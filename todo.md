@@ -3,8 +3,8 @@
 ## Faz 0 — Hazırlık
 
 - [x] `git init` yap
-- [ ] Next.js projesi oluştur (`npx create-next-app@latest`)
-- [ ] Tailwind CSS kur
+- [x] Next.js projesi oluştur (`npx create-next-app@latest`)
+- [x] Tailwind CSS kur
 - [ ] Supabase projesi aç, bağlantı bilgilerini `.env.local`'a ekle
 - [ ] Drizzle ORM kur ve Supabase'e bağla
 - [ ] Boş projeyi Vercel'e deploy et ("merhaba dünya" testi)
