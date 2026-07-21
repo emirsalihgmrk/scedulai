@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ScedulAI",
   description: "Kişiselleştirilmiş dil öğrenme platformu",
+
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
