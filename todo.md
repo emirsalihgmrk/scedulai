@@ -6,7 +6,9 @@
 - [x] Supabase projesi aç, bağlantı bilgilerini `.env.local`'a ekle
 - [x] Drizzle ORM kur ve Supabase'e bağla
 - [x] Boş projeyi Vercel'e deploy et ("merhaba dünya" testi)
+- [x] Kullanılacak ai-sdk kararı ve konfigürasyonu
 
 # Next
 
-- [] Kullanılacak ai-sdk kararı ve konfigürasyonu
+- [] SYSTEM_PROMPT geliştirilerek cevabın iyileştirilmesi
+- [] 15-sentences-per-day-with-tedx/simulation.ts dosyasının tamamlanması.
