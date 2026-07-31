@@ -1,7 +1,6 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText, Output, ModelMessage } from "ai";
 import { z } from "zod";
-import { outputs } from "./outputs";
 
 if (!process.env.OPENROUTER_API_KEY) {
   throw new Error("OPENROUTER_API_KEY ortam değişkeni tanımlanmamış!");
@@ -50,5 +49,3 @@ export async function getAIObjectResponse<T>({
 
   return result;
 }
-
-export { outputs };

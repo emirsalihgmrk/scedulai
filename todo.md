@@ -7,8 +7,8 @@
 - [x] Drizzle ORM kur ve Supabase'e bağla
 - [x] Boş projeyi Vercel'e deploy et ("merhaba dünya" testi)
 - [x] Kullanılacak ai-sdk kararı ve konfigürasyonu
+- [x] youtube-transcript entegrasyonu
 
 # Next
 
-- [] youtube-transcript entegrasyonu
-- [] 15-sentences-per-day-with-tedx/simulation.ts dosyasının tamamlanması.
+- [] Dosya: 15-sentences-per-day-with-tedx/simulation.ts. Otomatik video seçme mantığının eklenmesi
