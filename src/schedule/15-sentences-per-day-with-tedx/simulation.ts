@@ -1,4 +1,4 @@
-import { getAIResponse } from "@/ai";
+import { getAIObjectResponse, outputs } from "@/ai";
 
 async function simulate() {
   const transcript = `Transcriber: Anna Kalynchuk Reviewer: Michael Nystrom
@@ -331,29 +331,21 @@ and I hope you learnt something new.`;
 
   console.log("Simülasyon başlatılıyor...");
 
-  const result = await getAIResponse({
+  const result = await getAIObjectResponse({
     messages: [
       {
         role: "user",
-        content: `Please analyze this transcript and review it using the reviewTranscriptTool to generate 15 practice sentences in Turkish:\n\n${transcript}`,
+        content: `You are asked to analyze and review a transcript. Extract key sentence structures, vocabulary, and expressions from the transcript, and generate exactly 15 new practice sentences in Turkish for the user to translate into English later.\n\nTranscript:\n${transcript}`,
       },
     ],
-    toolName: "reviewTranscriptTool",
+    output: outputs.reviewTranscript,
   });
 
-  const toolResult = result.toolResults.find(
-    (tr) => tr.toolName === "reviewTranscriptTool",
-  );
-
-  if (toolResult) {
-    const sentences = (toolResult.output as { sentences: string[] }).sentences;
-    console.log("\n--- Oluşturulan 15 Cümle ---\n");
-    sentences.forEach((sentence, index) => {
-      console.log(`${index + 1}. ${sentence}`);
-    });
-  } else {
-    console.log("Tool tetiklenmedi, düz yanıt geldi:", result.text);
-  }
+  const sentences = result.output.sentences;
+  console.log("\n--- Oluşturulan 15 Cümle ---\n");
+  sentences.forEach((sentence, index) => {
+    console.log(`${index + 1}. ${sentence}`);
+  });
 }
 
 simulate();

@@ -10,5 +10,5 @@
 
 # Next
 
-- [] SYSTEM_PROMPT geliştirilerek cevabın iyileştirilmesi
+- [] youtube-transcript entegrasyonu
 - [] 15-sentences-per-day-with-tedx/simulation.ts dosyasının tamamlanması.
