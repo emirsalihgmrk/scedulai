@@ -1,73 +1,51 @@
-# CLAUDE.md
+# ScedulAI Contributor Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Project purpose
 
-## Proje
+ScedulAI is a personalized language-learning platform. It turns YouTube/TEDx transcripts into Turkish practice sentences, evaluates English translations, and will use each learner's error and vocabulary history to tailor later sessions. The durable product value is the learner profile and its accumulated learning data—not a particular LLM.
 
-ScedulAI — kişiselleştirilmiş dil öğrenme platformu. YouTube transkriptlerinden cümle üretir, kullanıcı çevirisini LLM ile değerlendirir, ve hataları zamanla takip ederek kişiye özel seans oluşturur. Rekabet avantajı modelde değil, biriktirilen kullanıcı verisinde (hata geçmişi, kelime ustalığı).
+## Current implementation
 
-## Tech Stack
+This is an early MVP. The implemented end-to-end experiment is:
 
-| Katman | Seçim |
-|--------|-------|
-| Frontend + Backend | Next.js (App Router) + Tailwind CSS |
-| Veritabanı + Auth | Supabase (PostgreSQL) |
-| ORM | Drizzle (veya Prisma) |
-| LLM | Anthropic SDK + OpenRouter (model yönlendirici) |
-| Transkript | youtube-transcript veya resmi altyazı API |
-| E-posta | Resend + Vercel Cron |
-| Deploy | Vercel (frontend) + Supabase (db) |
+`YouTube/TEDx URL -> video metadata validation -> transcript -> OpenRouter structured output -> 15 Turkish practice sentences`
 
-## Geliştirme Komutları
+- `src/schedule/15-sentences-per-day-with-tedx/simulation.ts` is the executable MVP workflow.
+- `src/lib/youtube.ts` owns URL parsing, TEDx validation, metadata lookup, and transcript retrieval.
+- `src/ai/index.ts` is the central LLM abstraction. Keep model/provider calls here rather than adding direct calls in pages, routes, or workflows.
+- `src/ai/outputs/` holds Zod schemas used with AI SDK `Output.object`; these are structured-output definitions, not executable tools.
+- `src/db/` is configured for Drizzle/Postgres, but `schema.ts` has not yet been implemented.
+- `src/app/page.tsx` is only a placeholder UI; do not infer that planned app routes already exist.
+
+Read `ROADMAP.md` for the longer-term product architecture and `DECISIONS.md` before changing an established technical decision.
+
+## Commands
 
 ```bash
-npm run dev        # geliştirme sunucusu
-npm run build      # production build
-npm run lint       # ESLint
-npx drizzle-kit push   # şema değişikliklerini Supabase'e uygula
-npx drizzle-kit studio # DB görsel arayüz
+npm run dev                         # start the Next.js dev server
+npm run lint                        # run ESLint
+npx tsc --noEmit                    # type-check
+npm run build                       # production build
+npm run simulate [youtube-url]      # run the transcript-to-sentences workflow
+npx drizzle-kit push                # apply schema changes to the configured database
+npx drizzle-kit studio              # open the Drizzle database UI
 ```
 
-## Mimari
+`simulate` requires the local environment configuration, including `OPENROUTER_API_KEY`. Never read, print, commit, or expose `.env*` files or their values.
 
-```
-app/
-  (auth)/          # login, register sayfaları
-  (app)/           # oturum gerektiren sayfalar
-    dashboard/
-    programs/
-    session/[id]/
-  api/
-    session/       # seans başlatma, cümle gönderme
-    llm/           # LLM proxy — doğrudan model çağrısı buradan geçer
-    transcript/    # YouTube transkript çekme
-lib/
-  llm.ts           # LLM soyutlama katmanı (model takas edilebilir)
-  db/
-    schema.ts      # Drizzle şema tanımları
-    queries.ts     # sık kullanılan sorgular
-```
+## Engineering conventions
 
-## Kritik Mimari Kural — LLM Katmanı
+- TypeScript is strict; retain explicit types at module boundaries and use the `@/` path alias for `src` imports.
+- Keep user-facing learning content and feedback in the learner's configured native language; the current MVP uses Turkish.
+- Use Zod schemas for LLM responses. Validate exact shape and count at the boundary instead of trusting free-form model text.
+- Prefer `generateText` with `Output.object` for one-shot structured extraction. Do not reintroduce forced tool calling unless the task needs an actual multi-step agent loop; see `DECISIONS.md`.
+- Keep provider/model selection configurable through `src/ai/index.ts`. Do not couple UI code to OpenRouter or a model identifier.
+- Treat external inputs as untrusted: validate YouTube URLs and handle unavailable metadata/transcripts with useful errors.
+- When database work begins, make learner history append-friendly and preserve the distinction between attempts, errors, vocabulary exposure, and mastery. The planned `errors` and `vocabulary` data are central to personalization.
 
-`lib/llm.ts` her LLM çağrısını sarmalayan tek noktadır. Bileşenler veya API route'ları modeli doğrudan çağırmaz. Bu sayede:
-- Model değişimi (Haiku ↔ Gemini Flash ↔ Sonnet) tek yerden yapılır
-- Prompt caching bu katmanda uygulanır
-- Token maliyeti merkezi olarak ölçülür
+## Validation and change scope
 
-Varsayılan model: `claude-haiku-4-5` (ucuz, hızlı). Premium kullanıcı veya karmaşık analiz: `claude-sonnet-4-6`.
-
-## Veri Modeli — Kritik Tablolar
-
-`errors` tablosu projenin kalbidir. Her hata bir satır: `user_id`, `error_type`, `related_word`, `session_id`, `timestamp`, `resolved`. Yeni seans oluştururken sistem bu tablodan kullanıcının zayıf noktalarını çeker ve LLM'e hedef verir.
-
-`vocabulary` tablosu: kelime, maruz kalma sayısı, doğru kullanım sayısı, ustalık skoru.
-
-Seans cümlesi üretiminde şema: `errors` + `vocabulary` → LLM prompt → hedefli cümleler.
-
-## Mevcut Faz
-
-**Faz 1 — Çekirdek MVP Döngüsü** (hesap yok, tek kullanıcı, sadece çalışan döngü):
-transkript al → nadir kelimeleri işaretle → 15 cümle üret → kullanıcı çevirir → LLM geri bildirim → ertesi gün 15 cümle daha.
-
-Faz 2'ye geçmeden önce token maliyetini gerçek veriyle ölçmek zorunlu.
+- For TypeScript or UI changes, run `npx tsc --noEmit` and `npm run lint`; run `npm run build` when route, configuration, or production behavior could be affected.
+- For AI workflow changes, run `npm run simulate` with a suitable TEDx URL only when the required credentials and network access are available. Do not replace automated checks with a live LLM call.
+- Keep changes focused. Do not modify generated directories (`.next/`, `node_modules/`) or secrets.
+- Update `DECISIONS.md` when making a durable architectural choice, and update `ROADMAP.md` or `todo.md` when materially changing delivery scope.
