@@ -1,52 +1,63 @@
-# ScedulAI Contributor Guide
+# CLAUDE.md
 
-## Project purpose
-
-ScedulAI is a personalized language-learning platform. It turns TED.com/TEDx transcripts into Turkish practice sentences, evaluates English translations, and will use each learner's error and vocabulary history to tailor later sessions. The durable product value is the learner profile and its accumulated learning data—not a particular LLM.
-
-## Current implementation
-
-This is an early MVP. The implemented end-to-end experiment is:
-
-`TED.com/TEDx URL -> talk metadata validation -> transcript -> OpenRouter structured output -> 15 Turkish practice sentences`
-
-- `src/schedule/15-sentences-per-day-with-tedx/simulation.ts` is the executable MVP workflow.
-- `src/lib/ted.ts` owns TED.com URL validation, TEDx detection, metadata lookup, and transcript retrieval.
-- `src/ai/index.ts` is the central LLM abstraction. Keep model/provider calls here rather than adding direct calls in pages, routes, or workflows.
-- `src/ai/outputs/` holds Zod schemas used with AI SDK `Output.object`; these are structured-output definitions, not executable tools.
-- `src/db/` is configured for Drizzle/Postgres, but `schema.ts` has not yet been implemented.
-- `src/app/page.tsx` is only a placeholder UI; do not infer that planned app routes already exist.
-
-Read `ROADMAP.md` for the longer-term product architecture and `DECISIONS.md` before changing an established technical decision.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
 
 ```bash
-npm run dev                         # start the Next.js dev server
-npm run lint                        # run ESLint
-npx tsc --noEmit                    # type-check
-npm run build                       # production build
-npm run simulate [ted-url]          # run the transcript-to-sentences workflow
-npx drizzle-kit push                # apply schema changes to the configured database
-npx drizzle-kit studio              # open the Drizzle database UI
+npm run dev          # Start Next.js dev server
+npm run build        # Production build
+npm run lint         # Run ESLint
+npm run simulate     # Run the 15-sentences workflow simulation (tsx)
+npm run simulate <ted-url>  # Run simulation with a specific TED.com talk URL
 ```
 
-`simulate` requires the local environment configuration, including `OPENROUTER_API_KEY`. Never read, print, commit, or expose `.env*` files or their values.
+Type-checking (no dedicated script — use the allowed form):
+```bash
+npx tsc --noEmit
+```
 
-## Engineering conventions
+Database migrations are generated with Drizzle Kit:
+```bash
+npx drizzle-kit generate
+npx drizzle-kit migrate
+```
 
-- TypeScript is strict; retain explicit types at module boundaries and use the `@/` path alias for `src` imports.
-- In `src`, use kebab-case filenames, camelCase variables/parameters, PascalCase types and React component functions, and UPPER_SNAKE_CASE only where a constant benefits from being visually distinct.
-- Keep user-facing learning content and feedback in the learner's configured native language; the current MVP uses Turkish.
-- Use Zod schemas for LLM responses. Validate exact shape and count at the boundary instead of trusting free-form model text.
-- Prefer `generateText` with `Output.object` for one-shot structured extraction. Do not reintroduce forced tool calling unless the task needs an actual multi-step agent loop; see `DECISIONS.md`.
-- Keep provider/model selection configurable through `src/ai/index.ts`. Do not couple UI code to OpenRouter or a model identifier.
-- Treat external inputs as untrusted: validate TED.com URLs and handle unavailable metadata/transcripts with useful errors.
-- When database work begins, make learner history append-friendly and preserve the distinction between attempts, errors, vocabulary exposure, and mastery. The planned `errors` and `vocabulary` data are central to personalization.
+After every file edit, the PostToolUse hook automatically runs `npm run typecheck && npm run lint`.
 
-## Validation and change scope
+## Architecture
 
-- For TypeScript or UI changes, run `npx tsc --noEmit` and `npm run lint`; run `npm run build` when route, configuration, or production behavior could be affected.
-- For AI workflow changes, run `npm run simulate` with a suitable TEDx URL only when the required credentials and network access are available. Do not replace automated checks with a live LLM call.
-- Keep changes focused. Do not modify generated directories (`.next/`, `node_modules/`) or secrets.
-- Update `DECISIONS.md` when making a durable architectural choice, and update `ROADMAP.md` or `todo.md` when materially changing delivery scope.
+**ScedulAI** is a language-learning platform built on Next.js 16 (App Router). Its first feature is a "15 sentences per day" program where users translate sentences derived from TED talk transcripts.
+
+### Key layers
+
+| Layer | Path | Purpose |
+|---|---|---|
+| AI provider | `src/ai/index.ts` | OpenRouter wrapper (`getAIObjectResponse`), default model `google/gemini-2.5-flash` |
+| AI tasks | `src/ai/tasks/` | One file per task; each calls `getAIObjectResponse` with a Zod output schema |
+| AI output schemas | `src/ai/outputs/` | Zod schemas and descriptions for structured AI responses |
+| TED scraper | `src/lib/ted.ts` | Scrapes `ted.com` via Cheerio, parses `__NEXT_DATA__` to extract talk metadata and transcript |
+| API route | `src/app/api/ted/route.ts` | `GET /api/ted?url=<ted-url>` — returns `TedTalkData` JSON |
+| DB | `src/db/` | Drizzle ORM + Postgres (`DATABASE_URL`); schema in `src/db/schema.ts` (currently empty) |
+| CLI util | `src/lib/cli.ts` | Colored terminal output helpers used by simulations |
+| Simulations | `src/schedule/*/simulation.ts` | Standalone scripts run via `tsx` to prototype/test workflows outside the browser |
+| Workflow docs | `src/schedule/*/workflow.md` | Product/design specs for each learning schedule |
+
+### Data flow (simulate command)
+
+1. `simulation.ts` fetches a TED talk URL → `fetchTedTalkData` scrapes `ted.com` HTML and returns `TedTalkData` (title, speaker, transcript, etc.)
+2. `reviewTranscript` sends the transcript to the AI and receives exactly 15 practice sentences in the user's native language (Turkish by default)
+3. Output is printed via `cli` helpers
+
+### Environment variables
+
+- `OPENROUTER_API_KEY` — required for all AI calls
+- `DATABASE_URL` — Postgres connection string
+- `NEXT_PUBLIC_APP_URL` — used as `HTTP-Referer` header in OpenRouter requests
+
+## Naming conventions (enforced by ESLint)
+
+- All `.ts`/`.tsx` and `.md` files under `src/` must use **kebab-case** filenames
+- Variables/parameters: `camelCase`; `const` variables may also be `UPPER_CASE`
+- Functions: `camelCase` or `PascalCase` (React components)
+- Types/interfaces/enums: `PascalCase`; enum members: `PascalCase`
