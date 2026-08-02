@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 
 export interface TedTalkData {
+  url: string;
   id: string;
   title: string;
   speaker: string;
@@ -134,13 +135,13 @@ function getSpeakerName(
   playerData: JsonRecord | null,
 ): string {
   const speakers = talk.speakers ?? videoData?.speakers;
-  const speakerNodes = getRecord(speakers, "nodes")?.nodes;
+  const speakerList = Array.isArray(speakers)
+    ? speakers
+    : isJsonRecord(speakers) && Array.isArray(speakers.nodes)
+      ? (speakers.nodes as unknown[])
+      : null;
 
-  for (const speakerList of [speakers, speakerNodes]) {
-    if (!Array.isArray(speakerList) || speakerList.length === 0) {
-      continue;
-    }
-
+  if (speakerList && speakerList.length > 0) {
     const names = speakerList
       .map((speaker) => {
         if (typeof speaker === "string") {
@@ -341,6 +342,7 @@ export async function fetchTedTalkData(
     const speaker = getSpeakerName(talk, videoData, playerData);
 
     return {
+      url: normalizeTedTalkUrl(tedUrl),
       id,
       title,
       speaker,
@@ -391,4 +393,78 @@ export async function fetchTedTalkData(
     console.error("Failed to fetch TED talk data:", error);
     return null;
   }
+}
+
+interface TedTalkListItem {
+  canonicalUrl?: unknown;
+  slug?: unknown;
+}
+
+export async function fetchTedTalkUrlsFromPage(page: number): Promise<string[]> {
+  try {
+    const response = await fetch(`https://www.ted.com/talks?page=${page}`, {
+      headers: {
+        Accept: "text/html",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
+
+    if (!response.ok) return [];
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    const nextDataText = $("#__NEXT_DATA__").text();
+    if (!nextDataText) return [];
+
+    const nextData: unknown = JSON.parse(nextDataText);
+    if (!isJsonRecord(nextData)) return [];
+
+    const pageProps = getPageProps(nextData);
+    const talks = pageProps?.talks;
+    if (!Array.isArray(talks)) return [];
+
+    const seen = new Set<string>();
+    const urls: string[] = [];
+
+    for (const talk of talks as TedTalkListItem[]) {
+      const rawUrl = getString(talk.canonicalUrl).trim();
+      const slug = getString(talk.slug).trim();
+      const url = rawUrl || (slug ? `https://www.ted.com/talks/${slug}` : "");
+
+      if (!url || seen.has(url)) continue;
+      seen.add(url);
+      urls.push(url);
+    }
+
+    return urls;
+  } catch {
+    return [];
+  }
+}
+
+export async function discoverTedTalk(
+  excludeUrls: string[] = [],
+): Promise<TedTalkData | null> {
+  const excludeSet = new Set(excludeUrls.map((u) => u.toLowerCase()));
+  const MAX_PAGES = 150;
+  const MAX_ATTEMPTS = 5;
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const page = Math.floor(Math.random() * MAX_PAGES) + 1;
+    const urls = await fetchTedTalkUrlsFromPage(page);
+
+    const candidates = urls
+      .filter((u) => !excludeSet.has(u.toLowerCase()))
+      .sort(() => Math.random() - 0.5);
+
+    for (const candidateUrl of candidates) {
+      const data = await fetchTedTalkData(candidateUrl);
+      if (hasTranscript(data)) {
+        return data;
+      }
+    }
+  }
+
+  return null;
 }
