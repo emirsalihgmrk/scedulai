@@ -1,1 +1,1 @@
-export * from "./review-transcript";
+export * from "./generate-practice-sentences";

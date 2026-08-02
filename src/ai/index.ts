@@ -6,6 +6,8 @@ if (!process.env.OPENROUTER_API_KEY) {
   throw new Error("OPENROUTER_API_KEY ortam değişkeni tanımlanmamış!");
 }
 
+export const DEFAULT_MODEL = "google/gemini-2.5-flash";
+
 export const aiProvider = createOpenRouter({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -14,12 +16,6 @@ export const aiProvider = createOpenRouter({
     "X-Title": "ScedulAI",
   },
 });
-
-export const SYSTEM_PROMPT = `
-Sen ScedulAI platformunda görev yapan uzman bir dil öğretmenisin.
-Görevin, verilen transkripti incelemek; kullanılan cümle yapılarını, kelimeleri ve ifade biçimlerini analiz etmek; ardından kullanıcının dilinde doğal, doğru ve akıcı cümleler üretmektir.
-Kullanıcının çevirilerini değerlendir, hataları tespit et ve kısa, net, yapıcı geri bildirimler sun.
-`.trim();
 
 interface ObjectAgentArgs<T> {
   model?: string;
@@ -32,11 +28,11 @@ interface ObjectAgentArgs<T> {
 }
 
 export async function getAIObjectResponse<T>({
-  model = "google/gemini-2.5-flash",
-  system = SYSTEM_PROMPT,
+  model = DEFAULT_MODEL,
+  system,
   messages,
   output,
-}: ObjectAgentArgs<T>) {
+}: ObjectAgentArgs<T>): Promise<T> {
   const result = await generateText({
     model: aiProvider(model),
     system,
@@ -47,5 +43,5 @@ export async function getAIObjectResponse<T>({
     }),
   });
 
-  return result;
+  return result.output as T;
 }
