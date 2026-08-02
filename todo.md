@@ -8,7 +8,8 @@
 - [x] Boş projeyi Vercel'e deploy et ("merhaba dünya" testi)
 - [x] Kullanılacak ai-sdk kararı ve konfigürasyonu
 - [x] TED.com scraper entegrasyonu
+- [x] Dosya: 15-sentences-per-day-with-tedx/simulation.ts. Otomatik video seçme mantığının eklenmesi
 
 # Next
 
-- [] Dosya: 15-sentences-per-day-with-tedx/simulation.ts. Otomatik video seçme mantığının eklenmesi
+- [] Dosya: 15-sentences-per-day-with-tedx/simulation.ts. Kullanıcı cümlelerinin değerlendirilmesi
