@@ -1,71 +1,55 @@
-import { getAIObjectResponse } from "@/ai";
-import { reviewTranscriptOutput } from "@/ai/outputs";
-import {
-  getVideoId,
-  getVideoInfo,
-  validateTEDxVideo,
-  fetchTranscript,
-} from "@/lib/youtube";
+import { reviewTranscript } from "@/ai/tasks";
+import { cli } from "@/lib/cli";
+import { fetchTedTalkData } from "@/lib/ted";
 
 async function simulate() {
-  const defaultUrl = "https://www.youtube.com/watch?v=kKvK2foOTJM";
+  const defaultUrl =
+    "https://www.ted.com/talks/lila_landowski_brain_hack_6_secrets_to_learning_faster_backed_by_neuroscience";
   const url = process.argv[2] || defaultUrl;
 
+  cli.title("15 Sentences a Day");
+
   if (!process.argv[2]) {
-    console.log(
-      `\x1b[33mUyarı: Herhangi bir YouTube URL'si belirtilmedi. Varsayılan TEDx videosu kullanılıyor:\x1b[0m ${defaultUrl}`,
-    );
-    console.log(
-      `Özel bir video ile çalıştırmak için: npm run simulate <youtube-url>\n`,
-    );
+    cli.warning("No TED.com URL provided; using the default TEDx talk.");
+    cli.detail("URL", defaultUrl);
+    cli.info("To use a specific talk: npm run simulate <ted-url>");
   }
 
   const startTime = Date.now();
-  console.log("Simulation starting...");
+  cli.info("Simulation started.");
 
   try {
-    const videoId = getVideoId(url);
+    cli.info("Fetching TED talk details and transcript...");
+    const tedTalkData = await fetchTedTalkData(url);
 
-    console.log(`Video detayları alınıyor: ${videoId}...`);
-    const videoInfo = await getVideoInfo(url);
-    const title = videoInfo.title || "";
-    const channelName = videoInfo.channel?.name || "";
+    if (!tedTalkData) {
+      throw new Error(
+        "Unable to retrieve the TED talk details or transcript. Please check the URL.",
+      );
+    }
 
-    console.log(`Video Başlığı: "${title}"`);
-    console.log(`Kanal: "${channelName}"`);
+    cli.detail("Title", `"${tedTalkData.title}"`);
+    cli.detail("Speaker", `"${tedTalkData.speaker}"`);
 
-    validateTEDxVideo(title, channelName);
+    const { transcript } = tedTalkData;
+    if (!transcript) {
+      throw new Error("The transcript is empty.");
+    }
 
-    console.log("Transkript çekiliyor...");
-    const transcript = await fetchTranscript(videoId);
-    console.log(
-      `Transkript başarıyla çekildi. Karakter sayısı: ${transcript.length}`,
-    );
+    cli.success("Transcript fetched.");
+    cli.detail("Characters", transcript.length);
+    cli.info("Generating 15 practice sentences...");
 
-    const result = await getAIObjectResponse({
-      messages: [
-        {
-          role: "user",
-          content: `You are asked to analyze and review a transcript. Extract key sentence structures, vocabulary, and expressions from the transcript, and generate exactly 15 new practice sentences in Turkish for the user to translate into English later.\n\nTranscript:\n${transcript}`,
-        },
-      ],
-      output: reviewTranscriptOutput,
+    const result = await reviewTranscript({
+      transcript,
+      nativeLanguage: "Turkish",
     });
 
-    const sentences = result.output.sentences;
-    console.log("\n--- Generated 15 Sentences ---\n");
-    sentences.forEach((sentence, index) => {
-      console.log(`${index + 1}. ${sentence}`);
-    });
-
-    const endTime = Date.now();
-    console.log(
-      `\nSimulation completed. Total time: ${(endTime - startTime) / 1000} seconds.`,
-    );
+    cli.list("Generated sentences", result.output.sentences);
+    const durationInSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
+    cli.success(`Simulation complete (${durationInSeconds}s).`);
   } catch (error) {
-    console.error(
-      `\n\x1b[31mHata oluştu:\x1b[0m ${error instanceof Error ? error.message : String(error)}`,
-    );
+    cli.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 }

@@ -7,7 +7,7 @@
 - [x] Drizzle ORM kur ve Supabase'e bağla
 - [x] Boş projeyi Vercel'e deploy et ("merhaba dünya" testi)
 - [x] Kullanılacak ai-sdk kararı ve konfigürasyonu
-- [x] youtube-transcript entegrasyonu
+- [x] TED.com scraper entegrasyonu
 
 # Next
 
