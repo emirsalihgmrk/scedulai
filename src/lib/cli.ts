@@ -1,3 +1,5 @@
+import * as readline from "readline";
+
 type LogVariant = "info" | "success" | "warning" | "error";
 
 const colors = {
@@ -46,6 +48,21 @@ export const cli = {
     console.log(`\n${colors.bold}${title}${colors.reset}`);
     items.forEach((item, index) => {
       console.log(`  ${colors.cyan}${index + 1}.${colors.reset} ${item}`);
+    });
+  },
+  prompt(question: string): Promise<string> {
+    return new Promise((resolve) => {
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+      rl.question(
+        `${colors.yellow}${colors.bold}?${colors.reset} ${question} `,
+        (answer) => {
+          rl.close();
+          resolve(answer.trim());
+        },
+      );
     });
   },
 };

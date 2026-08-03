@@ -1,1 +1,2 @@
-export * from "./generate-practice-sentences";
+export * from "./generate-sentences";
+export * from "./analyze-sentence";

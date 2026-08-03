@@ -17,6 +17,9 @@ export const aiProvider = createOpenRouter({
   },
 });
 
+const SYSTEM_PROMPT =
+  "You are an expert language teacher on the ScedulAI platform.";
+
 interface ObjectAgentArgs<T> {
   model?: string;
   system?: string;
@@ -27,21 +30,36 @@ interface ObjectAgentArgs<T> {
   };
 }
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
 export async function getAIObjectResponse<T>({
   model = DEFAULT_MODEL,
-  system,
+  system = SYSTEM_PROMPT,
   messages,
   output,
 }: ObjectAgentArgs<T>): Promise<T> {
-  const result = await generateText({
-    model: aiProvider(model),
-    system,
-    messages,
-    output: Output.object({
-      schema: output.schema,
-      description: output.description,
-    }),
-  });
+  let lastError: unknown;
 
-  return result.output as T;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await generateText({
+        model: aiProvider(model),
+        system,
+        messages,
+        output: Output.object({
+          schema: output.schema,
+          description: output.description,
+        }),
+      });
+      return result.output as T;
+    } catch (err) {
+      lastError = err;
+      if (attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * attempt));
+      }
+    }
+  }
+
+  throw lastError;
 }
