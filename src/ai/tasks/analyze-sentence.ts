@@ -18,7 +18,7 @@ const outputSchema = z.object({
     .min(0)
     .max(100)
     .describe(
-      "How accurately the user's English translation conveys the meaning of the original sentence, as a percentage from 0 to 100.",
+      "How accurately the user's English translation conveys the meaning of the original sentence, as a percentage from 0 to 100. Base this on meaning and grammar — not on similarity to the reference English sentence. A semantically equivalent, grammatically correct translation should score 100.",
     ),
   alternatives: z
     .array(z.string())
@@ -47,17 +47,10 @@ export function analyzeSentence({
       {
         role: "user",
         content: `A learner is practicing translating a sentence from their native language (${nativeLanguage}) into English. Below is the sentence in their native language, the original English sentence it was derived from (the correct answer), and the learner's own English translation.
-
-Analyze the sentence's structure, grammar, and meaning, writing this analysis in ${nativeLanguage} so the learner can understand it. Identify key English vocabulary words and idiomatic expressions from the correct translation. Evaluate how accurately the learner's translation matches the original English sentence and give a percentage score. Finally, provide a few alternative correct ways the sentence could be translated into English.
-
-Sentence (${nativeLanguage}):
-${sentence}
-
-Original English sentence (correct answer):
-${originalSentence}
-
-Learner's English translation:
-${userTranslation}`,
+        Analyze the sentence's structure, grammar, and meaning, writing this analysis in ${nativeLanguage} so the learner can understand it. Identify key English vocabulary words and idiomatic expressions from the correct translation. Evaluate how accurately the learner's translation conveys the meaning of the original ${nativeLanguage} sentence and give a percentage score — IMPORTANT: judge meaning and grammatical correctness, NOT word-for-word similarity to the reference English sentence; a translation that is naturally phrased and semantically equivalent deserves a high score even if it differs from the reference. Finally, provide a few alternative correct ways the sentence could be translated into English.
+        Sentence (${nativeLanguage}): ${sentence}
+        Original English sentence (correct answer): ${originalSentence}
+        Learner's English translation: ${userTranslation}`,
       },
     ],
     output: {

@@ -7,13 +7,32 @@ import { discoverTedTalk, fetchTedTalkData, hasTranscript } from "@/lib/ted";
 async function simulate(): Promise<void> {
   const startTime = Date.now();
 
-  const manualUrl = process.argv[2];
+  const args = process.argv.slice(2);
+  const flags = Object.fromEntries(
+    args
+      .filter((a) => a.startsWith("--"))
+      .map((a) => a.slice(2).split("=") as [string, string]),
+  );
+  const manualUrl = args.find((a) => !a.startsWith("--"));
+
+  const difficultyFlag =
+    flags["difficulty"] ?? process.env.npm_config_difficulty ?? "easy";
+  const difficulty = (
+    ["easy", "medium", "hard"].includes(difficultyFlag)
+      ? difficultyFlag
+      : "easy"
+  ) as "easy" | "medium" | "hard";
+
+  const countRaw = flags["count"] ?? process.env.npm_config_count ?? "15";
+  const countArg = parseInt(countRaw, 10);
+  const count = isNaN(countArg) || countArg < 1 ? 15 : countArg;
 
   let talkData;
 
   if (manualUrl) {
     cli.title("TED Talk Simulation (Manual URL)");
     cli.info(`Fetching talk from: ${manualUrl}`);
+    cli.info(`Difficulty: ${difficulty} | Sentences: ${count}`);
     talkData = await fetchTedTalkData(manualUrl);
     if (!hasTranscript(talkData)) {
       cli.error("The provided talk has no transcript. Exiting.");
@@ -45,18 +64,22 @@ async function simulate(): Promise<void> {
     `${Math.round(talkData.durationSeconds / 60)} minutes`,
   );
 
-  cli.info("Generating 15 practice sentences...");
+  cli.info(`Generating ${count} practice sentences...`);
   const { sentences } = await generateSentences({
     transcript: talkData.transcript,
     nativeLanguage: "Turkish",
+    difficulty,
+    count,
   });
 
   const accuracies: number[] = [];
 
   for (let i = 0; i < sentences.length; i++) {
-    const { native, english } = sentences[i];
+    const { native, english, difficulty } = sentences[i];
 
-    cli.title(`Sentence ${i + 1} / ${sentences.length}`);
+    cli.title(
+      `Sentence ${i + 1} / ${sentences.length} [${difficulty.toUpperCase()}]`,
+    );
     cli.info(native);
 
     const userTranslation = await cli.prompt("Your English translation:");
