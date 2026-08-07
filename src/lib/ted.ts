@@ -448,15 +448,15 @@ export async function discoverTedTalk(
 ): Promise<TedTalkData | null> {
   const excludeSet = new Set(excludeUrls.map((u) => u.toLowerCase()));
   const MAX_PAGES = 150;
-  const MAX_ATTEMPTS = 5;
+  const MAX_PAGE_ATTEMPTS = 20;
 
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const page = Math.floor(Math.random() * MAX_PAGES) + 1;
+  const pages = Array.from({ length: MAX_PAGES }, (_, i) => i + 1).sort(
+    () => Math.random() - 0.5,
+  );
+
+  for (const page of pages.slice(0, MAX_PAGE_ATTEMPTS)) {
     const urls = await fetchTedTalkUrlsFromPage(page);
-
-    const candidates = urls
-      .filter((u) => !excludeSet.has(u.toLowerCase()))
-      .sort(() => Math.random() - 0.5);
+    const candidates = urls.filter((u) => !excludeSet.has(u.toLowerCase()));
 
     for (const candidateUrl of candidates) {
       const data = await fetchTedTalkData(candidateUrl);
