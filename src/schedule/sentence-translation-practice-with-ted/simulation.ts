@@ -15,13 +15,13 @@ async function simulate(): Promise<void> {
   );
   const manualUrl = args.find((a) => !a.startsWith("--"));
 
-  const difficultyFlag =
-    flags["difficulty"] ?? process.env.npm_config_difficulty ?? "easy";
-  const difficulty = (
-    ["easy", "medium", "hard"].includes(difficultyFlag)
-      ? difficultyFlag
-      : "easy"
-  ) as "easy" | "medium" | "hard";
+  const cefrFlag =
+    flags["level"] ?? process.env.npm_config_level ?? "B1";
+  const cefrLevel = (
+    ["A1", "A2", "B1", "B2", "C1", "C2"].includes(cefrFlag.toUpperCase())
+      ? cefrFlag.toUpperCase()
+      : "B1"
+  ) as "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 
   const countRaw = flags["count"] ?? process.env.npm_config_count ?? "15";
   const countArg = parseInt(countRaw, 10);
@@ -32,7 +32,7 @@ async function simulate(): Promise<void> {
   if (manualUrl) {
     cli.title("TED Talk Simulation (Manual URL)");
     cli.info(`Fetching talk from: ${manualUrl}`);
-    cli.info(`Difficulty: ${difficulty} | Sentences: ${count}`);
+    cli.info(`Level: ${cefrLevel} | Sentences: ${count}`);
     talkData = await fetchTedTalkData(manualUrl);
     if (!hasTranscript(talkData)) {
       cli.error("The provided talk has no transcript. Exiting.");
@@ -68,17 +68,17 @@ async function simulate(): Promise<void> {
   const { sentences } = await generateSentences({
     transcript: talkData.transcript,
     nativeLanguage: "Turkish",
-    difficulty,
+    cefrLevel,
     count,
   });
 
   const accuracies: number[] = [];
 
   for (let i = 0; i < sentences.length; i++) {
-    const { native, english, difficulty } = sentences[i];
+    const { native, english, cefrLevel: sentenceLevel } = sentences[i];
 
     cli.title(
-      `Sentence ${i + 1} / ${sentences.length} [${difficulty.toUpperCase()}]`,
+      `Sentence ${i + 1} / ${sentences.length} [${sentenceLevel}]`,
     );
     cli.info(native);
 

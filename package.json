@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "simulate": "tsx --env-file=.env.local ./src/schedule/15-sentences-per-day-with-tedx/simulation.ts",
+    "simulate": "tsx --env-file=.env.local ./src/schedule/sentence-translation-practice-with-ted/simulation.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },
