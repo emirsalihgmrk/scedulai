@@ -43,11 +43,12 @@ export function analyzeSentence({
   nativeLanguage,
 }: AnalyzeSentenceArgs): Promise<AnalyzeSentenceOutput> {
   return getAIObjectResponse<AnalyzeSentenceOutput>({
+    model: "google/gemini-2.5-flash-lite",
     messages: [
       {
         role: "user",
         content: `A learner is practicing translating a sentence from their native language (${nativeLanguage}) into English. Below is the sentence in their native language, the original English sentence it was derived from (the correct answer), and the learner's own English translation.
-        Analyze the sentence's structure, grammar, and meaning, writing this analysis in ${nativeLanguage} so the learner can understand it. Identify key English vocabulary words and idiomatic expressions from the correct translation. Evaluate how accurately the learner's translation conveys the meaning of the original ${nativeLanguage} sentence and give a percentage score — IMPORTANT: judge meaning and grammatical correctness, NOT word-for-word similarity to the reference English sentence; a translation that is naturally phrased and semantically equivalent deserves a high score even if it differs from the reference. Finally, provide a few alternative correct ways the sentence could be translated into English.
+        Analyze the sentence's structure, grammar, and meaning, writing this analysis in ${nativeLanguage} so the learner can understand it. Identify key English vocabulary words and idiomatic expressions from the correct translation. Evaluate how accurately the learner's translation conveys the meaning of the original ${nativeLanguage} sentence and give a percentage score — IMPORTANT: judge meaning and grammatical correctness, NOT word-for-word similarity to the reference English sentence; a translation that is naturally phrased and semantically equivalent deserves a high score even if it differs from the reference. CRITICAL: Some source languages (e.g. Turkish) use gender-neutral pronouns (e.g. "o" means both "he" and "she"). If the original sentence is ambiguous about gender, accept both gendered and gender-neutral translations as equally correct — do NOT penalize the learner for choosing a different gender than the reference English sentence. Finally, provide a few alternative correct ways the sentence could be translated into English.
         Sentence (${nativeLanguage}): ${sentence}
         Original English sentence (correct answer): ${originalSentence}
         Learner's English translation: ${userTranslation}`,
