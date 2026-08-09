@@ -36,7 +36,7 @@ After every file edit, the PostToolUse hook automatically runs `npm run typechec
 | AI provider | `src/ai/index.ts` | OpenRouter wrapper (`getAIObjectResponse`), default model `google/gemini-2.5-flash` |
 | AI tasks | `src/ai/tasks/` | One file per task; each calls `getAIObjectResponse` with a Zod output schema |
 | AI output schemas | `src/ai/outputs/` | Zod schemas and descriptions for structured AI responses |
-| TED scraper | `src/lib/ted.ts` | Scrapes `ted.com` via Cheerio, parses `__NEXT_DATA__` to extract talk metadata and transcript |
+| TED client | `src/lib/ted.ts` | Fetches talk metadata + transcript from the TED GraphQL API (`/graphql`) and discovers talks via the search API (`/api/search`) |
 | API route | `src/app/api/ted/route.ts` | `GET /api/ted?url=<ted-url>` — returns `TedTalkData` JSON |
 | DB | `src/db/` | Drizzle ORM + Postgres (`DATABASE_URL`); schema in `src/db/schema.ts` (currently empty) |
 | CLI util | `src/lib/cli.ts` | Colored terminal output helpers used by simulations |
@@ -45,7 +45,7 @@ After every file edit, the PostToolUse hook automatically runs `npm run typechec
 
 ### Data flow (simulate command)
 
-1. `simulation.ts` fetches a TED talk URL → `fetchTedTalkData` scrapes `ted.com` HTML and returns `TedTalkData` (title, speaker, transcript, etc.)
+1. `simulation.ts` fetches a TED talk URL → `fetchTedTalkData` queries the TED GraphQL API and returns `TedTalkData` (title, speaker, transcript, etc.)
 2. `reviewTranscript` sends the transcript to the AI and receives exactly 15 practice sentences in the user's native language (Turkish by default)
 3. Output is printed via `cli` helpers
 
