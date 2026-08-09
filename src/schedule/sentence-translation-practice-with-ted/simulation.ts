@@ -15,8 +15,7 @@ async function simulate(): Promise<void> {
   );
   const manualUrl = args.find((a) => !a.startsWith("--"));
 
-  const cefrFlag =
-    flags["level"] ?? process.env.npm_config_level ?? "B1";
+  const cefrFlag = flags["level"] ?? process.env.npm_config_level ?? "B1";
   const cefrLevel = (
     ["A1", "A2", "B1", "B2", "C1", "C2"].includes(cefrFlag.toUpperCase())
       ? cefrFlag.toUpperCase()
@@ -77,12 +76,18 @@ async function simulate(): Promise<void> {
   for (let i = 0; i < sentences.length; i++) {
     const { native, english, cefrLevel: sentenceLevel } = sentences[i];
 
-    cli.title(
-      `Sentence ${i + 1} / ${sentences.length} [${sentenceLevel}]`,
-    );
+    cli.title(`Sentence ${i + 1} / ${sentences.length} [${sentenceLevel}]`);
     cli.info(native);
 
     const userTranslation = await cli.prompt("Your English translation:");
+
+    if (!userTranslation.trim()) {
+      cli.detail("Accuracy", "%0");
+      cli.info("No translation entered — skipped.");
+      console.log();
+      accuracies.push(0);
+      continue;
+    }
 
     cli.info("Analyzing...");
     const result = await analyzeSentence({
@@ -94,9 +99,10 @@ async function simulate(): Promise<void> {
 
     accuracies.push(result.accuracy);
 
-    cli.detail("Accuracy", `%${result.accuracy}`);
-    console.log();
     cli.info(result.analysis);
+    if (result.mistakes.length > 0) {
+      cli.list("Mistakes", result.mistakes);
+    }
     cli.list("Original sentence", [english]);
     if (result.alternatives.length > 0) {
       cli.list("Alternatives", result.alternatives);
@@ -105,6 +111,8 @@ async function simulate(): Promise<void> {
     if (result.expressions.length > 0) {
       cli.list("Expressions", result.expressions);
     }
+    console.log();
+    cli.detail("Accuracy", `%${result.accuracy}`);
   }
 
   const avg = accuracies.reduce((a, b) => a + b, 0) / accuracies.length;

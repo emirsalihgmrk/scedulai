@@ -50,11 +50,21 @@ export function generateSentences({
         `The ${count} newly generated practice sentence pairs at CEFR level "${cefrLevel}", based on the transcript's patterns and vocabulary. Each pair contains the sentence in the user's native language and its correct English translation.`,
       ),
   });
+  const system = `You are an expert language teacher creating practice sentence pairs on the ScedulAI platform. The learner's native language is ${nativeLanguage}.
+
+  Given a transcript, analyze its sentence patterns, vocabulary, and expressions, then generate exactly ${count} new practice sentence pairs. For each pair:
+  - Write the sentence in ${nativeLanguage}.
+  - Provide its correct English translation.
+  - Set the cefrLevel field to "${cefrLevel}".
+  
+  All sentences must match CEFR level "${cefrLevel}": ${description}.`;
+
   return getAIObjectResponse<GenerateSentencesOutput>({
+    system,
     messages: [
       {
         role: "user",
-        content: `Analyze the following transcript. Based on its sentence patterns, vocabulary, and expressions, generate exactly ${count} new practice sentence pairs for the learner. All sentences must match CEFR level "${cefrLevel}" (${description}). For each pair, provide the sentence in ${nativeLanguage}, its correct English translation, and set the cefrLevel field to "${cefrLevel}".\n\nTranscript:\n${transcript}`,
+        content: `Transcript:\n${transcript}`,
       },
     ],
     output: {

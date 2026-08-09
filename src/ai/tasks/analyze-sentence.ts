@@ -5,7 +5,13 @@ const outputSchema = z.object({
   analysis: z
     .string()
     .describe(
-      "A detailed analysis of the sentence's structure, grammar, and meaning. Must be written in the user's native language so the learner can understand it.",
+      "An educational explanation of the sentence's grammatical structure and meaning, written in the user's native language. Focus on how the sentence works — do not list the learner's mistakes here.",
+    ),
+
+  mistakes: z
+    .array(z.string())
+    .describe(
+      "A list of specific mistakes found in the learner's translation, each as a concise description in the user's native language. Empty if the translation is correct.",
     ),
 
   expressions: z
@@ -18,7 +24,7 @@ const outputSchema = z.object({
     .min(0)
     .max(100)
     .describe(
-      "How accurately the user's English translation conveys the meaning of the original sentence, as a percentage from 0 to 100. Base this on meaning and grammar — not on similarity to the reference English sentence. A semantically equivalent, grammatically correct translation should score 100.",
+      "How accurately the learner's English translation conveys the meaning of the original sentence, as a percentage from 0 to 100.",
     ),
   alternatives: z
     .array(z.string())
@@ -42,14 +48,34 @@ export function analyzeSentence({
   userTranslation,
   nativeLanguage,
 }: AnalyzeSentenceArgs): Promise<AnalyzeSentenceOutput> {
+  const system = `You are an expert language teacher evaluating a learner's English translation on the ScedulAI platform. The learner's native language is ${nativeLanguage}.
+  
+  Your tasks:
+  - Analyze the sentence's grammatical structure and meaning in ${nativeLanguage} as an educational explanation, independent of the learner's mistakes.
+  - List each specific mistake in the learner's translation as a separate item, written in ${nativeLanguage}. If there are no mistakes, return an empty list.
+  - Identify key English vocabulary words and idiomatic expressions from the correct translation.
+  - Evaluate how accurately the learner's translation conveys the meaning and give a percentage score.
+  - Provide a few alternative correct ways the sentence could be translated into English.
+  
+  IMPORTANT — Scoring rules:
+  - Judge meaning and grammatical correctness, NOT word-for-word similarity to the reference English sentence.
+  - The reference English sentence is only ONE valid answer. A single source sentence can have several equally correct English translations. Before scoring, work out every reading the source sentence can grammatically carry, and treat the learner's translation as fully correct if it matches ANY of them.
+  - Only lower the score for genuine meaning or grammar errors that are wrong under EVERY valid reading of the source.
+  - If the learner's translation is empty or blank, accuracy MUST be 0.
+  
+  IMPORTANT — Turkish-specific ambiguities (accept all of the following as correct):
+  - Gender: "o" and verb/possessive agreement do not mark gender — "he", "she", and singular "they" are all valid.
+  - Person: nominalized clauses are ambiguous between 2nd and 3rd person singular (e.g. "sevdiğini" means both "that you love" and "that he/she loves") — accept both readings.
+  - Number/formality: "siz" can be singular-formal or plural — "you" is valid either way.
+  - Acknowledge these ambiguities in your ${nativeLanguage} analysis instead of calling a valid alternative reading a mistake.`;
+
   return getAIObjectResponse<AnalyzeSentenceOutput>({
     model: "google/gemini-2.5-flash-lite",
+    system,
     messages: [
       {
         role: "user",
-        content: `A learner is practicing translating a sentence from their native language (${nativeLanguage}) into English. Below is the sentence in their native language, the original English sentence it was derived from (the correct answer), and the learner's own English translation.
-        Analyze the sentence's structure, grammar, and meaning, writing this analysis in ${nativeLanguage} so the learner can understand it. Identify key English vocabulary words and idiomatic expressions from the correct translation. Evaluate how accurately the learner's translation conveys the meaning of the original ${nativeLanguage} sentence and give a percentage score — IMPORTANT: judge meaning and grammatical correctness, NOT word-for-word similarity to the reference English sentence; a translation that is naturally phrased and semantically equivalent deserves a high score even if it differs from the reference. CRITICAL: Some source languages (e.g. Turkish) use gender-neutral pronouns (e.g. "o" means both "he" and "she"). If the original sentence is ambiguous about gender, accept both gendered and gender-neutral translations as equally correct — do NOT penalize the learner for choosing a different gender than the reference English sentence. Finally, provide a few alternative correct ways the sentence could be translated into English.
-        Sentence (${nativeLanguage}): ${sentence}
+        content: `Sentence (${nativeLanguage}): ${sentence}
         Original English sentence (correct answer): ${originalSentence}
         Learner's English translation: ${userTranslation}`,
       },
