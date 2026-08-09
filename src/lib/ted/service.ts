@@ -172,10 +172,13 @@ export async function fetchTedTalkData(
   }
 }
 
-async function fetchTedSearchUrls(
+const HITS_PER_PAGE = 24;
+
+async function fetchTedSearchPage(
+  page: number,
   sort: "newest" | "oldest" | "relevance" | "popular" = "popular",
   language: string | null = "english",
-): Promise<string[]> {
+): Promise<{ urls: string[]; nbPages: number }> {
   const facetFilters = language ? [[`subtitle_languages:${language}`]] : [];
 
   const body = [
@@ -188,9 +191,9 @@ async function fetchTedSearchUrls(
         facets: ["subtitle_languages", "tags"],
         highlightPostTag: "__/ais-highlight__",
         highlightPreTag: "__ais-highlight__",
-        hitsPerPage: 24,
+        hitsPerPage: HITS_PER_PAGE,
         maxValuesPerFacet: 500,
-        page: 0,
+        page,
         query: "",
       },
     },
@@ -207,13 +210,15 @@ async function fetchTedSearchUrls(
     body: JSON.stringify(body),
   });
 
-  if (!response.ok) return [];
+  if (!response.ok) return { urls: [], nbPages: 0 };
 
   try {
     const parsed = searchResponseSchema.safeParse(await response.json());
-    if (!parsed.success) return [];
+    if (!parsed.success) return { urls: [], nbPages: 0 };
 
-    const hits = parsed.data.results[0]?.hits ?? [];
+    const result = parsed.data.results[0];
+    const hits = result?.hits ?? [];
+    const nbPages = result?.nbPages ?? 0;
     const seen = new Set<string>();
     const urls: string[] = [];
 
@@ -227,9 +232,9 @@ async function fetchTedSearchUrls(
       urls.push(url);
     }
 
-    return urls;
+    return { urls, nbPages };
   } catch {
-    return [];
+    return { urls: [], nbPages: 0 };
   }
 }
 
@@ -237,15 +242,25 @@ export async function discoverTedTalk(
   excludeUrls: string[] = [],
 ): Promise<TedTalkData | null> {
   const excludeSet = new Set(excludeUrls.map((u) => u.toLowerCase()));
+  const startPage = Math.floor(excludeUrls.length / HITS_PER_PAGE);
 
-  const urls = await fetchTedSearchUrls();
-  const candidates = urls.filter((u) => !excludeSet.has(u.toLowerCase()));
+  let page = startPage;
+  let nbPages = startPage + 1; // updated with the real value after the first fetch
 
-  for (const candidateUrl of candidates) {
-    const data = await fetchTedTalkData(candidateUrl);
-    if (hasTranscript(data)) {
-      return data;
+  while (page < nbPages) {
+    const { urls, nbPages: total } = await fetchTedSearchPage(page);
+    nbPages = total;
+
+    for (const candidateUrl of urls) {
+      if (excludeSet.has(candidateUrl.toLowerCase())) continue;
+
+      const data = await fetchTedTalkData(candidateUrl);
+      if (hasTranscript(data)) {
+        return data;
+      }
     }
+
+    page++;
   }
 
   return null;

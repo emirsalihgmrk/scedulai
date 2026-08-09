@@ -69,6 +69,7 @@ export const searchResponseSchema = z.object({
           }),
         )
         .nullish(),
+      nbPages: z.number().nullish(),
     }),
   ),
 });
