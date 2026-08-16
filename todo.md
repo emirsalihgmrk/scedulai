@@ -7,9 +7,11 @@
 - [x] Drizzle ORM kur ve Supabase'e bağla
 - [x] Boş projeyi Vercel'e deploy et ("merhaba dünya" testi)
 - [x] Kullanılacak ai-sdk kararı ve konfigürasyonu
-- [x] TED.com scraper entegrasyonu
-- [x] Dosya: 15-sentences-per-day-with-tedx/simulation.ts. Otomatik video seçme mantığının eklenmesi
+- [x] Otomatik video seçme mantığının eklenmesi
+- [x] Kullanıcı cümlelerinin değerlendirilmesi
+- [x] kısmi veritabanının oluşturulması
+- [x] ~~TED.com scraper entegrasyonu~~ (kaldırıldı — bkz. DECISIONS.md [2026-08-16])
 
 # Next
 
-- [] Dosya: 15-sentences-per-day-with-tedx/simulation.ts. Kullanıcı cümlelerinin değerlendirilmesi
+- [ ] YouTube Data API ile video + transkript seed mantığının uygulanması (`src/db/seed.ts`)

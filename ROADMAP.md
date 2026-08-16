@@ -53,7 +53,7 @@ Tek kişilik veya küçük ekiple, hızlı ve ucuz başlangıç için önerdiği
 | **Veritabanı + Auth + Depolama** | **Supabase** (PostgreSQL tabanlı)                                        | Auth, veritabanı ve dosya depolamayı tek üründe verir. Cömert ücretsiz katman. Solo geliştirici için en büyük zaman tasarrufu.     |
 | **ORM**                          | Prisma veya Drizzle                                                      | Veritabanını tip güvenli, okunabilir şekilde yönetirsin. Şema (özellikle hata tablosu) için kritik.                                |
 | **LLM erişimi**                  | Anthropic / Gemini SDK + **OpenRouter** (model yönlendirici)             | OpenRouter tek API'den çok modele erişim verir; modeli kod değiştirmeden takas edersin. Çekirdek işte Haiku 4.5 veya Gemini Flash. |
-| **Transkript çekme**             | TED.com scraper (`cheerio`) / resmi altyazı verisi                       | TED/TEDx altyazılarını programatik çekmek için. Hukuki/ToS sınırlarına dikkat et.                                                   |
+| **Video / Transkript çekme**     | YouTube Data API + altyazı (caption) verisi                              | Videoları ve altyazıları resmi API üzerinden programatik çekmek için. Kota ve ToS sınırlarına dikkat et.                            |
 | **E-posta / hatırlatma**         | Resend + zamanlanmış görev (Vercel Cron veya Supabase pg_cron)           | Hatırlatma e-postaları için basit ve ucuz.                                                                                         |
 | **Hosting**                      | Vercel (frontend) + Supabase (backend/db)                                | İkisi de ücretsiz katmanda başlar; trafikle birlikte ölçeklenir.                                                                   |
 | **Ödeme (ileride)**              | Stripe (küresel) / iyzico (Türkiye) / Lemon Squeezy (merchant-of-record) | Abonelik için. Lemon Squeezy vergi/faturayı senin yerine üstlenir; solo dev için pratik.                                           |
@@ -105,7 +105,7 @@ Fazları sırayla yap. Her fazın sonunda çalışan, gösterilebilir bir şey o
 
 **Hedef:** Tek bir program, tek kullanıcı, hesap bile olmadan çalışan sihirli an.
 
-- Kullanıcı bir TED.com konuşma linki girer veya sen sabit bir TEDx konuşması verirsin → transkript çekilir.
+- Kullanıcı bir video seçer veya sen sabit bir video verirsin → transkript (altyazı) çekilir.
 - LLM transkripti analiz eder, nadir kelimeleri işaretler.
 - Sistem 15 ana-dil cümlesi üretir; kullanıcı tek tek çevirir.
 - Her çeviride LLM hataları açıklar, sonrakine geçer.

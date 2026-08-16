@@ -1,6 +1,6 @@
 # ScedulAI
 
-Kişiselleştirilmiş dil öğrenme platformu. TED.com/TEDx transkriptlerinden cümle üretir, kullanıcı çevirisini LLM ile değerlendirir ve hataları zamanla takip ederek kişiye özel seans oluşturur.
+Kişiselleştirilmiş dil öğrenme platformu. Video transkriptlerinden cümle üretir, kullanıcı çevirisini LLM ile değerlendirir ve hataları zamanla takip ederek kişiye özel seans oluşturur.
 
 ## Tech Stack
 
@@ -8,7 +8,7 @@ Kişiselleştirilmiş dil öğrenme platformu. TED.com/TEDx transkriptlerinden c
 - **Veritabanı + Auth:** Supabase (PostgreSQL)
 - **ORM:** Drizzle
 - **LLM:** Anthropic SDK + OpenRouter
-- **Transkript:** TED.com scraper (`cheerio`)
+- **Video / Transkript:** YouTube Data API (planlanıyor)
 - **E-posta:** Resend + Vercel Cron
 - **Deploy:** Vercel + Supabase
 

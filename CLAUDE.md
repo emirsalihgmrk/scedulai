@@ -8,8 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev          # Start Next.js dev server
 npm run build        # Production build
 npm run lint         # Run ESLint
-npm run simulate     # Run the 15-sentences workflow simulation (tsx)
-npm run simulate <ted-url>  # Run simulation with a specific TED.com talk URL
+npm run db:seed      # Seed the database (tsx)
 ```
 
 Type-checking (no dedicated script — use the allowed form):
@@ -27,7 +26,7 @@ After every file edit, the PostToolUse hook automatically runs `npm run typechec
 
 ## Architecture
 
-**ScedulAI** is a language-learning platform built on Next.js 16 (App Router). Its first feature is a "15 sentences per day" program where users translate sentences derived from TED talk transcripts.
+**ScedulAI** is a language-learning platform built on Next.js 16 (App Router). Its first feature is a "15 sentences per day" program where users translate sentences derived from video transcripts.
 
 ### Key layers
 
@@ -36,18 +35,11 @@ After every file edit, the PostToolUse hook automatically runs `npm run typechec
 | AI provider | `src/ai/index.ts` | OpenRouter wrapper (`getAIObjectResponse`), default model `google/gemini-2.5-flash` |
 | AI tasks | `src/ai/tasks/` | One file per task; each calls `getAIObjectResponse` with a Zod output schema |
 | AI output schemas | `src/ai/outputs/` | Zod schemas and descriptions for structured AI responses |
-| TED client | `src/lib/ted.ts` | Fetches talk metadata + transcript from the TED GraphQL API (`/graphql`) and discovers talks via the search API (`/api/search`) |
-| API route | `src/app/api/ted/route.ts` | `GET /api/ted?url=<ted-url>` — returns `TedTalkData` JSON |
-| DB | `src/db/` | Drizzle ORM + Postgres (`DATABASE_URL`); schema in `src/db/schema.ts` (currently empty) |
-| CLI util | `src/lib/cli.ts` | Colored terminal output helpers used by simulations |
-| Simulations | `src/schedule/*/simulation.ts` | Standalone scripts run via `tsx` to prototype/test workflows outside the browser |
-| Workflow docs | `src/schedule/*/workflow.md` | Product/design specs for each learning schedule |
+| Video service | `src/services/video.ts` | Selects an unwatched video + its transcript for a user |
+| DB | `src/db/` | Drizzle ORM + Postgres (`DATABASE_URL`); schema in `src/db/schema.ts` |
+| Seed | `src/db/seed.ts` | Seeds users; video/transcript seeding (via the YouTube Data API) is TODO |
 
-### Data flow (simulate command)
-
-1. `simulation.ts` fetches a TED talk URL → `fetchTedTalkData` queries the TED GraphQL API and returns `TedTalkData` (title, speaker, transcript, etc.)
-2. `reviewTranscript` sends the transcript to the AI and receives exactly 15 practice sentences in the user's native language (Turkish by default)
-3. Output is printed via `cli` helpers
+> **Note:** Video sourcing is being migrated to the YouTube Data API. The previous TED.com integration (client, API route, discovery, simulations) has been removed.
 
 ### Environment variables
 
