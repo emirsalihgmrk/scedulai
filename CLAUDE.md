@@ -37,15 +37,17 @@ After every file edit, the PostToolUse hook automatically runs `npm run typechec
 | AI output schemas | `src/ai/outputs/` | Zod schemas and descriptions for structured AI responses |
 | Video service | `src/services/video.ts` | Selects an unwatched video + its transcript for a user |
 | DB | `src/db/` | Drizzle ORM + Postgres (`DATABASE_URL`); schema in `src/db/schema.ts` |
-| Seed | `src/db/seed.ts` | Seeds users; video/transcript seeding (via the YouTube Data API) is TODO |
+| YouTube | `src/lib/youtube.ts` | YouTube Data API v3 client (channel → uploads → videos) + transcript fetch via `youtube-transcript` |
+| Seed | `src/db/seed.ts` | Seeds users, then videos + English transcripts from a configured channel via `src/lib/youtube.ts` |
 
-> **Note:** Video sourcing is being migrated to the YouTube Data API. The previous TED.com integration (client, API route, discovery, simulations) has been removed.
+> **Note:** Video metadata comes from the official YouTube Data API v3 (API key). Transcripts for third-party channels aren't available through the Data API (`captions.download` needs OAuth), so seeding uses the `youtube-transcript` package against the public timedtext endpoint — a one-time, best-effort step. The previous TED.com integration has been removed.
 
 ### Environment variables
 
 - `OPENROUTER_API_KEY` — required for all AI calls
 - `DATABASE_URL` — Postgres connection string
 - `NEXT_PUBLIC_APP_URL` — used as `HTTP-Referer` header in OpenRouter requests
+- `YOUTUBE_API_KEY` — YouTube Data API v3 key, used by `db:seed` to source videos
 
 ## Naming conventions (enforced by ESLint)
 

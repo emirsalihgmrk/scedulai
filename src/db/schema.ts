@@ -11,11 +11,6 @@ import {
   QuestionAnswer,
   QuestionPayload,
 } from "@/types/question";
-
-interface TranscriptLine {
-  time: string;
-  text: string;
-}
 import { relations } from "drizzle-orm";
 import {
   index,
@@ -28,6 +23,11 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+
+interface TranscriptLine {
+  time: string;
+  text: string;
+}
 
 const commonFields = {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -63,33 +63,24 @@ export const usersTable = pgTable("users", {
   targetLanguage: targetLanguageEnum("target_language").default("en").notNull(),
 });
 
-export const videosTable = pgTable("videos", {
+export const channelsTable = pgTable("channels", {
   ...commonFields,
-  url: text("url").notNull().unique(),
+  youtubeId: text("youtube_id").notNull().unique(),
   title: text("title").notNull(),
-  speaker: text("speaker").notNull(),
-  publishedAt: text("published_at"),
-  durationSeconds: integer("duration_seconds"),
-  thumbnailUrl: text("thumbnail_url"),
+  thumbnailUrl: text("thumbnail_url").notNull(),
 });
 
-export const watchedVideosTable = pgTable(
-  "watched_videos",
-  {
-    ...commonFields,
-    userId: uuid("user_id")
-      .references(() => usersTable.id, { onDelete: "cascade" })
-      .notNull(),
-    videoId: uuid("video_id")
-      .references(() => videosTable.id, { onDelete: "cascade" })
-      .notNull(),
-  },
-  (table) => [
-    unique("watched_videos_user_video_unique").on(table.userId, table.videoId),
-    index("watched_videos_user_id_idx").on(table.userId),
-    index("watched_videos_video_id_idx").on(table.videoId),
-  ],
-);
+export const videosTable = pgTable("videos", {
+  ...commonFields,
+  channelId: uuid("channel_id")
+    .references(() => channelsTable.id, { onDelete: "cascade" })
+    .notNull(),
+  url: text("url").notNull().unique(),
+  title: text("title").notNull(),
+  publishedAt: text("published_at").notNull(),
+  durationSeconds: integer("duration_seconds").notNull(),
+  thumbnailUrl: text("thumbnail_url").notNull(),
+});
 
 export const transcriptsTable = pgTable(
   "transcripts",
@@ -102,7 +93,10 @@ export const transcriptsTable = pgTable(
     content: jsonb("content").$type<TranscriptLine[]>().notNull(),
   },
   (table) => [
-    unique("transcripts_video_language_unique").on(table.videoId, table.language),
+    unique("transcripts_video_language_unique").on(
+      table.videoId,
+      table.language,
+    ),
     index("transcripts_video_id_idx").on(table.videoId),
   ],
 );
@@ -150,29 +144,21 @@ export const questionsTable = pgTable(
 );
 
 export const usersRelations = relations(usersTable, ({ many }) => ({
-  watchedVideos: many(watchedVideosTable),
   quizzes: many(quizzesTable),
 }));
 
-export const videosRelations = relations(videosTable, ({ many }) => ({
-  watchedVideos: many(watchedVideosTable),
+export const channelsRelations = relations(channelsTable, ({ many }) => ({
+  videos: many(videosTable),
+}));
+
+export const videosRelations = relations(videosTable, ({ one, many }) => ({
+  channel: one(channelsTable, {
+    fields: [videosTable.channelId],
+    references: [channelsTable.id],
+  }),
   quizzes: many(quizzesTable),
   transcripts: many(transcriptsTable),
 }));
-
-export const watchedVideosRelations = relations(
-  watchedVideosTable,
-  ({ one }) => ({
-    user: one(usersTable, {
-      fields: [watchedVideosTable.userId],
-      references: [usersTable.id],
-    }),
-    video: one(videosTable, {
-      fields: [watchedVideosTable.videoId],
-      references: [videosTable.id],
-    }),
-  }),
-);
 
 export const quizzesRelations = relations(quizzesTable, ({ one, many }) => ({
   user: one(usersTable, {

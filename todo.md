@@ -11,7 +11,6 @@
 - [x] Kullanıcı cümlelerinin değerlendirilmesi
 - [x] kısmi veritabanının oluşturulması
 - [x] ~~TED.com scraper entegrasyonu~~ (kaldırıldı — bkz. DECISIONS.md [2026-08-16])
+- [x] YouTube Data API ile video + transkript seed mantığının uygulanması (`src/db/seed.ts`)
 
 # Next
-
-- [ ] YouTube Data API ile video + transkript seed mantığının uygulanması (`src/db/seed.ts`)

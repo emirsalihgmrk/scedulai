@@ -1,43 +1,47 @@
 import { db } from "@/db";
-import { transcriptsTable, videosTable, watchedVideosTable } from "@/db/schema";
+import { channelsTable, transcriptsTable, videosTable } from "@/db/schema";
 import { TranscriptLine, Video } from "@/types/video";
-import { and, eq, inArray, not } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
-const tempUserId = "92a41e29-9ec6-4ed3-9c52-8ec9a5197ce1";
-
-export async function getVideo(): Promise<Video & { transcript: TranscriptLine[] }> {
-  const watched = await db
-    .select({ videoId: watchedVideosTable.videoId })
-    .from(watchedVideosTable)
-    .where(eq(watchedVideosTable.userId, tempUserId));
-
-  const watchedIds = watched.map((w) => w.videoId);
-
+/* const tempUserId = "92a41e29-9ec6-4ed3-9c52-8ec9a5197ce1";
+ */
+export async function getVideo(): Promise<Video> {
   const [row] = await db
     .select({
       id: videosTable.id,
-      createdAt: videosTable.createdAt,
-      updatedAt: videosTable.updatedAt,
       url: videosTable.url,
       title: videosTable.title,
-      speaker: videosTable.speaker,
+      channelTitle: channelsTable.title,
+      channelThumbnailUrl: channelsTable.thumbnailUrl,
       publishedAt: videosTable.publishedAt,
       durationSeconds: videosTable.durationSeconds,
       thumbnailUrl: videosTable.thumbnailUrl,
-      transcript: transcriptsTable.content,
     })
     .from(videosTable)
-    .innerJoin(
-      transcriptsTable,
+    .innerJoin(channelsTable, eq(videosTable.channelId, channelsTable.id))
+    .limit(1);
+
+  if (!row)
+    throw new Error("No unwatched videos with English transcripts available");
+
+  return row;
+}
+
+export async function getTranscript(
+  videoId: string,
+): Promise<TranscriptLine[]> {
+  const [row] = await db
+    .select({ content: transcriptsTable.content })
+    .from(transcriptsTable)
+    .where(
       and(
-        eq(transcriptsTable.videoId, videosTable.id),
+        eq(transcriptsTable.videoId, videoId),
         eq(transcriptsTable.language, "en"),
       ),
     )
-    .where(watchedIds.length > 0 ? not(inArray(videosTable.id, watchedIds)) : undefined)
     .limit(1);
 
-  if (!row) throw new Error("No unwatched videos with English transcripts available");
+  if (!row) throw new Error(`No English transcript found for video ${videoId}`);
 
-  return row;
+  return row.content;
 }

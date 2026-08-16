@@ -11,21 +11,48 @@ import {
   Captions,
   Settings,
 } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { video } from "@/lib/data";
+import { formatDuration } from "@/lib/utils";
+import { Video } from "@/types/video";
 
-export function VideoPlayer() {
+function ControlButton({
+  children,
+  label,
+  onClick,
+}: {
+  children: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      aria-label={label}
+      className="text-white/90 hover:bg-white/15 hover:text-white"
+    >
+      {children}
+    </Button>
+  );
+}
+
+export function VideoPlayer({ video }: { video: Video }) {
   const [playing, setPlaying] = useState(false);
 
   return (
     <figure className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
       {/* 16:9 video surface */}
       <div className="group relative aspect-video w-full overflow-hidden bg-primary/10">
-        <img
-          src="/video-thumbnail.png"
-          alt={`${video.speaker} presenting "${video.title}"`}
-          className="h-full w-full object-cover"
+        <Image
+          src={video.thumbnailUrl}
+          alt={`${video.channelTitle} presenting "${video.title}"`}
+          fill
+          sizes="(max-width: 1024px) 100vw, 66vw"
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/5 to-black/20" />
 
@@ -55,18 +82,20 @@ export function VideoPlayer() {
         <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
           {/* Scrubber */}
           <div className="mb-3 flex items-center gap-3 text-[11px] font-medium tabular-nums text-white">
-            <span>{video.currentTime}</span>
+            <span>04:12</span>
             <div className="relative h-1.5 flex-1 rounded-full bg-white/25">
               <div
                 className="absolute inset-y-0 left-0 rounded-full bg-primary"
-                style={{ width: `${video.progress}%` }}
+                style={{ width: `30%` }}
               />
               <div
                 className="absolute top-1/2 size-3.5 -translate-y-1/2 rounded-full border-2 border-primary bg-white shadow"
-                style={{ left: `calc(${video.progress}% - 7px)` }}
+                style={{ left: `calc(30% - 7px)` }}
               />
             </div>
-            <span className="text-white/70">{video.duration}</span>
+            <span className="text-white/70">
+              {formatDuration(video.durationSeconds)}
+            </span>
           </div>
 
           <div className="flex items-center justify-between">
@@ -102,28 +131,5 @@ export function VideoPlayer() {
         </div>
       </div>
     </figure>
-  );
-}
-
-function ControlButton({
-  children,
-  label,
-  onClick,
-}: {
-  children: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      onClick={onClick}
-      aria-label={label}
-      className="text-white/90 hover:bg-white/15 hover:text-white"
-    >
-      {children}
-    </Button>
   );
 }

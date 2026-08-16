@@ -1,14 +1,22 @@
+import { Suspense } from "react";
 import { Calendar } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { video } from "@/lib/data";
 import { VideoPlayer } from "@/app/_components/video-player";
-import { TranscriptCard } from "@/app/_components/transcript-card";
+import {
+  TranscriptCard,
+  TranscriptCardFallback,
+} from "@/app/_components/transcript-card";
+import { getTranscript, getVideo } from "@/services/video";
+import { formatDate } from "@/lib/utils";
 
-export function VideoPanel() {
+export async function VideoPanel() {
+  const video = await getVideo();
+  const transcriptPromise = getTranscript(video.id);
+
   return (
     <div className="flex min-h-0 flex-col gap-5">
-      <VideoPlayer />
+      <VideoPlayer video={video} />
 
       {/* Metadata */}
       <div>
@@ -18,27 +26,53 @@ export function VideoPanel() {
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2.5">
             <Avatar>
-              <AvatarImage src="/speaker-avatar.png" alt="" />
-              <AvatarFallback>EV</AvatarFallback>
+              <AvatarImage
+                src={video.channelThumbnailUrl}
+                alt={video.channelTitle}
+              />
+              <AvatarFallback>
+                {video.channelTitle.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div className="leading-tight">
               <p className="text-sm font-semibold text-foreground">
-                {video.speaker}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {video.speakerRole}
+                {video.channelTitle}
               </p>
             </div>
           </div>
           <Separator orientation="vertical" className="hidden h-8 sm:block" />
           <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <Calendar className="size-3.5" />
-            {video.releaseDate}
+            {formatDate(video.publishedAt)}
           </div>
         </div>
       </div>
 
-      <TranscriptCard />
+      <Suspense fallback={<TranscriptCardFallback />}>
+        <TranscriptCard transcriptPromise={transcriptPromise} />
+      </Suspense>
+    </div>
+  );
+}
+
+export function VideoPanelFallback() {
+  return (
+    <div className="flex min-h-0 flex-col gap-5">
+      {/* Video surface */}
+      <div className="aspect-video w-full animate-pulse rounded-xl bg-muted" />
+
+      {/* Metadata */}
+      <div>
+        <div className="h-7 w-3/4 animate-pulse rounded bg-muted sm:h-8" />
+        <div className="mt-3 flex items-center gap-3">
+          <div className="size-9 animate-pulse rounded-full bg-muted" />
+          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+          <Separator orientation="vertical" className="hidden h-8 sm:block" />
+          <div className="h-3.5 w-24 animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+
+      <TranscriptCardFallback />
     </div>
   );
 }

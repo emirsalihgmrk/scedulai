@@ -1,6 +1,12 @@
-import { videosTable } from "@/db/schema";
+import { channelsTable, videosTable } from "@/db/schema";
 
-export type Video = typeof videosTable.$inferSelect;
+export type ChannelRow = typeof channelsTable.$inferSelect;
+export type VideoRow = typeof videosTable.$inferSelect;
+
+export type Video = Omit<VideoRow, "channelId" | "createdAt" | "updatedAt"> & {
+  channelTitle: ChannelRow["title"];
+  channelThumbnailUrl: ChannelRow["thumbnailUrl"];
+};
 
 export interface TranscriptLine {
   time: string;
