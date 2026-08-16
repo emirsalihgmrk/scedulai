@@ -1,0 +1,1 @@
+ALTER TABLE "watched_videos" DROP COLUMN "watched_at";
