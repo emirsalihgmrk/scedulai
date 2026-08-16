@@ -1,13 +1,16 @@
 import { Sparkles } from "lucide-react";
 import { VideoPanel } from "./_components/video-panel";
 import { QuizPanel } from "./_components/quiz-panel";
+import { getVideo } from "@/services/video";
 
-export default function Page() {
+export default async function Page() {
+  const video = await getVideo();
+  console.log(video);
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
       <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex  items-center justify-between px-4 py-3 sm:px-6">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2.5">
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Sparkles className="size-4" />
@@ -31,7 +34,7 @@ export default function Page() {
       </header>
 
       {/* Split view */}
-      <main className="mx-auto  px-4 py-6 sm:px-6">
+      <main className="px-4 py-6 sm:px-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_1fr] xl:gap-8">
           <section aria-label="Video and transcript">
             <VideoPanel />
