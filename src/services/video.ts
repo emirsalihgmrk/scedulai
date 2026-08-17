@@ -6,7 +6,7 @@ import { and, eq } from "drizzle-orm";
 /* const tempUserId = "92a41e29-9ec6-4ed3-9c52-8ec9a5197ce1";
  */
 export async function getVideo(): Promise<Video> {
-  const [row] = await db
+  const row = await db
     .select({
       id: videosTable.id,
       youtubeId: videosTable.youtubeId,
@@ -20,12 +20,12 @@ export async function getVideo(): Promise<Video> {
     })
     .from(videosTable)
     .innerJoin(channelsTable, eq(videosTable.channelId, channelsTable.id))
-    .limit(1);
+    .limit(2);
 
   if (!row)
     throw new Error("No unwatched videos with English transcripts available");
 
-  return row;
+  return row[1];
 }
 
 export async function getTranscript(

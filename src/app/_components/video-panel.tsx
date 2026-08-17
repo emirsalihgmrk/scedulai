@@ -7,11 +7,16 @@ import {
   TranscriptCard,
   TranscriptCardFallback,
 } from "@/app/_components/transcript-card";
-import { getTranscript, getVideo } from "@/services/video";
+import { getTranscript } from "@/services/video";
+import { Video } from "@/types/video";
 import { formatDate } from "@/lib/utils";
 
-export async function VideoPanel() {
-  const video = await getVideo();
+export async function VideoPanel({
+  videoPromise,
+}: {
+  videoPromise: Promise<Video>;
+}) {
+  const video = await videoPromise;
   const transcriptPromise = getTranscript(video.id);
 
   return (

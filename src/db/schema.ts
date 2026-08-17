@@ -10,7 +10,7 @@ import {
   QUESTION_TYPES,
   QuestionAnswer,
   QuestionPayload,
-} from "@/types/question";
+} from "@/types/quiz";
 import { relations } from "drizzle-orm";
 import {
   index,
@@ -112,7 +112,6 @@ export const quizzesTable = pgTable(
     videoId: uuid("video_id").references(() => videosTable.id, {
       onDelete: "set null",
     }),
-    accuracy: integer("accuracy"),
     cefrLevel: cefrLevelEnum("cefr_level").notNull(),
   },
   (table) => [

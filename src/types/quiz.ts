@@ -1,3 +1,5 @@
+import { questionsTable, quizzesTable } from "@/db/schema";
+
 export const QUESTION_TYPES = ["translation", "fill-in-the-blank"] as const;
 export type QuestionType = (typeof QUESTION_TYPES)[number];
 
@@ -40,4 +42,15 @@ export type AiAnalysis = {
   mistakes?: string[];
   alternativeAnswers?: string[];
   expressions?: string[];
+};
+
+/// derived types from db tables
+
+type QuizSelect = typeof quizzesTable.$inferSelect;
+export type Quiz = Pick<QuizSelect, "cefrLevel">;
+
+export type Question = typeof questionsTable.$inferSelect;
+
+export type QuizWithQuestions = Pick<QuizSelect, "id" | "cefrLevel"> & {
+  questions: Question[];
 };

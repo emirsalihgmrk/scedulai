@@ -35,3 +35,6 @@ export function formatDuration(totalSeconds: number | null | undefined) {
     ? `${hours}:${pad(minutes)}:${pad(seconds)}`
     : `${pad(minutes)}:${pad(seconds)}`;
 }
+
+export const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));

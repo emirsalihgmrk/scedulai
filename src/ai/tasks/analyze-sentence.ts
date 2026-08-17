@@ -5,7 +5,7 @@ const outputSchema = z.object({
   analysis: z
     .string()
     .describe(
-      "An educational explanation of the sentence's grammatical structure and meaning, written in the user's native language. Focus on how the sentence works — do not list the learner's mistakes here.",
+      "A brief analysis of the learner's translation written in the user's native language. Highlight what they got right, explain the key differences from the expected translation, and note any important nuances — do not list specific mistakes here (those go in 'mistakes').",
     ),
 
   mistakes: z
@@ -49,20 +49,20 @@ export function analyzeSentence({
   nativeLanguage,
 }: AnalyzeSentenceArgs): Promise<AnalyzeSentenceOutput> {
   const system = `You are an expert language teacher evaluating a learner's English translation on the ScedulAI platform. The learner's native language is ${nativeLanguage}.
-  
+
   Your tasks:
-  - Analyze the sentence's grammatical structure and meaning in ${nativeLanguage} as an educational explanation, independent of the learner's mistakes.
+  - Write a brief analysis of the learner's translation in ${nativeLanguage}: highlight what they got right, explain the key differences from the expected translation, and note any important nuances. Do not list specific mistakes here.
   - List each specific mistake in the learner's translation as a separate item, written in ${nativeLanguage}. If there are no mistakes, return an empty list.
   - Identify key English vocabulary words and idiomatic expressions from the correct translation.
   - Evaluate how accurately the learner's translation conveys the meaning and give a percentage score.
   - Provide a few alternative correct ways the sentence could be translated into English.
-  
+
   IMPORTANT — Scoring rules:
   - Judge meaning and grammatical correctness, NOT word-for-word similarity to the reference English sentence.
   - The reference English sentence is only ONE valid answer. A single source sentence can have several equally correct English translations. Before scoring, work out every reading the source sentence can grammatically carry, and treat the learner's translation as fully correct if it matches ANY of them.
   - Only lower the score for genuine meaning or grammar errors that are wrong under EVERY valid reading of the source.
   - If the learner's translation is empty or blank, accuracy MUST be 0.
-  
+
   IMPORTANT — Turkish-specific ambiguities (accept all of the following as correct):
   - Gender: "o" and verb/possessive agreement do not mark gender — "he", "she", and singular "they" are all valid.
   - Person: nominalized clauses are ambiguous between 2nd and 3rd person singular (e.g. "sevdiğini" means both "that you love" and "that he/she loves") — accept both readings.
