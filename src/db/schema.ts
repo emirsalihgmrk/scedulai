@@ -75,6 +75,7 @@ export const videosTable = pgTable("videos", {
   channelId: uuid("channel_id")
     .references(() => channelsTable.id, { onDelete: "cascade" })
     .notNull(),
+  youtubeId: text("youtube_id").notNull().unique(),
   url: text("url").notNull().unique(),
   title: text("title").notNull(),
   publishedAt: text("published_at").notNull(),

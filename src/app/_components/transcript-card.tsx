@@ -47,7 +47,6 @@ export function TranscriptCard({
   transcriptPromise: Promise<TranscriptLine[]>;
 }) {
   const lines = use(transcriptPromise);
-  console.log(lines);
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (

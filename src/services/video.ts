@@ -9,6 +9,7 @@ export async function getVideo(): Promise<Video> {
   const [row] = await db
     .select({
       id: videosTable.id,
+      youtubeId: videosTable.youtubeId,
       url: videosTable.url,
       title: videosTable.title,
       channelTitle: channelsTable.title,

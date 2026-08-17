@@ -91,6 +91,7 @@ async function seed() {
       .insert(videosTable)
       .values({
         channelId: channelDbIdByYoutubeId.get(meta.channelId)!,
+        youtubeId: meta.videoId,
         url: meta.url,
         title: meta.title,
         publishedAt: meta.publishedAt,
