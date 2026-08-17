@@ -53,7 +53,7 @@ Tek kişilik veya küçük ekiple, hızlı ve ucuz başlangıç için önerdiği
 | **Veritabanı + Auth + Depolama** | **Supabase** (PostgreSQL tabanlı)                                        | Auth, veritabanı ve dosya depolamayı tek üründe verir. Cömert ücretsiz katman. Solo geliştirici için en büyük zaman tasarrufu.     |
 | **ORM**                          | Prisma veya Drizzle                                                      | Veritabanını tip güvenli, okunabilir şekilde yönetirsin. Şema (özellikle hata tablosu) için kritik.                                |
 | **LLM erişimi**                  | Anthropic / Gemini SDK + **OpenRouter** (model yönlendirici)             | OpenRouter tek API'den çok modele erişim verir; modeli kod değiştirmeden takas edersin. Çekirdek işte Haiku 4.5 veya Gemini Flash. |
-| **Video / Transkript çekme**     | YouTube Data API + altyazı (caption) verisi                              | Videoları ve altyazıları resmi API üzerinden programatik çekmek için. Kota ve ToS sınırlarına dikkat et.                            |
+| **Video / Transkript çekme**     | YouTube Data API + altyazı (caption) verisi                              | Videoları ve altyazıları resmi API üzerinden programatik çekmek için. Kota ve ToS sınırlarına dikkat et.                           |
 | **E-posta / hatırlatma**         | Resend + zamanlanmış görev (Vercel Cron veya Supabase pg_cron)           | Hatırlatma e-postaları için basit ve ucuz.                                                                                         |
 | **Hosting**                      | Vercel (frontend) + Supabase (backend/db)                                | İkisi de ücretsiz katmanda başlar; trafikle birlikte ölçeklenir.                                                                   |
 | **Ödeme (ileride)**              | Stripe (küresel) / iyzico (Türkiye) / Lemon Squeezy (merchant-of-record) | Abonelik için. Lemon Squeezy vergi/faturayı senin yerine üstlenir; solo dev için pratik.                                           |
@@ -165,5 +165,3 @@ Bu hafta yapılacak tek şey: **Faz 1'in çekirdek döngüsünü** çalışır h
 4. Topluluk (Faz 4 — ölçekleme)
 5. Para kazanma (Faz 5)
 6. Ses + çoklu dil (Faz 6)
-
-## 💡 Fikir Kutusu (Backlog / İleride Düşünülecekler)
