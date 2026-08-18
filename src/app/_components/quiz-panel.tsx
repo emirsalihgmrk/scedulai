@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Question, QuizWithQuestions } from "@/types/quiz";
-import { submitAnswer } from "@/app/actions/submit-answer";
+import { submitAnswer } from "@/app/actions/quiz";
 
 const SOURCE_LANG = "Türkçe";
 const TARGET_LANG = "English";
@@ -66,11 +66,11 @@ function OverviewStep({
 }) {
   const total = quiz.questions.length;
 
-  const gradedQuestions = questions.filter((q) => q.accuracy !== null);
+  const gradedQuestions = questions.filter((q) => q.answerAccuracy !== null);
   const avgAccuracy =
     gradedQuestions.length > 0
       ? Math.round(
-          gradedQuestions.reduce((sum, q) => sum + (q.accuracy ?? 0), 0) /
+          gradedQuestions.reduce((sum, q) => sum + (q.answerAccuracy ?? 0), 0) /
             gradedQuestions.length,
         )
       : null;
@@ -144,7 +144,7 @@ function OverviewStep({
             </p>
             <ul className="flex flex-col gap-1.5">
               {questions.map((q, i) => {
-                const isGraded = q.accuracy !== null;
+                const isGraded = q.answerAccuracy !== null;
                 return (
                   <li key={q.id}>
                     <button
@@ -160,9 +160,9 @@ function OverviewStep({
                       </span>
                       {isGraded && (
                         <span
-                          className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-bold tabular-nums ${accuracyClasses(q.accuracy ?? 0)}`}
+                          className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-bold tabular-nums ${accuracyClasses(q.answerAccuracy ?? 0)}`}
                         >
-                          {q.accuracy}%
+                          {q.answerAccuracy}%
                         </span>
                       )}
                     </button>
@@ -272,8 +272,8 @@ function GradedQuestion({
   flipped: boolean;
   onFlip: (flipped: boolean) => void;
 }) {
-  const analysis = question.aiAnalyse;
-  const accuracy = question.accuracy ?? 0;
+  const analysis = question.answerAnalysis;
+  const accuracy = question.answerAccuracy ?? 0;
   const userTranslation =
     question.answer?.type === "translation"
       ? question.answer.userTranslation
@@ -340,10 +340,10 @@ function GradedQuestion({
           </div>
 
           <p className="text-[13px] leading-relaxed text-foreground/90">
-            {analysis.analyse}
+            {analysis.analysis}
           </p>
 
-          {analysis.mistakes && analysis.mistakes.length > 0 && (
+          {analysis.mistakes.length > 0 && (
             <div className="border-t border-border pt-3">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-destructive">
                 Mistakes ({analysis.mistakes.length})
@@ -362,25 +362,24 @@ function GradedQuestion({
             </div>
           )}
 
-          {analysis.alternativeAnswers &&
-            analysis.alternativeAnswers.length > 0 && (
-              <div className="border-t border-border pt-3">
-                <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  <Lightbulb className="size-3.5" />
-                  Alternative phrasings
-                </div>
-                <ul className="space-y-1">
-                  {analysis.alternativeAnswers.map((alt, i) => (
-                    <li
-                      key={i}
-                      className="text-[13px] leading-relaxed text-foreground/90 before:mr-1.5 before:text-muted-foreground before:content-['·']"
-                    >
-                      {alt}
-                    </li>
-                  ))}
-                </ul>
+          {analysis.alternatives.length > 0 && (
+            <div className="border-t border-border pt-3">
+              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <Lightbulb className="size-3.5" />
+                Alternative phrasings
               </div>
-            )}
+              <ul className="space-y-1">
+                {analysis.alternatives.map((alt, i) => (
+                  <li
+                    key={i}
+                    className="text-[13px] leading-relaxed text-foreground/90 before:mr-1.5 before:text-muted-foreground before:content-['·']"
+                  >
+                    {alt}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {analysis.expressions && analysis.expressions.length > 0 && (
             <div className="border-t border-border pt-3">
@@ -444,7 +443,7 @@ function QuestionStep({
   const [error, setError] = useState<string | null>(null);
   const [flipped, setFlipped] = useState(false);
 
-  const isGraded = question.aiAnalyse !== null;
+  const isGraded = question.answerAnalysis !== null;
 
   function handleSubmit() {
     setError(null);

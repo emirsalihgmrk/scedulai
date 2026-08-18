@@ -5,10 +5,10 @@ import {
 } from "@/constants/language";
 import { PLANS } from "@/constants/plan";
 import {
-  AiAnalysis,
   QUESTION_DIRECTIONS,
   QUESTION_TYPES,
   QuestionAnswer,
+  QuestionAnswerAnalysis,
   QuestionPayload,
 } from "@/types/quiz";
 import { relations } from "drizzle-orm";
@@ -134,8 +134,8 @@ export const questionsTable = pgTable(
       .notNull(),
     payload: jsonb("payload").$type<QuestionPayload>().notNull(),
     answer: jsonb("answer").$type<QuestionAnswer>(),
-    aiAnalyse: jsonb("ai_analyse").$type<AiAnalysis>(),
-    accuracy: integer("accuracy"),
+    answerAnalysis: jsonb("analysis").$type<QuestionAnswerAnalysis>(),
+    answerAccuracy: integer("accuracy"),
   },
   (table) => [
     index("questions_quiz_id_idx").on(table.quizId),

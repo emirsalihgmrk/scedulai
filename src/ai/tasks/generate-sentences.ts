@@ -1,23 +1,11 @@
 import { getAIObjectResponse } from "@/ai";
+import {
+  generateSentencesOutputSchema,
+  sentencePairSchema,
+  GenerateSentencesOutput,
+} from "@/ai/outputs/generate-sentences";
+import { CefrLevel } from "@/constants/cefr-level";
 import { z } from "zod";
-
-const sentencePair = z.object({
-  native: z
-    .string()
-    .describe("The practice sentence in the user's native language."),
-  english: z
-    .string()
-    .describe("The correct English translation of this sentence."),
-  cefrLevel: z
-    .enum(["A1", "A2", "B1", "B2", "C1", "C2"])
-    .describe("The CEFR proficiency level of the sentence."),
-});
-
-type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
-
-type GenerateSentencesOutput = {
-  sentences: z.infer<typeof sentencePair>[];
-};
 
 const cefrDescriptions: Record<CefrLevel, string> = {
   A1: "very simple everyday words and phrases, basic subject-verb-object patterns, present tense only",
@@ -42,9 +30,9 @@ export function generateSentences({
   cefrLevel,
 }: GenerateSentencesArgs): Promise<GenerateSentencesOutput> {
   const description = cefrDescriptions[cefrLevel];
-  const outputSchema = z.object({
+  const outputSchema = generateSentencesOutputSchema.extend({
     sentences: z
-      .array(sentencePair)
+      .array(sentencePairSchema)
       .length(count, `Exactly ${count} sentence pairs must be generated.`)
       .describe(
         `The ${count} newly generated practice sentence pairs at CEFR level "${cefrLevel}", based on the transcript's patterns and vocabulary. Each pair contains the sentence in the user's native language and its correct English translation.`,
@@ -56,7 +44,7 @@ export function generateSentences({
   - Write the sentence in ${nativeLanguage}.
   - Provide its correct English translation.
   - Set the cefrLevel field to "${cefrLevel}".
-  
+
   All sentences must match CEFR level "${cefrLevel}": ${description}.`;
 
   return getAIObjectResponse<GenerateSentencesOutput>({

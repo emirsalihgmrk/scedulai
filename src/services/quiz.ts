@@ -3,11 +3,10 @@ import { db } from "@/db";
 import { questionsTable, quizzesTable } from "@/db/schema";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getTranscript } from "@/services/video";
-import { CreateQuizInput } from "@/schemas/quiz";
 import {
-  AiAnalysis,
   Question,
-  QuestionAnswer,
+  QuestionAnswerUpdateInput,
+  QuizCreateInput,
   QuizWithQuestions,
 } from "@/types/quiz";
 
@@ -45,22 +44,18 @@ export async function getQuestion(
 
 export async function updateQuestion(
   questionId: string,
-  values: {
-    answer: QuestionAnswer;
-    aiAnalyse: AiAnalysis;
-    accuracy: number;
-  },
+  input: QuestionAnswerUpdateInput,
 ): Promise<Question> {
   const [question] = await db
     .update(questionsTable)
-    .set(values)
+    .set(input)
     .where(eq(questionsTable.id, questionId))
     .returning();
 
   return question;
 }
 
-export async function createQuiz(input: CreateQuizInput) {
+export async function createQuiz(input: QuizCreateInput) {
   const [quiz] = await db.insert(quizzesTable).values(input).returning({
     id: quizzesTable.id,
     cefrLevel: quizzesTable.cefrLevel,
