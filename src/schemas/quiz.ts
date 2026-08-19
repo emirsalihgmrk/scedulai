@@ -6,7 +6,7 @@ import { z } from "zod";
 
 export const quizCreateSchema = createInsertSchema(quizzesTable).pick({
   userId: true,
-  videoId: true,
+  sectionId: true,
   cefrLevel: true,
 });
 

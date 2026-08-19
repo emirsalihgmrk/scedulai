@@ -1,8 +1,10 @@
 import { db } from "@/db";
 import {
   channelsTable,
+  programsTable,
   questionsTable,
   quizzesTable,
+  sectionsTable,
   transcriptsTable,
   usersTable,
   videosTable,
@@ -22,8 +24,10 @@ async function seed() {
   console.log("Clearing database...");
   await db.delete(questionsTable);
   await db.delete(quizzesTable);
+  await db.delete(sectionsTable);
   await db.delete(transcriptsTable);
   await db.delete(videosTable);
+  await db.delete(programsTable);
   await db.delete(channelsTable);
   await db.delete(usersTable);
 
@@ -72,8 +76,8 @@ async function seed() {
     insertedChannels.map((c) => [c.youtubeId, c.id]),
   );
 
-  let inserted = 0;
   let skipped = 0;
+  const seededVideos: { id: string; title: string }[] = [];
 
   for (const meta of metas) {
     const transcript = await fetchEnglishTranscript(
@@ -106,11 +110,44 @@ async function seed() {
       content: transcript,
     });
 
-    inserted++;
+    seededVideos.push({ id: video.id, title: meta.title });
     console.log(`  ✓ ${meta.title}`);
   }
 
-  console.log(`Done. ${inserted} video eklendi, ${skipped} atlandı.`);
+  // Build a program whose ordered sections each point to a seeded video, so the
+  // section-based UI/services have real data to work with end-to-end.
+  let sectionCount = 0;
+  if (seededVideos.length > 0) {
+    const firstChannel = insertedChannels[0];
+    const programThumbnailUrl = channelThumbnails.get(firstChannel.youtubeId)!;
+
+    const [program] = await db
+      .insert(programsTable)
+      .values({
+        title: "TED ile İngilizce",
+        slug: "ted-ile-ingilizce",
+        description:
+          "TED konuşmalarının transkriptlerinden üretilen çeviri alıştırmaları.",
+        channelId: firstChannel.id,
+        thumbnailUrl: programThumbnailUrl,
+        cefrLevel: "A2",
+      })
+      .returning({ id: programsTable.id });
+
+    await db.insert(sectionsTable).values(
+      seededVideos.map((video, index) => ({
+        programId: program.id,
+        videoId: video.id,
+        title: video.title,
+        order: index + 1,
+      })),
+    );
+    sectionCount = seededVideos.length;
+  }
+
+  console.log(
+    `Done. ${seededVideos.length} video eklendi, ${skipped} atlandı, ${sectionCount} section oluşturuldu.`,
+  );
   process.exit(0);
 }
 

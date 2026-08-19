@@ -1,12 +1,10 @@
 import { Suspense } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, VideoOff } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { VideoPlayer } from "@/app/_components/video-player";
-import {
-  TranscriptCard,
-  TranscriptCardFallback,
-} from "@/app/_components/transcript-card";
+import { VideoPlayer } from "./video-player";
+import { TranscriptCard, TranscriptCardFallback } from "./transcript-card";
+import { EmptyState } from "./empty-state";
 import { getTranscript } from "@/services/video";
 import { Video } from "@/types/video";
 import { formatDate } from "@/lib/utils";
@@ -14,9 +12,21 @@ import { formatDate } from "@/lib/utils";
 export async function VideoPanel({
   videoPromise,
 }: {
-  videoPromise: Promise<Video>;
+  videoPromise: Promise<Video | null>;
 }) {
   const video = await videoPromise;
+
+  if (!video) {
+    return (
+      <EmptyState
+        icon={VideoOff}
+        title="Bu section için video yok"
+        description="Bu section'a henüz bir video eklenmemiş."
+        className="min-h-[60vh]"
+      />
+    );
+  }
+
   const transcriptPromise = getTranscript(video.id);
 
   return (

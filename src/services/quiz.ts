@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { questionsTable, quizzesTable } from "@/db/schema";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
-import { getTranscript } from "@/services/video";
+import { getTranscript, findVideo } from "@/services/video";
 import {
   Question,
   QuestionAnswerUpdateInput,
@@ -16,14 +16,14 @@ export const NATIVE_LANGUAGE = "Turkish";
 const DEFAULT_CEFR_LEVEL = "A2" as const;
 const QUESTION_COUNT = 5;
 
-export async function getQuiz(
-  videoId: string,
+export async function findQuiz(
+  sectionId: string,
   userId: string = TEMP_USER_ID,
-): Promise<QuizWithQuestions | undefined> {
-  return db.query.quizzesTable.findFirst({
+): Promise<QuizWithQuestions | null> {
+  const quiz = await db.query.quizzesTable.findFirst({
     where: and(
       eq(quizzesTable.userId, userId),
-      eq(quizzesTable.videoId, videoId),
+      eq(quizzesTable.sectionId, sectionId),
     ),
     columns: { id: true, cefrLevel: true },
     with: {
@@ -32,14 +32,18 @@ export async function getQuiz(
       },
     },
   });
+
+  return quiz ?? null;
 }
 
-export async function getQuestion(
+export async function findQuestion(
   questionId: string,
-): Promise<Question | undefined> {
-  return db.query.questionsTable.findFirst({
+): Promise<Question | null> {
+  const question = await db.query.questionsTable.findFirst({
     where: eq(questionsTable.id, questionId),
   });
+
+  return question ?? null;
 }
 
 export async function updateQuestion(
@@ -64,13 +68,16 @@ export async function createQuiz(input: QuizCreateInput) {
   return quiz;
 }
 
-export async function getOrCreateQuiz(
-  videoId: string,
-): Promise<QuizWithQuestions> {
-  const existing = await getQuiz(videoId);
+export async function findOrCreateQuiz(
+  sectionId: string,
+): Promise<QuizWithQuestions | null> {
+  const existing = await findQuiz(sectionId);
   if (existing) return existing;
 
-  const lines = await getTranscript(videoId);
+  const video = await findVideo(sectionId);
+  if (!video) return null;
+
+  const lines = await getTranscript(video.id);
   const transcript = lines.map((line) => line.text).join("\n");
 
   const { sentences } = await generateSentences({
@@ -85,7 +92,7 @@ export async function getOrCreateQuiz(
       .insert(quizzesTable)
       .values({
         userId: TEMP_USER_ID,
-        videoId,
+        sectionId,
         cefrLevel: DEFAULT_CEFR_LEVEL,
       })
       .returning({
@@ -100,8 +107,6 @@ export async function getOrCreateQuiz(
           quizId: quiz.id,
           order: index,
           type: "translation" as const,
-          // Learner sees the native sentence and translates it to the target
-          // language (English), so this is native-to-target, not the schema default.
           direction: "native-to-target" as const,
           payload: {
             type: "translation" as const,

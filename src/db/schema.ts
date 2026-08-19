@@ -63,6 +63,39 @@ export const usersTable = pgTable("users", {
   targetLanguage: targetLanguageEnum("target_language").default("en").notNull(),
 });
 
+export const programsTable = pgTable("programs", {
+  ...commonFields,
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description").notNull(),
+  channelId: uuid("channel_id").references(() => channelsTable.id, {
+    onDelete: "set null",
+  }),
+  participantCount: integer("participant_count").default(0).notNull(),
+  thumbnailUrl: text("thumbnail_url").notNull(),
+  cefrLevel: cefrLevelEnum("cefr_level"),
+  referenceUrl: text("reference_url"),
+});
+
+export const sectionsTable = pgTable(
+  "sections",
+  {
+    ...commonFields,
+    programId: uuid("program_id")
+      .references(() => programsTable.id, { onDelete: "cascade" })
+      .notNull(),
+    videoId: uuid("video_id").references(() => videosTable.id, {
+      onDelete: "set null",
+    }),
+    title: text("title").notNull(),
+    order: integer("order").notNull(),
+  },
+  (table) => [
+    unique("sections_program_order_unique").on(table.programId, table.order),
+    index("sections_program_id_idx").on(table.programId),
+  ],
+);
+
 export const channelsTable = pgTable("channels", {
   ...commonFields,
   youtubeId: text("youtube_id").notNull().unique(),
@@ -109,14 +142,15 @@ export const quizzesTable = pgTable(
     userId: uuid("user_id")
       .references(() => usersTable.id, { onDelete: "cascade" })
       .notNull(),
-    videoId: uuid("video_id").references(() => videosTable.id, {
-      onDelete: "set null",
-    }),
+    sectionId: uuid("section_id")
+      .references(() => sectionsTable.id, { onDelete: "cascade" })
+      .notNull(),
     cefrLevel: cefrLevelEnum("cefr_level").notNull(),
   },
   (table) => [
     index("quizzes_user_id_idx").on(table.userId),
-    index("quizzes_video_id_idx").on(table.videoId),
+    index("quizzes_section_id_idx").on(table.sectionId),
+    unique("quizzes_user_section_unique").on(table.userId, table.sectionId),
   ],
 );
 
@@ -149,6 +183,27 @@ export const usersRelations = relations(usersTable, ({ many }) => ({
 
 export const channelsRelations = relations(channelsTable, ({ many }) => ({
   videos: many(videosTable),
+  programs: many(programsTable),
+}));
+
+export const programsRelations = relations(programsTable, ({ one, many }) => ({
+  channel: one(channelsTable, {
+    fields: [programsTable.channelId],
+    references: [channelsTable.id],
+  }),
+  sections: many(sectionsTable),
+}));
+
+export const sectionsRelations = relations(sectionsTable, ({ one, many }) => ({
+  program: one(programsTable, {
+    fields: [sectionsTable.programId],
+    references: [programsTable.id],
+  }),
+  video: one(videosTable, {
+    fields: [sectionsTable.videoId],
+    references: [videosTable.id],
+  }),
+  quizzes: many(quizzesTable),
 }));
 
 export const videosRelations = relations(videosTable, ({ one, many }) => ({
@@ -156,7 +211,6 @@ export const videosRelations = relations(videosTable, ({ one, many }) => ({
     fields: [videosTable.channelId],
     references: [channelsTable.id],
   }),
-  quizzes: many(quizzesTable),
   transcripts: many(transcriptsTable),
 }));
 
@@ -165,9 +219,9 @@ export const quizzesRelations = relations(quizzesTable, ({ one, many }) => ({
     fields: [quizzesTable.userId],
     references: [usersTable.id],
   }),
-  video: one(videosTable, {
-    fields: [quizzesTable.videoId],
-    references: [videosTable.id],
+  section: one(sectionsTable, {
+    fields: [quizzesTable.sectionId],
+    references: [sectionsTable.id],
   }),
   questions: many(questionsTable),
 }));

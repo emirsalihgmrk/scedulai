@@ -16,6 +16,7 @@ import {
   PencilLine,
   BookOpen,
   Lightbulb,
+  FileQuestion,
 } from "lucide-react";
 import {
   Card,
@@ -31,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Question, QuizWithQuestions } from "@/types/quiz";
 import { submitAnswer } from "@/app/actions/quiz";
+import { EmptyState } from "./empty-state";
 
 const SOURCE_LANG = "Türkçe";
 const TARGET_LANG = "English";
@@ -535,19 +537,11 @@ function QuestionStep({
   );
 }
 
-export function QuizPanel({
-  quizPromise,
-}: {
-  quizPromise: Promise<QuizWithQuestions>;
-}) {
-  const quiz = use(quizPromise);
+function QuizContent({ quiz }: { quiz: QuizWithQuestions }) {
   const total = quiz.questions.length;
 
-  // step 0 = overview, step 1..total = the corresponding question
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  // Graded questions returned by the submit action, keyed by id, so results
-  // survive step navigation without refetching the quiz.
   const [graded, setGraded] = useState<Record<string, Question>>({});
 
   const questions = quiz.questions.map((q) => graded[q.id] ?? q);
@@ -601,6 +595,29 @@ export function QuizPanel({
   );
 }
 
+export function QuizPanel({
+  quizPromise,
+}: {
+  quizPromise: Promise<QuizWithQuestions | null>;
+}) {
+  const quiz = use(quizPromise);
+
+  if (!quiz) {
+    return (
+      <div className="sticky top-20">
+        <EmptyState
+          icon={FileQuestion}
+          title="Quiz hazırlanamadı"
+          description="Bu section'a bağlı bir video/transkript olmadığı için quiz üretilemedi."
+          className="h-[80vh]"
+        />
+      </div>
+    );
+  }
+
+  return <QuizContent quiz={quiz} />;
+}
+
 export function QuizPanelFallback() {
   return (
     <div className="sticky top-20">
@@ -615,10 +632,10 @@ export function QuizPanelFallback() {
 
         <div className="flex flex-col gap-1.5">
           <p className="bg-linear-to-r from-primary to-chart-5 bg-clip-text font-display text-lg font-semibold text-transparent">
-            Quiz yapay zeka ile hazırlanıyor
+            Quiz is being prepared with AI
           </p>
           <p className="text-sm text-muted-foreground">
-            Transkriptten sana özel çeviri cümleleri üretiliyor…
+            Personalized translation sentences are being generated from your transcript...
           </p>
         </div>
 

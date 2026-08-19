@@ -1,9 +1,14 @@
 import { db } from "@/db";
-import { channelsTable, transcriptsTable, videosTable } from "@/db/schema";
+import {
+  channelsTable,
+  sectionsTable,
+  transcriptsTable,
+  videosTable,
+} from "@/db/schema";
 import { TranscriptLine, Video } from "@/types/video";
 import { and, eq } from "drizzle-orm";
 
-export async function getVideo(): Promise<Video> {
+export async function findVideo(sectionId: string): Promise<Video | null> {
   const [row] = await db
     .select({
       id: videosTable.id,
@@ -16,14 +21,13 @@ export async function getVideo(): Promise<Video> {
       durationSeconds: videosTable.durationSeconds,
       thumbnailUrl: videosTable.thumbnailUrl,
     })
-    .from(videosTable)
+    .from(sectionsTable)
+    .innerJoin(videosTable, eq(sectionsTable.videoId, videosTable.id))
     .innerJoin(channelsTable, eq(videosTable.channelId, channelsTable.id))
-    .limit(10);
+    .where(eq(sectionsTable.id, sectionId))
+    .limit(1);
 
-  if (!row)
-    throw new Error("No unwatched videos with English transcripts available");
-
-  return row;
+  return row ?? null;
 }
 
 export async function getTranscript(
