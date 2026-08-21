@@ -12,10 +12,9 @@
 - [x] kısmi veritabanının oluşturulması
 - [x] ~~TED.com scraper entegrasyonu~~ (kaldırıldı — bkz. DECISIONS.md [2026-08-16])
 - [x] YouTube Data API ile video + transkript seed mantığının uygulanması (`src/db/seed.ts`)
+- [x] quiz-panel.tsx: graduated-card bileşeninde original sentence yer alacak
 
 # Next
-
-- [] quiz-panel.tsx: graduated-card bileşeninde original sentence yer alacak
 
 ## 💡 Fikir Kutusu (Backlog / İleride Düşünülecekler)
 

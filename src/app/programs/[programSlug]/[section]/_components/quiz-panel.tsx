@@ -316,6 +316,18 @@ function GradedQuestion({
             </span>
           </div>
 
+          {question.payload.type === "translation" && (
+            <div className="rounded-xl border border-success/30 bg-success/8 p-4">
+              <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-success">
+                <CircleCheck className="size-3.5" />
+                Original Sentence
+              </div>
+              <p className="text-[15px] leading-relaxed text-foreground">
+                {question.payload.expectedTranslation}
+              </p>
+            </div>
+          )}
+
           <Button
             type="button"
             variant="secondary"
@@ -635,7 +647,8 @@ export function QuizPanelFallback() {
             Quiz is being prepared with AI
           </p>
           <p className="text-sm text-muted-foreground">
-            Personalized translation sentences are being generated from your transcript...
+            Personalized translation sentences are being generated from your
+            transcript...
           </p>
         </div>
 

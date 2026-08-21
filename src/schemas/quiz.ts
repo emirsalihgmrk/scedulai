@@ -15,7 +15,7 @@ export const quizCreateSchema = createInsertSchema(quizzesTable).pick({
 export const questionTranslationPayloadSchema = z.object({
   type: z.literal("translation"),
   sourceSentence: z.string(),
-  expectedTranslation: z.string().optional(),
+  expectedTranslation: z.string(),
   hint: z.string().optional(),
 });
 
