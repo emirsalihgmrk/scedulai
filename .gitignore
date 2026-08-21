@@ -24,3 +24,5 @@ next-env.d.ts
 .agents/
 .claude/
 .data/
+
+better-auth_migrations/

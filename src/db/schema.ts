@@ -13,6 +13,7 @@ import {
 } from "@/types/quiz";
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -54,15 +55,77 @@ export const targetLanguageEnum = pgEnum(
   SUPPORTED_TARGET_LANGUAGE_CODES,
 );
 
-export const usersTable = pgTable("users", {
-  ...commonFields,
-  fullName: text("full_name").notNull(),
+// better-auth managed tables
+export const userTable = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   plan: planEnum("plan").default("free").notNull(),
   nativeLanguage: nativeLanguageEnum("native_language").default("tr").notNull(),
   targetLanguage: targetLanguageEnum("target_language").default("en").notNull(),
 });
 
+export const sessionTable = pgTable(
+  "session",
+  {
+    id: text("id").primaryKey(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    token: text("token").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  (table) => [index("session_userId_idx").on(table.userId)],
+);
+
+export const accountTable = pgTable(
+  "account",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", {
+      withTimezone: true,
+    }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", {
+      withTimezone: true,
+    }),
+    scope: text("scope"),
+    password: text("password"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [index("account_userId_idx").on(table.userId)],
+);
+
+export const verificationTable = pgTable(
+  "verification",
+  {
+    id: text("id").primaryKey(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [index("verification_identifier_idx").on(table.identifier)],
+);
+
+// App tables
 export const programsTable = pgTable("programs", {
   ...commonFields,
   title: text("title").notNull(),
@@ -139,8 +202,8 @@ export const quizzesTable = pgTable(
   "quizzes",
   {
     ...commonFields,
-    userId: uuid("user_id")
-      .references(() => usersTable.id, { onDelete: "cascade" })
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
       .notNull(),
     sectionId: uuid("section_id")
       .references(() => sectionsTable.id, { onDelete: "cascade" })
@@ -177,8 +240,25 @@ export const questionsTable = pgTable(
   ],
 );
 
-export const usersRelations = relations(usersTable, ({ many }) => ({
+// Relations
+export const userRelations = relations(userTable, ({ many }) => ({
   quizzes: many(quizzesTable),
+  sessions: many(sessionTable),
+  accounts: many(accountTable),
+}));
+
+export const sessionRelations = relations(sessionTable, ({ one }) => ({
+  user: one(userTable, {
+    fields: [sessionTable.userId],
+    references: [userTable.id],
+  }),
+}));
+
+export const accountRelations = relations(accountTable, ({ one }) => ({
+  user: one(userTable, {
+    fields: [accountTable.userId],
+    references: [userTable.id],
+  }),
 }));
 
 export const channelsRelations = relations(channelsTable, ({ many }) => ({
@@ -215,9 +295,9 @@ export const videosRelations = relations(videosTable, ({ one, many }) => ({
 }));
 
 export const quizzesRelations = relations(quizzesTable, ({ one, many }) => ({
-  user: one(usersTable, {
+  user: one(userTable, {
     fields: [quizzesTable.userId],
-    references: [usersTable.id],
+    references: [userTable.id],
   }),
   section: one(sectionsTable, {
     fields: [quizzesTable.sectionId],

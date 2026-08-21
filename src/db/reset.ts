@@ -3,13 +3,17 @@ import { db } from "@/db";
 
 async function reset() {
   await db.execute(sql`
+    DROP TABLE IF EXISTS account CASCADE;
+    DROP TABLE IF EXISTS channels CASCADE;
+    DROP TABLE IF EXISTS programs CASCADE;
     DROP TABLE IF EXISTS questions CASCADE;
     DROP TABLE IF EXISTS quizzes CASCADE;
-    DROP TABLE IF EXISTS watched_videos CASCADE;
+    DROP TABLE IF EXISTS sections CASCADE;
+    DROP TABLE IF EXISTS session CASCADE;
     DROP TABLE IF EXISTS transcripts CASCADE;
+    DROP TABLE IF EXISTS user CASCADE;
+    DROP TABLE IF EXISTS verification CASCADE;
     DROP TABLE IF EXISTS videos CASCADE;
-    DROP TABLE IF EXISTS channels CASCADE;
-    DROP TABLE IF EXISTS users CASCADE;
   `);
   console.log("Database reset complete.");
   process.exit(0);

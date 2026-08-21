@@ -6,7 +6,6 @@ import {
   quizzesTable,
   sectionsTable,
   transcriptsTable,
-  usersTable,
   videosTable,
 } from "@/db/schema";
 import {
@@ -29,24 +28,6 @@ async function seed() {
   await db.delete(videosTable);
   await db.delete(programsTable);
   await db.delete(channelsTable);
-  await db.delete(usersTable);
-
-  await db.insert(usersTable).values([
-    {
-      fullName: "Ada Kaya",
-      email: "ada@example.com",
-      plan: "premium",
-      nativeLanguage: "tr",
-      targetLanguage: "en",
-    },
-    {
-      fullName: "Yeni Kullanıcı",
-      email: "newcomer@example.com",
-      plan: "free",
-      nativeLanguage: "tr",
-      targetLanguage: "en",
-    },
-  ]);
 
   console.log(
     `Fetching up to ${VIDEO_LIMIT} videos from ${YOUTUBE_CHANNEL}...`,
