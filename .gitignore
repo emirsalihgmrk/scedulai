@@ -26,3 +26,5 @@ next-env.d.ts
 .data/
 
 better-auth_migrations/
+
+skills-lock.json
