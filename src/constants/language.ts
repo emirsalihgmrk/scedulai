@@ -1,32 +1,32 @@
 export const SUPPORTED_NATIVE_LANGUAGES = [
-  { code: "tr", name: "Türkçe", nativeName: "Türkçe", flag: "🇹🇷" },
-  { code: "en", name: "İngilizce", nativeName: "English", flag: "🇬🇧" },
-  { code: "de", name: "Almanca", nativeName: "Deutsch", flag: "🇩🇪" },
-  { code: "es", name: "İspanyolca", nativeName: "Español", flag: "🇪🇸" },
-  { code: "fr", name: "Fransızca", nativeName: "Français", flag: "🇫🇷" },
-  { code: "it", name: "İtalyanca", nativeName: "Italiano", flag: "🇮🇹" },
+  { code: "tr", name: "Türkçe", nativeName: "Türkçe", countryCode: "tr" },
+  { code: "en", name: "İngilizce", nativeName: "English", countryCode: "gb" },
+  { code: "de", name: "Almanca", nativeName: "Deutsch", countryCode: "de" },
+  { code: "es", name: "İspanyolca", nativeName: "Español", countryCode: "es" },
+  { code: "fr", name: "Fransızca", nativeName: "Français", countryCode: "fr" },
+  { code: "it", name: "İtalyanca", nativeName: "Italiano", countryCode: "it" },
 
-  { code: "ja", name: "Japonca", nativeName: "日本語", flag: "🇯🇵" },
-  { code: "ko", name: "Korece", nativeName: "한국어", flag: "🇰🇷" },
+  { code: "ja", name: "Japonca", nativeName: "日本語", countryCode: "jp" },
+  { code: "ko", name: "Korece", nativeName: "한국어", countryCode: "kr" },
   {
     code: "zh",
     name: "Çince (Basitleştirilmiş)",
     nativeName: "中文 (简体)",
-    flag: "🇨🇳",
+    countryCode: "cn",
   },
 
-  { code: "ru", name: "Rusça", nativeName: "Русский", flag: "🇷🇺" },
-  { code: "pt", name: "Portekizce", nativeName: "Português", flag: "🇵🇹" },
-  { code: "nl", name: "Felemenkçe", nativeName: "Nederlands", flag: "🇳🇱" },
-  { code: "pl", name: "Lehçe", nativeName: "Polski", flag: "🇵🇱" },
-  { code: "el", name: "Yunanca", nativeName: "Ελληνικά", flag: "🇬🇷" },
+  { code: "ru", name: "Rusça", nativeName: "Русский", countryCode: "ru" },
+  { code: "pt", name: "Portekizce", nativeName: "Português", countryCode: "pt" },
+  { code: "nl", name: "Felemenkçe", nativeName: "Nederlands", countryCode: "nl" },
+  { code: "pl", name: "Lehçe", nativeName: "Polski", countryCode: "pl" },
+  { code: "el", name: "Yunanca", nativeName: "Ελληνικά", countryCode: "gr" },
 
-  { code: "sv", name: "İsveççe", nativeName: "Svenska", flag: "🇸🇪" },
-  { code: "no", name: "Norveççe", nativeName: "Norsk", flag: "🇳🇴" },
-  { code: "da", name: "Danca", nativeName: "Dansk", flag: "🇩🇰" },
-  { code: "fi", name: "Fince", nativeName: "Suomi", flag: "🇫🇮" },
+  { code: "sv", name: "İsveççe", nativeName: "Svenska", countryCode: "se" },
+  { code: "no", name: "Norveççe", nativeName: "Norsk", countryCode: "no" },
+  { code: "da", name: "Danca", nativeName: "Dansk", countryCode: "dk" },
+  { code: "fi", name: "Fince", nativeName: "Suomi", countryCode: "fi" },
 
-  { code: "ar", name: "Arapça", nativeName: "العربية", flag: "🇸🇦" },
+  { code: "ar", name: "Arapça", nativeName: "العربية", countryCode: "sa" },
 ] as const;
 
 export const SUPPORTED_NATIVE_LANGUAGE_CODES = SUPPORTED_NATIVE_LANGUAGES.map(

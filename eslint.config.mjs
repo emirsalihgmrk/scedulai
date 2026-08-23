@@ -19,12 +19,12 @@ const eslintConfig = defineConfig([
         {
           selector: "variable",
           modifiers: ["const"],
-          format: ["camelCase", "UPPER_CASE"],
+          format: ["camelCase", "UPPER_CASE", "PascalCase"],
           leadingUnderscore: "allow",
         },
         {
           selector: ["variable", "parameter"],
-          format: ["camelCase"],
+          format: ["camelCase", "PascalCase"],
           leadingUnderscore: "allow",
         },
         {
