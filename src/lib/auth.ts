@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
 import { Resend } from "resend";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
@@ -60,4 +61,8 @@ export const auth = betterAuth({
       },
     },
   },
+  // Must be the last plugin so it can set cookies from server actions
+  // (e.g. signInEmail / signUpEmail). Without it the session cookie is
+  // never sent to the browser even though the DB session is created.
+  plugins: [nextCookies()],
 });
