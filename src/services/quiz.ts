@@ -1,12 +1,10 @@
-import { db } from "@/db";
-import { questionsTable, quizzesTable } from "@/db/schema";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import {
   getTranscriptByVideoIdService,
   getVideoBySectionIdService,
 } from "@/services/video";
 import { Question, QuizWithQuestions } from "@/types/quiz";
-import { updateQuestion } from "@/dal/quiz/mutations";
+import { createQuiz, updateQuestion } from "@/dal/quiz/mutations";
 import {
   QuestionAnswer,
   QuestionPayload,
@@ -82,7 +80,7 @@ export async function submitAnswerService(
   return updateQuestion(questionId, inputResult);
 }
 
-export async function findOrCreateQuiz(
+export async function getOrCreateQuizService(
   sectionId: string,
 ): Promise<QuizWithQuestions | null> {
   const existing = await getQuizBySectionIdService(sectionId);
@@ -101,36 +99,5 @@ export async function findOrCreateQuiz(
     cefrLevel: DEFAULT_CEFR_LEVEL,
   });
 
-  return db.transaction(async (tx) => {
-    const [quiz] = await tx
-      .insert(quizzesTable)
-      .values({
-        userId: TEMP_USER_ID,
-        sectionId,
-        cefrLevel: DEFAULT_CEFR_LEVEL,
-      })
-      .returning({
-        id: quizzesTable.id,
-        cefrLevel: quizzesTable.cefrLevel,
-      });
-
-    const questions: Question[] = await tx
-      .insert(questionsTable)
-      .values(
-        sentences.map((sentence, index) => ({
-          quizId: quiz.id,
-          order: index,
-          type: "translation" as const,
-          direction: "native-to-target" as const,
-          payload: {
-            type: "translation" as const,
-            sourceSentence: sentence.native,
-            expectedTranslation: sentence.english,
-          },
-        })),
-      )
-      .returning();
-
-    return { ...quiz, questions };
-  });
+  return createQuiz(sectionId, TEMP_USER_ID, DEFAULT_CEFR_LEVEL, sentences);
 }

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/shared/header";
 import { getSectionByOrderService } from "@/services/program";
 import { getVideoBySectionIdService } from "@/services/video";
-import { findOrCreateQuiz } from "@/services/quiz";
+import { getOrCreateQuizService } from "@/services/quiz";
 import { VideoPanel, VideoPanelFallback } from "./_components/video-panel";
 import { QuizPanel, QuizPanelFallback } from "./_components/quiz-panel";
 
@@ -28,7 +28,7 @@ export default async function Page({
   if (!currentSection) notFound();
 
   const videoPromise = getVideoBySectionIdService(currentSection.id);
-  const quizPromise = findOrCreateQuiz(currentSection.id);
+  const quizPromise = getOrCreateQuizService(currentSection.id);
 
   return (
     <div className="min-h-screen bg-background">
