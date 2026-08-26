@@ -1,14 +1,19 @@
-import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { questionsTable, quizzesTable } from "@/db/schema";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
-import { getTranscript, findVideo } from "@/services/video";
 import {
-  Question,
-  QuestionAnswerUpdateInput,
-  QuizCreateInput,
-  QuizWithQuestions,
-} from "@/types/quiz";
+  getTranscriptByVideoIdService,
+  getVideoBySectionIdService,
+} from "@/services/video";
+import { Question, QuizWithQuestions } from "@/types/quiz";
+import { updateQuestion } from "@/dal/quiz/mutations";
+import {
+  QuestionAnswer,
+  QuestionPayload,
+  submitAnswerSchema,
+} from "@/schemas/quiz";
+import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
+import { getQuestionById, getQuizBySectionId } from "@/dal/quiz/queries";
 
 // No auth yet — placeholders until users/sessions exist (see video.ts).
 const TEMP_USER_ID = process.env.TEMP_USER_ID as string;
@@ -16,68 +21,77 @@ export const NATIVE_LANGUAGE = "Turkish";
 const DEFAULT_CEFR_LEVEL = "A2" as const;
 const QUESTION_COUNT = 5;
 
-export async function findQuiz(
+export async function getQuizBySectionIdService(
   sectionId: string,
   userId: string = TEMP_USER_ID,
 ): Promise<QuizWithQuestions | null> {
-  const quiz = await db.query.quizzesTable.findFirst({
-    where: and(
-      eq(quizzesTable.userId, userId),
-      eq(quizzesTable.sectionId, sectionId),
-    ),
-    columns: { id: true, cefrLevel: true },
-    with: {
-      questions: {
-        orderBy: (questions, { asc }) => asc(questions.order),
-      },
-    },
-  });
+  const quiz = await getQuizBySectionId(sectionId, userId);
+  if (!quiz) return null;
 
-  return quiz ?? null;
+  //PERMISSION
+  //
+
+  return quiz;
 }
 
-export async function findQuestion(
+export async function getQuestionByIdService(
   questionId: string,
 ): Promise<Question | null> {
-  const question = await db.query.questionsTable.findFirst({
-    where: eq(questionsTable.id, questionId),
-  });
+  const question = await getQuestionById(questionId);
+  if (!question) return null;
 
-  return question ?? null;
-}
-
-export async function updateQuestion(
-  questionId: string,
-  input: QuestionAnswerUpdateInput,
-): Promise<Question> {
-  const [question] = await db
-    .update(questionsTable)
-    .set(input)
-    .where(eq(questionsTable.id, questionId))
-    .returning();
+  //PERMISSION
+  //
 
   return question;
 }
 
-export async function createQuiz(input: QuizCreateInput) {
-  const [quiz] = await db.insert(quizzesTable).values(input).returning({
-    id: quizzesTable.id,
-    cefrLevel: quizzesTable.cefrLevel,
+export async function submitAnswerService(
+  questionId: string,
+  questionPayload: QuestionPayload,
+  input: QuestionAnswer,
+): Promise<Question> {
+  const question = await getQuestionByIdService(questionId);
+  if (!question) throw new Error("Not found");
+
+  //PERMISSION
+  //
+
+  const parsedAnswer = submitAnswerSchema.safeParse(input);
+  if (!parsedAnswer.success) throw new Error("Invalid data");
+
+  const aiResult = await analyzeSentence({
+    sentence: questionPayload.sourceSentence,
+    originalSentence: questionPayload.expectedTranslation ?? "",
+    userTranslation: input.userTranslation,
+    nativeLanguage: NATIVE_LANGUAGE,
   });
 
-  return quiz;
+  const { accuracy, ...analysis } = aiResult;
+  const analyzedInput = {
+    answer: input,
+    answerAnalysis: analysis,
+    answerAccuracy: Math.round(accuracy),
+  };
+
+  const parsedResult = submitAnswerSchema.safeParse(analyzedInput);
+  if (!parsedResult.success) throw new Error("Invalid data");
+
+  const inputResult = parsedResult.data;
+
+  return updateQuestion(questionId, inputResult);
 }
 
 export async function findOrCreateQuiz(
   sectionId: string,
 ): Promise<QuizWithQuestions | null> {
-  const existing = await findQuiz(sectionId);
+  const existing = await getQuizBySectionIdService(sectionId);
   if (existing) return existing;
 
-  const video = await findVideo(sectionId);
+  const video = await getVideoBySectionIdService(sectionId);
   if (!video) return null;
 
-  const lines = await getTranscript(video.id);
+  const lines = await getTranscriptByVideoIdService(video.id);
   const transcript = lines.map((line) => line.text).join("\n");
 
   const { sentences } = await generateSentences({

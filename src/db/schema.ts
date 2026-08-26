@@ -7,9 +7,7 @@ import { PLANS } from "@/constants/plan";
 import {
   QUESTION_DIRECTIONS,
   QUESTION_TYPES,
-  QuestionAnswer,
   QuestionAnswerAnalysis,
-  QuestionPayload,
 } from "@/types/quiz";
 import { relations } from "drizzle-orm";
 import {
@@ -24,11 +22,8 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-
-interface TranscriptLine {
-  time: string;
-  text: string;
-}
+import type { TranscriptLine } from "@/types/video";
+import { QuestionAnswer, QuestionPayload } from "@/schemas/quiz";
 
 const commonFields = {
   id: uuid("id").primaryKey().defaultRandom(),

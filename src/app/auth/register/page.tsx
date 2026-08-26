@@ -8,7 +8,7 @@ import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import { signUpSchema, type SignUpInput } from "@/schemas/auth";
-import { signUpUser } from "@/services/auth";
+import { signUpUser } from "@/actions/auth";
 import { SUPPORTED_NATIVE_LANGUAGES } from "@/constants/language";
 import { PLAN_OPTIONS } from "@/constants/plan";
 import { cn } from "@/lib/utils";

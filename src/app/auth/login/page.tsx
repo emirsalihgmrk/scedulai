@@ -8,7 +8,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import { signInSchema, type SignInInput } from "@/schemas/auth";
-import { signInUser } from "@/services/auth";
+import { signInUser } from "@/actions/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

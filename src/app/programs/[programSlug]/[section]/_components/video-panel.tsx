@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { VideoPlayer } from "./video-player";
 import { TranscriptCard, TranscriptCardFallback } from "./transcript-card";
 import { EmptyState } from "./empty-state";
-import { getTranscript } from "@/services/video";
+import { getTranscriptByVideoIdService } from "@/services/video";
 import { Video } from "@/types/video";
 import { formatDate } from "@/lib/utils";
 
@@ -27,7 +27,7 @@ export async function VideoPanel({
     );
   }
 
-  const transcriptPromise = getTranscript(video.id);
+  const transcriptPromise = getTranscriptByVideoIdService(video.id);
 
   return (
     <div className="flex min-h-0 flex-col gap-5">

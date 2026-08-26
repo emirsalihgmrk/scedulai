@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import Header from "@/components/shared/header";
-import { findSection } from "@/services/program";
-import { findVideo } from "@/services/video";
+import { getSectionByOrderService } from "@/services/program";
+import { getVideoBySectionIdService } from "@/services/video";
 import { findOrCreateQuiz } from "@/services/quiz";
 import { VideoPanel, VideoPanelFallback } from "./_components/video-panel";
 import { QuizPanel, QuizPanelFallback } from "./_components/quiz-panel";
@@ -24,10 +24,10 @@ export default async function Page({
   const order = parseOrder(section);
   if (order === null) notFound();
 
-  const currentSection = await findSection(programSlug, order);
+  const currentSection = await getSectionByOrderService(programSlug, order);
   if (!currentSection) notFound();
 
-  const videoPromise = findVideo(currentSection.id);
+  const videoPromise = getVideoBySectionIdService(currentSection.id);
   const quizPromise = findOrCreateQuiz(currentSection.id);
 
   return (

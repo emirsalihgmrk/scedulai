@@ -31,17 +31,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Question, QuizWithQuestions } from "@/types/quiz";
-import { submitAnswer } from "@/app/actions/quiz";
 import { EmptyState } from "./empty-state";
+import { submitAnswerAction } from "@/actions/quiz";
 
 const SOURCE_LANG = "Türkçe";
 const TARGET_LANG = "English";
-
-function questionSentence(question: Question) {
-  return question.payload.type === "translation"
-    ? question.payload.sourceSentence
-    : question.payload.sentenceWithBlank;
-}
 
 function accuracyClasses(accuracy: number) {
   return accuracy < 75
@@ -158,7 +152,7 @@ function OverviewStep({
                         {i + 1}
                       </span>
                       <span className="min-w-0 flex-1 text-[13px] leading-snug text-foreground/80">
-                        {questionSentence(q)}
+                        {q.payload.sourceSentence}
                       </span>
                       {isGraded && (
                         <span
@@ -200,7 +194,7 @@ function SourceSentence({ question }: { question: Question }) {
         AI-generated from transcript
       </div>
       <p className="text-pretty font-display text-lg font-medium leading-snug text-foreground sm:text-xl">
-        {questionSentence(question)}
+        {question.payload.sourceSentence}
       </p>
     </div>
   );
@@ -463,11 +457,15 @@ function QuestionStep({
     setError(null);
     startTransition(async () => {
       try {
-        const updated = await submitAnswer({
-          questionId: question.id,
-          answer: { type: "translation", userTranslation: value },
+        const result = await submitAnswerAction(question.id, question.payload, {
+          type: "translation",
+          userTranslation: value,
         });
-        onGraded(updated);
+        if (result.ok) {
+          onGraded(result.data);
+        } else {
+          setError(result.error);
+        }
       } catch {
         setError("Değerlendirme başarısız oldu, lütfen tekrar deneyin.");
       }
