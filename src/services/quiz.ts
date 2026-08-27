@@ -9,22 +9,20 @@ import {
 } from "@/schemas/quiz";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
+import { getCurrentUser } from "@/services/auth";
 
-// No auth yet — placeholders until users/sessions exist (see video.ts).
-const TEMP_USER_ID = process.env.TEMP_USER_ID as string;
 export const NATIVE_LANGUAGE = "Turkish";
 const DEFAULT_CEFR_LEVEL = "A2" as const;
 const QUESTION_COUNT = 5;
 
 export async function getQuizBySectionIdService(
   sectionId: string,
-  userId: string = TEMP_USER_ID,
 ): Promise<QuizWithQuestions | null> {
-  const quiz = await getQuiz(sectionId, userId);
-  if (!quiz) return null;
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Unauthorized");
 
-  //PERMISSION
-  //
+  const quiz = await getQuiz(sectionId, user.id);
+  if (!quiz) return null;
 
   return quiz;
 }
@@ -80,6 +78,9 @@ export async function submitAnswerService(
 export async function getOrCreateQuizService(
   sectionId: string,
 ): Promise<QuizWithQuestions | null> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Unauthorized");
+
   const existing = await getQuizBySectionIdService(sectionId);
   if (existing) return existing;
 
@@ -96,5 +97,5 @@ export async function getOrCreateQuizService(
     cefrLevel: DEFAULT_CEFR_LEVEL,
   });
 
-  return createQuiz(sectionId, TEMP_USER_ID, DEFAULT_CEFR_LEVEL, sentences);
+  return createQuiz(sectionId, user.id, DEFAULT_CEFR_LEVEL, sentences);
 }
