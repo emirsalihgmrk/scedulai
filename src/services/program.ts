@@ -1,5 +1,5 @@
 import { getFirstSection, getSectionByOrder } from "@/dal/program/queries";
-import { Section } from "@/types/section";
+import { Section } from "@/schemas/program";
 
 export async function getFirstSectionService(
   programSlug: string,

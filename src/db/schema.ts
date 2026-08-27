@@ -4,11 +4,7 @@ import {
   SUPPORTED_TARGET_LANGUAGE_CODES,
 } from "@/constants/language";
 import { PLANS } from "@/constants/plan";
-import {
-  QUESTION_DIRECTIONS,
-  QUESTION_TYPES,
-  QuestionAnswerAnalysis,
-} from "@/types/quiz";
+import { QUESTION_DIRECTIONS, QUESTION_TYPES } from "@/constants/question";
 import { relations } from "drizzle-orm";
 import {
   boolean,
@@ -22,8 +18,12 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { TranscriptLine } from "@/types/video";
-import { QuestionAnswer, QuestionPayload } from "@/schemas/quiz";
+import type { TranscriptLine } from "@/schemas/video";
+import type {
+  QuestionAnswer,
+  QuestionAnswerAnalysis,
+  QuestionPayload,
+} from "@/schemas/quiz";
 
 const commonFields = {
   id: uuid("id").primaryKey().defaultRandom(),

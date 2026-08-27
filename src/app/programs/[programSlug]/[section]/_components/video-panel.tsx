@@ -6,7 +6,7 @@ import { VideoPlayer } from "./video-player";
 import { TranscriptCard, TranscriptCardFallback } from "./transcript-card";
 import { EmptyState } from "./empty-state";
 import { getTranscriptService } from "@/services/video";
-import { Video } from "@/types/video";
+import { Video } from "@/schemas/video";
 import { formatDate } from "@/lib/utils";
 
 export async function VideoPanel({
@@ -42,16 +42,16 @@ export async function VideoPanel({
           <div className="flex items-center gap-2.5">
             <Avatar>
               <AvatarImage
-                src={video.channelThumbnailUrl}
-                alt={video.channelTitle}
+                src={video.channel.thumbnailUrl}
+                alt={video.channel.title}
               />
               <AvatarFallback>
-                {video.channelTitle.slice(0, 2).toUpperCase()}
+                {video.channel.title.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="leading-tight">
               <p className="text-sm font-semibold text-foreground">
-                {video.channelTitle}
+                {video.channel.title}
               </p>
             </div>
           </div>

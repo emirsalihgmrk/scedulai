@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { TranscriptLine } from "@/types/video";
+import { TranscriptLine } from "@/schemas/video";
 import { cn } from "@/lib/utils";
 
 function TranscriptCardShell({ children }: { children: React.ReactNode }) {

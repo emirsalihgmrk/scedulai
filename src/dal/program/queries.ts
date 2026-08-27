@@ -1,28 +1,41 @@
 import { db } from "@/db";
-import { programsTable, sectionsTable } from "@/db/schema";
-import { and, asc, eq, getTableColumns } from "drizzle-orm";
+import { programsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import type { Section } from "@/schemas/program";
 
-export async function getFirstSection(programSlug: string) {
-  const [row] = await db
-    .select(getTableColumns(sectionsTable))
-    .from(sectionsTable)
-    .innerJoin(programsTable, eq(sectionsTable.programId, programsTable.id))
-    .where(eq(programsTable.slug, programSlug))
-    .orderBy(asc(sectionsTable.order))
-    .limit(1);
+export async function getFirstSection(
+  programSlug: string,
+): Promise<Section | undefined> {
+  const row = await db.query.programsTable.findFirst({
+    where: eq(programsTable.slug, programSlug),
+    columns: {},
+    with: {
+      sections: {
+        columns: { createdAt: false, updatedAt: false },
+        orderBy: (sections, { asc }) => asc(sections.order),
+        limit: 1,
+      },
+    },
+  });
 
-  return row;
+  return row?.sections[0];
 }
 
-export async function getSectionByOrder(programSlug: string, order: number) {
-  const [row] = await db
-    .select(getTableColumns(sectionsTable))
-    .from(sectionsTable)
-    .innerJoin(programsTable, eq(sectionsTable.programId, programsTable.id))
-    .where(
-      and(eq(programsTable.slug, programSlug), eq(sectionsTable.order, order)),
-    )
-    .limit(1);
+export async function getSectionByOrder(
+  programSlug: string,
+  order: number,
+): Promise<Section | undefined> {
+  const row = await db.query.programsTable.findFirst({
+    where: eq(programsTable.slug, programSlug),
+    columns: {},
+    with: {
+      sections: {
+        columns: { createdAt: false, updatedAt: false },
+        where: (sections, { eq }) => eq(sections.order, order),
+        limit: 1,
+      },
+    },
+  });
 
-  return row;
+  return row?.sections[0];
 }

@@ -30,7 +30,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Question, QuizWithQuestions } from "@/types/quiz";
+import { Question, QuizWithQuestions } from "@/schemas/quiz";
 import { EmptyState } from "./empty-state";
 import { submitAnswerAction } from "@/actions/quiz";
 

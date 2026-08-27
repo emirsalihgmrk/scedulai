@@ -2,8 +2,8 @@
 
 import { QuestionAnswer, QuestionPayload } from "@/schemas/quiz";
 import { submitAnswerService } from "@/services/quiz";
-import type { ActionResult } from "@/types/action";
-import type { Question } from "@/types/quiz";
+import type { ActionResult } from "@/schemas/common";
+import type { Question } from "@/schemas/quiz";
 
 export async function submitAnswerAction(
   questionId: string,

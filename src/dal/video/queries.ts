@@ -1,45 +1,48 @@
 import { db } from "@/db";
-import {
-  channelsTable,
-  sectionsTable,
-  transcriptsTable,
-  videosTable,
-} from "@/db/schema";
+import { sectionsTable, transcriptsTable } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import type { TranscriptLine, Video } from "@/schemas/video";
 
-export async function getVideo(sectionId: string) {
-  const [row] = await db
-    .select({
-      id: videosTable.id,
-      youtubeId: videosTable.youtubeId,
-      url: videosTable.url,
-      title: videosTable.title,
-      channelTitle: channelsTable.title,
-      channelThumbnailUrl: channelsTable.thumbnailUrl,
-      publishedAt: videosTable.publishedAt,
-      durationSeconds: videosTable.durationSeconds,
-      thumbnailUrl: videosTable.thumbnailUrl,
-    })
-    .from(sectionsTable)
-    .innerJoin(videosTable, eq(sectionsTable.videoId, videosTable.id))
-    .innerJoin(channelsTable, eq(videosTable.channelId, channelsTable.id))
-    .where(eq(sectionsTable.id, sectionId))
-    .limit(1);
+export async function getVideo(sectionId: string): Promise<Video | undefined> {
+  const row = await db.query.sectionsTable.findFirst({
+    where: eq(sectionsTable.id, sectionId),
+    columns: {},
+    with: {
+      video: {
+        columns: {
+          id: true,
+          youtubeId: true,
+          url: true,
+          title: true,
+          publishedAt: true,
+          durationSeconds: true,
+          thumbnailUrl: true,
+        },
+        with: {
+          channel: {
+            columns: { title: true, thumbnailUrl: true },
+          },
+        },
+      },
+    },
+  });
 
-  return row;
+  const video = row?.video;
+  if (!video?.channel) return undefined;
+
+  return { ...video, channel: video.channel };
 }
 
-export async function getTranscript(videoId: string) {
-  const [row] = await db
-    .select({ content: transcriptsTable.content })
-    .from(transcriptsTable)
-    .where(
-      and(
-        eq(transcriptsTable.videoId, videoId),
-        eq(transcriptsTable.language, "en"),
-      ),
-    )
-    .limit(1);
+export async function getTranscript(
+  videoId: string,
+): Promise<TranscriptLine[] | undefined> {
+  const row = await db.query.transcriptsTable.findFirst({
+    where: and(
+      eq(transcriptsTable.videoId, videoId),
+      eq(transcriptsTable.language, "en"),
+    ),
+    columns: { content: true },
+  });
 
   return row?.content;
 }

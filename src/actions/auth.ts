@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { signInSchema, signUpSchema } from "@/schemas/auth";
 import type { SignInInput, SignUpInput } from "@/schemas/auth";
-import type { ActionResult } from "@/types/action";
+import type { ActionResult } from "@/schemas/common";
 
 // better-auth surfaces expected failures (e.g. wrong password, email in use) as
 // APIError — map those to a typed failure and let anything else bubble up.

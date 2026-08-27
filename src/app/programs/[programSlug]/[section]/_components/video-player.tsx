@@ -14,7 +14,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDuration } from "@/lib/utils";
-import { Video } from "@/types/video";
+import { Video } from "@/schemas/video";
 
 function ControlButton({
   children,
@@ -58,7 +58,7 @@ export function VideoPlayer({ video }: { video: Video }) {
           <>
             <Image
               src={video.thumbnailUrl}
-              alt={`${video.channelTitle} presenting "${video.title}"`}
+              alt={`${video.channel.title} presenting "${video.title}"`}
               fill
               sizes="(max-width: 1024px) 100vw, 66vw"
               className="object-cover"

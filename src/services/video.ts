@@ -1,5 +1,5 @@
 import { getTranscript, getVideo } from "@/dal/video/queries";
-import { TranscriptLine, Video } from "@/types/video";
+import { TranscriptLine, Video } from "@/schemas/video";
 
 export async function getVideoService(
   sectionId: string,

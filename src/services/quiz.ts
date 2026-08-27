@@ -1,6 +1,6 @@
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getTranscriptService, getVideoService } from "@/services/video";
-import { Question, QuizWithQuestions } from "@/types/quiz";
+import { Question, QuizWithQuestions } from "@/schemas/quiz";
 import { createQuiz, updateQuestion } from "@/dal/quiz/mutations";
 import {
   QuestionAnswer,
