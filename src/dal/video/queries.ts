@@ -7,7 +7,7 @@ import {
 } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 
-export async function getVideoBySectionId(sectionId: string) {
+export async function getVideo(sectionId: string) {
   const [row] = await db
     .select({
       id: videosTable.id,
@@ -29,7 +29,7 @@ export async function getVideoBySectionId(sectionId: string) {
   return row;
 }
 
-export async function getTranscriptByVideoId(videoId: string) {
+export async function getTranscript(videoId: string) {
   const [row] = await db
     .select({ content: transcriptsTable.content })
     .from(transcriptsTable)

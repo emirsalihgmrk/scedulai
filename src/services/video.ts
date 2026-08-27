@@ -1,13 +1,10 @@
-import {
-  getTranscriptByVideoId,
-  getVideoBySectionId,
-} from "@/dal/video/queries";
+import { getTranscript, getVideo } from "@/dal/video/queries";
 import { TranscriptLine, Video } from "@/types/video";
 
-export async function getVideoBySectionIdService(
+export async function getVideoService(
   sectionId: string,
 ): Promise<Video | null> {
-  const video = await getVideoBySectionId(sectionId);
+  const video = await getVideo(sectionId);
   if (!video) return null;
 
   //PERMISSION
@@ -16,10 +13,10 @@ export async function getVideoBySectionIdService(
   return video;
 }
 
-export async function getTranscriptByVideoIdService(
+export async function getTranscriptService(
   videoId: string,
 ): Promise<TranscriptLine[]> {
-  const transcript = await getTranscriptByVideoId(videoId);
+  const transcript = await getTranscript(videoId);
 
   if (!transcript) return [];
 

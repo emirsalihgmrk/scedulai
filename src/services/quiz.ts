@@ -1,8 +1,5 @@
 import { generateSentences } from "@/ai/tasks/generate-sentences";
-import {
-  getTranscriptByVideoIdService,
-  getVideoBySectionIdService,
-} from "@/services/video";
+import { getTranscriptService, getVideoService } from "@/services/video";
 import { Question, QuizWithQuestions } from "@/types/quiz";
 import { createQuiz, updateQuestion } from "@/dal/quiz/mutations";
 import {
@@ -11,7 +8,7 @@ import {
   submitAnswerSchema,
 } from "@/schemas/quiz";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
-import { getQuestionById, getQuizBySectionId } from "@/dal/quiz/queries";
+import { getQuestion, getQuiz } from "@/dal/quiz/queries";
 
 // No auth yet — placeholders until users/sessions exist (see video.ts).
 const TEMP_USER_ID = process.env.TEMP_USER_ID as string;
@@ -23,7 +20,7 @@ export async function getQuizBySectionIdService(
   sectionId: string,
   userId: string = TEMP_USER_ID,
 ): Promise<QuizWithQuestions | null> {
-  const quiz = await getQuizBySectionId(sectionId, userId);
+  const quiz = await getQuiz(sectionId, userId);
   if (!quiz) return null;
 
   //PERMISSION
@@ -35,7 +32,7 @@ export async function getQuizBySectionIdService(
 export async function getQuestionByIdService(
   questionId: string,
 ): Promise<Question | null> {
-  const question = await getQuestionById(questionId);
+  const question = await getQuestion(questionId);
   if (!question) return null;
 
   //PERMISSION
@@ -86,10 +83,10 @@ export async function getOrCreateQuizService(
   const existing = await getQuizBySectionIdService(sectionId);
   if (existing) return existing;
 
-  const video = await getVideoBySectionIdService(sectionId);
+  const video = await getVideoService(sectionId);
   if (!video) return null;
 
-  const lines = await getTranscriptByVideoIdService(video.id);
+  const lines = await getTranscriptService(video.id);
   const transcript = lines.map((line) => line.text).join("\n");
 
   const { sentences } = await generateSentences({

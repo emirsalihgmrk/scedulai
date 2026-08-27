@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import Header from "@/components/shared/header";
 import { getSectionByOrderService } from "@/services/program";
-import { getVideoBySectionIdService } from "@/services/video";
+import { getVideoService } from "@/services/video";
 import { getOrCreateQuizService } from "@/services/quiz";
 import { VideoPanel, VideoPanelFallback } from "./_components/video-panel";
 import { QuizPanel, QuizPanelFallback } from "./_components/quiz-panel";
@@ -27,7 +27,7 @@ export default async function Page({
   const currentSection = await getSectionByOrderService(programSlug, order);
   if (!currentSection) notFound();
 
-  const videoPromise = getVideoBySectionIdService(currentSection.id);
+  const videoPromise = getVideoService(currentSection.id);
   const quizPromise = getOrCreateQuizService(currentSection.id);
 
   return (
