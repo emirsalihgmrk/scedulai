@@ -205,11 +205,22 @@ export async function fetchEnglishTranscript(
   videoId: string,
   durationSeconds: number,
 ): Promise<TranscriptLine[] | null> {
+  const tryFetch = async (lang?: string) => {
+    const raw = await YoutubeTranscript.fetchTranscript(
+      videoId,
+      lang ? { lang } : {},
+    );
+    return raw.length > 0 ? raw : null;
+  };
+
   try {
-    const raw = await YoutubeTranscript.fetchTranscript(videoId, {
-      lang: "en",
-    });
-    if (raw.length === 0) return null;
+    // Try exact "en", then "en-GB" (BBC content), then default (auto-generated)
+    const raw =
+      (await tryFetch("en").catch(() => null)) ??
+      (await tryFetch("en-GB").catch(() => null)) ??
+      (await tryFetch().catch(() => null));
+
+    if (!raw) return null;
 
     const maxOffset = Math.max(...raw.map((line) => line.offset));
     const looksLikeMs = maxOffset > durationSeconds * 1.5;
