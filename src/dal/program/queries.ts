@@ -1,7 +1,22 @@
 import { db } from "@/db";
 import { programsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import type { Section } from "@/schemas/program";
+import type { ProgramListItem, Section } from "@/schemas/program";
+
+export async function getPrograms(): Promise<ProgramListItem[]> {
+  return db.query.programsTable.findMany({
+    columns: {
+      id: true,
+      slug: true,
+      title: true,
+      shortDescription: true,
+      thumbnailUrl: true,
+      cefrLevel: true,
+      referenceUrl: true,
+    },
+    orderBy: (programs, { asc }) => asc(programs.title),
+  });
+}
 
 export async function getFirstSection(
   programSlug: string,

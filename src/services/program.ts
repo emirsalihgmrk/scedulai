@@ -1,5 +1,18 @@
-import { getFirstSection, getSectionByOrder } from "@/dal/program/queries";
-import { Section } from "@/schemas/program";
+import {
+  getFirstSection,
+  getPrograms,
+  getSectionByOrder,
+} from "@/dal/program/queries";
+import { ProgramListItem, Section } from "@/schemas/program";
+
+export async function getProgramsService(): Promise<ProgramListItem[]> {
+  const programs = await getPrograms();
+
+  //PERMISSION
+  //
+
+  return programs;
+}
 
 export async function getFirstSectionService(
   programSlug: string,
