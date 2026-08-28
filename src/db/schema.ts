@@ -130,10 +130,10 @@ export const programsTable = pgTable("programs", {
   title: text("title").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description").notNull(),
+  shortDescription: text("short_description").notNull(),
   channelId: uuid("channel_id").references(() => channelsTable.id, {
     onDelete: "set null",
   }),
-  participantCount: integer("participant_count").default(0).notNull(),
   thumbnailUrl: text("thumbnail_url").notNull(),
   cefrLevel: cefrLevelEnum("cefr_level"),
   referenceUrl: text("reference_url"),
@@ -160,7 +160,7 @@ export const sectionsTable = pgTable(
 
 export const channelsTable = pgTable("channels", {
   ...commonFields,
-  youtubeId: text("youtube_id").notNull().unique(),
+  youtubeSlug: text("youtube_slug").notNull().unique(),
   title: text("title").notNull(),
   thumbnailUrl: text("thumbnail_url").notNull(),
 });
