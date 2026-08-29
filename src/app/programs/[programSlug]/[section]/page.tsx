@@ -2,6 +2,11 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import Header from "@/components/shared/header";
+import {
+  SUPPORTED_NATIVE_LANGUAGES,
+  SUPPORTED_TARGET_LANGUAGES,
+} from "@/constants/language";
+import { getCurrentUser } from "@/services/auth";
 import { getSectionByOrderService } from "@/services/program";
 import { getVideoService } from "@/services/video";
 import { getOrCreateQuizService } from "@/services/quiz";
@@ -24,8 +29,21 @@ export default async function Page({
   const order = parseOrder(section);
   if (order === null) notFound();
 
-  const currentSection = await getSectionByOrderService(programSlug, order);
+  const [currentSection, user] = await Promise.all([
+    getSectionByOrderService(programSlug, order),
+    getCurrentUser(),
+  ]);
+
   if (!currentSection) notFound();
+
+  const nativeLang = SUPPORTED_NATIVE_LANGUAGES.find(
+    (l) => l.code === user?.nativeLanguage,
+  );
+  const targetLang = SUPPORTED_TARGET_LANGUAGES.find(
+    (l) => l.code === user?.targetLanguage,
+  );
+  const nativeLangLabel = nativeLang?.nativeName ?? "Native";
+  const targetLangLabel = targetLang?.nativeName ?? "English";
 
   const videoPromise = getVideoService(currentSection.id);
   const quizPromise = getOrCreateQuizService(currentSection.id);
@@ -42,7 +60,11 @@ export default async function Page({
           </section>
           <section aria-label="AI interactive quiz" className="min-w-0">
             <Suspense fallback={<QuizPanelFallback />}>
-              <QuizPanel quizPromise={quizPromise} />
+              <QuizPanel
+                quizPromise={quizPromise}
+                nativeLangLabel={nativeLangLabel}
+                targetLangLabel={targetLangLabel}
+              />
             </Suspense>
           </section>
         </div>

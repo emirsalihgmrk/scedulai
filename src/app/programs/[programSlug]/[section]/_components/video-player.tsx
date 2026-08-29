@@ -1,43 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Play,
-  Volume2,
-  Maximize,
-  Rewind,
-  FastForward,
-  Captions,
-  Settings,
-} from "lucide-react";
+import { Play } from "lucide-react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatDuration } from "@/lib/utils";
 import { Video } from "@/schemas/video";
-
-function ControlButton({
-  children,
-  label,
-  onClick,
-}: {
-  children: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      onClick={onClick}
-      aria-label={label}
-      className="text-white/90 hover:bg-white/15 hover:text-white"
-    >
-      {children}
-    </Button>
-  );
-}
 
 export function VideoPlayer({ video }: { video: Video }) {
   const [playing, setPlaying] = useState(false);
@@ -70,7 +37,7 @@ export function VideoPlayer({ video }: { video: Video }) {
               type="button"
               onClick={() => setPlaying(true)}
               aria-label="Play video"
-              className="absolute inset-0 flex items-center justify-center"
+              className="absolute inset-0 flex items-center justify-center cursor-pointer"
             >
               <span className="flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-white/20 transition-transform duration-200 group-hover:scale-105">
                 <Play className="size-7 translate-x-0.5" />
@@ -82,55 +49,6 @@ export function VideoPlayer({ video }: { video: Video }) {
               <span className="size-2 animate-pulse rounded-full bg-warning" />
               Auto captions on
             </Badge>
-
-            {/* Custom control bar */}
-            <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-              {/* Scrubber */}
-              <div className="mb-3 flex items-center gap-3 text-[11px] font-medium tabular-nums text-white">
-                <span>04:12</span>
-                <div className="relative h-1.5 flex-1 rounded-full bg-white/25">
-                  <div
-                    className="absolute inset-y-0 left-0 rounded-full bg-primary"
-                    style={{ width: `30%` }}
-                  />
-                  <div
-                    className="absolute top-1/2 size-3.5 -translate-y-1/2 rounded-full border-2 border-primary bg-white shadow"
-                    style={{ left: `calc(30% - 7px)` }}
-                  />
-                </div>
-                <span className="text-white/70">
-                  {formatDuration(video.durationSeconds)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-0.5">
-                  <ControlButton label="Rewind 10 seconds">
-                    <Rewind />
-                  </ControlButton>
-                  <ControlButton label="Play" onClick={() => setPlaying(true)}>
-                    <Play />
-                  </ControlButton>
-                  <ControlButton label="Forward 10 seconds">
-                    <FastForward />
-                  </ControlButton>
-                  <ControlButton label="Volume">
-                    <Volume2 />
-                  </ControlButton>
-                </div>
-                <div className="flex items-center gap-0.5">
-                  <ControlButton label="Captions">
-                    <Captions />
-                  </ControlButton>
-                  <ControlButton label="Settings">
-                    <Settings />
-                  </ControlButton>
-                  <ControlButton label="Fullscreen">
-                    <Maximize />
-                  </ControlButton>
-                </div>
-              </div>
-            </div>
           </>
         )}
       </div>

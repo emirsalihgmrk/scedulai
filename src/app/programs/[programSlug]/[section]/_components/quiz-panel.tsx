@@ -2,7 +2,6 @@
 
 import { use, useState, useTransition } from "react";
 import {
-  GraduationCap,
   CircleCheck,
   Clock,
   Gauge,
@@ -23,7 +22,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardAction,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -33,9 +31,6 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Question, QuizWithQuestions } from "@/schemas/quiz";
 import { EmptyState } from "./empty-state";
 import { submitAnswerAction } from "@/actions/quiz";
-
-const SOURCE_LANG = "Türkçe";
-const TARGET_LANG = "English";
 
 function accuracyClasses(accuracy: number) {
   return accuracy < 75
@@ -83,12 +78,6 @@ function OverviewStep({
             Generated from this talk
           </CardDescription>
         </div>
-        <CardAction className="row-span-1 self-center">
-          <Badge className="gap-1.5 bg-warning/15 font-bold text-warning-foreground ring-1 ring-inset ring-warning/30">
-            <GraduationCap />
-            CEFR: {quiz.cefrLevel}
-          </Badge>
-        </CardAction>
       </CardHeader>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pt-2">
@@ -427,7 +416,8 @@ function QuestionStep({
   question,
   index,
   total,
-  cefrLevel,
+  nativeLangLabel,
+  targetLangLabel,
   value,
   onChange,
   onOverview,
@@ -438,7 +428,8 @@ function QuestionStep({
   question: Question;
   index: number;
   total: number;
-  cefrLevel: string;
+  nativeLangLabel: string;
+  targetLangLabel: string;
   value: string;
   onChange: (value: string) => void;
   onOverview: () => void;
@@ -446,6 +437,10 @@ function QuestionStep({
   onNext: () => void;
   onGraded: (question: Question) => void;
 }) {
+  const [sourceLang, targetLang] =
+    question.direction === "native-to-target"
+      ? [nativeLangLabel, targetLangLabel]
+      : [targetLangLabel, nativeLangLabel];
   const isLast = index === total;
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -480,15 +475,12 @@ function QuestionStep({
             <span className="size-1.5 animate-pulse rounded-full bg-primary" />
             Question {index} / {total}
           </Badge>
-          <Badge className="bg-warning/15 font-semibold text-warning-foreground ring-1 ring-inset ring-warning/30">
-            {cefrLevel}
-          </Badge>
         </div>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
           <Languages className="size-3.5" />
-          {SOURCE_LANG}
+          {sourceLang}
           <ArrowRight className="size-3" />
-          {TARGET_LANG}
+          {targetLang}
         </span>
       </div>
 
@@ -547,7 +539,15 @@ function QuestionStep({
   );
 }
 
-function QuizContent({ quiz }: { quiz: QuizWithQuestions }) {
+function QuizContent({
+  quiz,
+  nativeLangLabel,
+  targetLangLabel,
+}: {
+  quiz: QuizWithQuestions;
+  nativeLangLabel: string;
+  targetLangLabel: string;
+}) {
   const total = quiz.questions.length;
 
   const [step, setStep] = useState(0);
@@ -589,7 +589,8 @@ function QuizContent({ quiz }: { quiz: QuizWithQuestions }) {
             question={question}
             index={step}
             total={total}
-            cefrLevel={quiz.cefrLevel}
+            nativeLangLabel={nativeLangLabel}
+            targetLangLabel={targetLangLabel}
             value={answers[question.id] ?? ""}
             onChange={(value) =>
               setAnswers((prev) => ({ ...prev, [question.id]: value }))
@@ -607,8 +608,12 @@ function QuizContent({ quiz }: { quiz: QuizWithQuestions }) {
 
 export function QuizPanel({
   quizPromise,
+  nativeLangLabel,
+  targetLangLabel,
 }: {
   quizPromise: Promise<QuizWithQuestions | null>;
+  nativeLangLabel: string;
+  targetLangLabel: string;
 }) {
   const quiz = use(quizPromise);
 
@@ -625,7 +630,13 @@ export function QuizPanel({
     );
   }
 
-  return <QuizContent quiz={quiz} />;
+  return (
+    <QuizContent
+      quiz={quiz}
+      nativeLangLabel={nativeLangLabel}
+      targetLangLabel={targetLangLabel}
+    />
+  );
 }
 
 export function QuizPanelFallback() {

@@ -30,6 +30,7 @@ export function analyzeSentence({
   - Judge meaning and grammatical correctness, NOT word-for-word similarity to the reference English sentence.
   - The reference English sentence is only ONE valid answer. A single source sentence can have several equally correct English translations. Before scoring, work out every reading the source sentence can grammatically carry, and treat the learner's translation as fully correct if it matches ANY of them.
   - Only lower the score for genuine meaning or grammar errors that are wrong under EVERY valid reading of the source.
+  - Do NOT penalize for punctuation differences (missing commas, periods, apostrophes, etc.). Punctuation errors must never lower the score or appear in the mistakes list.
   - If the learner's translation is empty or blank, accuracy MUST be 0.
 
   IMPORTANT — Turkish-specific ambiguities (accept all of the following as correct):
