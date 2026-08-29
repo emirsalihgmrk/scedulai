@@ -1,6 +1,5 @@
 import { db } from "@/db";
 import { questionsTable, quizzesTable } from "@/db/schema";
-import { CefrLevel } from "@/constants/cefr-level";
 import type {
   Question,
   QuestionUpdate,
@@ -36,14 +35,13 @@ export async function updateQuestion(
 export async function createQuiz(
   sectionId: string,
   userId: string,
-  cefrLevel: CefrLevel,
   sentences: Array<{ native: string; english: string }>,
 ): Promise<QuizWithQuestions> {
   return db.transaction(async (tx) => {
     const [quiz] = await tx
       .insert(quizzesTable)
-      .values({ userId, sectionId, cefrLevel })
-      .returning({ id: quizzesTable.id, cefrLevel: quizzesTable.cefrLevel });
+      .values({ userId, sectionId })
+      .returning({ id: quizzesTable.id });
 
     const questions = await tx
       .insert(questionsTable)
@@ -52,7 +50,6 @@ export async function createQuiz(
           quizId: quiz.id,
           order: index,
           type: "translation" as const,
-          direction: "native-to-target" as const,
           payload: {
             type: "translation" as const,
             sourceSentence: sentence.native,

@@ -12,7 +12,7 @@ export async function getQuiz(
       eq(quizzesTable.userId, userId),
       eq(quizzesTable.sectionId, sectionId),
     ),
-    columns: { id: true, cefrLevel: true },
+    columns: { id: true },
     with: {
       questions: {
         columns: { createdAt: false, updatedAt: false },

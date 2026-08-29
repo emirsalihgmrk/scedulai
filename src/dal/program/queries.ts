@@ -11,7 +11,7 @@ export async function getPrograms(): Promise<ProgramListItem[]> {
       title: true,
       shortDescription: true,
       thumbnailUrl: true,
-      cefrLevel: true,
+      difficulty: true,
       referenceUrl: true,
     },
     orderBy: (programs, { asc }) => asc(programs.title),

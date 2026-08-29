@@ -12,7 +12,6 @@ import { getQuestion, getQuiz } from "@/dal/quiz/queries";
 import { getCurrentUser } from "@/services/auth";
 
 export const NATIVE_LANGUAGE = "Turkish";
-const DEFAULT_CEFR_LEVEL = "A2" as const;
 const QUESTION_COUNT = 5;
 
 export async function getQuizBySectionIdService(
@@ -94,8 +93,7 @@ export async function getOrCreateQuizService(
     transcript,
     nativeLanguage: NATIVE_LANGUAGE,
     count: QUESTION_COUNT,
-    cefrLevel: DEFAULT_CEFR_LEVEL,
   });
 
-  return createQuiz(sectionId, user.id, DEFAULT_CEFR_LEVEL, sentences);
+  return createQuiz(sectionId, user.id, sentences);
 }

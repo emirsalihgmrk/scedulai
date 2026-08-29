@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ExternalLink } from "lucide-react";
+import { DIFFICULTY_BADGE_CLASSES } from "@/constants/difficulty";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ export function ProgramCard({ program }: { program: ProgramListItem }) {
     title,
     shortDescription,
     thumbnailUrl,
-    cefrLevel,
+    difficulty,
     referenceUrl,
   } = program;
 
@@ -26,9 +27,11 @@ export function ProgramCard({ program }: { program: ProgramListItem }) {
           alt=""
           className="size-full object-cover transition-transform duration-300 group-hover/program:scale-105"
         />
-        {cefrLevel && (
-          <Badge className="absolute top-3 left-3 bg-background/85 text-foreground backdrop-blur-sm">
-            {cefrLevel}
+        {difficulty && (
+          <Badge
+            className={`absolute top-3 left-3 ${DIFFICULTY_BADGE_CLASSES[difficulty]}`}
+          >
+            {difficulty}
           </Badge>
         )}
       </div>

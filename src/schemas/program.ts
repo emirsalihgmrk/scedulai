@@ -15,6 +15,6 @@ export type ProgramListItem = Pick<
   | "title"
   | "shortDescription"
   | "thumbnailUrl"
-  | "cefrLevel"
+  | "difficulty"
   | "referenceUrl"
 >;

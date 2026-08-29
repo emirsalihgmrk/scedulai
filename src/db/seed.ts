@@ -1,4 +1,4 @@
-import { CefrLevel } from "@/constants/cefr-level";
+import { Difficulty } from "@/constants/difficulty";
 import { db } from "@/db";
 import {
   channelsTable,
@@ -19,7 +19,7 @@ const PROGRAMS_SEED: {
   channelHandle: string;
   title: string;
   slug: string;
-  cefrLevel: CefrLevel;
+  difficulty: Difficulty;
   description: string;
   shortDescription: string;
   thumbnailUrl: string;
@@ -29,7 +29,7 @@ const PROGRAMS_SEED: {
     channelHandle: "@TED",
     title: "TED Talks",
     slug: "ted-talks",
-    cefrLevel: "B1",
+    difficulty: "intermediate",
     shortDescription:
       "Inspiring talks from the world's leading thinkers, scientists, and leaders. Sharpen your intermediate listening with diverse accents and rich, real-world vocabulary.",
     description:
@@ -42,7 +42,7 @@ const PROGRAMS_SEED: {
     channelHandle: "@TEDx",
     title: "TEDx Talks",
     slug: "tedx-talks",
-    cefrLevel: "B2",
+    difficulty: "advanced",
     shortDescription:
       "Independent, authentic stories from local communities around the world. Push past the language barrier with advanced terms, abstract ideas, and fluent delivery.",
     description:
@@ -55,7 +55,7 @@ const PROGRAMS_SEED: {
     channelHandle: "@TEDEd",
     title: "TED-Ed Talks",
     slug: "teded-talks",
-    cefrLevel: "B1",
+    difficulty: "intermediate",
     shortDescription:
       "Explore science and history through stunning animations and engaging stories. Reinforce your comprehension with clear, well-structured, and easy-to-follow narration.",
     description:
@@ -68,7 +68,7 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "6 Minute English",
     slug: "6-minutes-english",
-    cefrLevel: "A2",
+    difficulty: "beginner",
     shortDescription:
       "Everyday topics explored through entertaining 6-minute conversations. Learn the key vocabulary in context and get used to the natural British accent and rhythm.",
     description:
@@ -82,7 +82,7 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "Learning English From The News",
     slug: "learning-english-from-the-news",
-    cefrLevel: "A2",
+    difficulty: "beginner",
     shortDescription:
       "Build your skills by following the biggest headlines on the world agenda. Learn the vocabulary and phrases most common in media, while boosting your general knowledge.",
     description:
@@ -96,7 +96,7 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "Really Easy English",
     slug: "really-easy-english",
-    cefrLevel: "A1",
+    difficulty: "beginner",
     shortDescription:
       "Basic grammar and everyday phrases tailored for absolute beginners. Grasp the fundamentals through short, clear, step-by-step explanations that build real confidence.",
     description:
@@ -110,7 +110,7 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "The English We Speak",
     slug: "the-english-we-speak",
-    cefrLevel: "A2",
+    difficulty: "beginner",
     shortDescription:
       "Discover the idioms and slang native speakers use in daily life. Pick up the real, street-level English and popular expressions you won't find in textbooks.",
     description:
@@ -124,7 +124,7 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "Learning English For Work",
     slug: "learning-english-for-work",
-    cefrLevel: "A2",
+    difficulty: "beginner",
     shortDescription:
       "Practical English for the business world, interviews, and professional emails. Master phrases for running meetings, giving presentations, and writing with confidence.",
     description:
@@ -138,7 +138,7 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "6 Minute Vocabulary",
     slug: "6-minutes-vocabulary",
-    cefrLevel: "A1",
+    difficulty: "beginner",
     shortDescription:
       "Expand your vocabulary and learn to use words in the right context. Grasp prefixes, suffixes, synonyms, and antonyms with fast, effective 6-minute lessons.",
     description:
@@ -264,7 +264,7 @@ async function seed() {
         shortDescription: prog.shortDescription,
         channelId: channelDbIdBySlug.get(prog.channelHandle)!,
         thumbnailUrl: prog.thumbnailUrl,
-        cefrLevel: prog.cefrLevel,
+        difficulty: prog.difficulty,
         referenceUrl: prog.referenceUrl,
       })),
     )

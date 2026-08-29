@@ -13,7 +13,7 @@ export type QuestionUpdate = Partial<QuestionSelect>;
 
 export type Question = Omit<QuestionSelect, "createdAt" | "updatedAt">;
 
-export type QuizWithQuestions = Pick<QuizSelect, "id" | "cefrLevel"> & {
+export type QuizWithQuestions = Pick<QuizSelect, "id"> & {
   questions: Question[];
 };
 

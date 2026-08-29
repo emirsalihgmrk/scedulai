@@ -1,4 +1,4 @@
-import { CEFR_LEVELS } from "@/constants/cefr-level";
+import { DIFFICULTIES } from "@/constants/difficulty";
 import {
   SUPPORTED_NATIVE_LANGUAGE_CODES,
   SUPPORTED_TARGET_LANGUAGE_CODES,
@@ -35,7 +35,7 @@ const commonFields = {
 };
 
 export const planEnum = pgEnum("plan", PLANS);
-export const cefrLevelEnum = pgEnum("cefr_level", CEFR_LEVELS);
+export const difficultyEnum = pgEnum("difficulty", DIFFICULTIES);
 export const questionTypeEnum = pgEnum("question_type", QUESTION_TYPES);
 export const questionDirectionEnum = pgEnum(
   "question_direction",
@@ -135,7 +135,7 @@ export const programsTable = pgTable("programs", {
     onDelete: "set null",
   }),
   thumbnailUrl: text("thumbnail_url").notNull(),
-  cefrLevel: cefrLevelEnum("cefr_level"),
+  difficulty: difficultyEnum("difficulty"),
   referenceUrl: text("reference_url"),
 });
 
@@ -207,7 +207,6 @@ export const quizzesTable = pgTable(
     sectionId: uuid("section_id")
       .references(() => sectionsTable.id, { onDelete: "cascade" })
       .notNull(),
-    cefrLevel: cefrLevelEnum("cefr_level").notNull(),
   },
   (table) => [
     index("quizzes_user_id_idx").on(table.userId),
@@ -226,7 +225,7 @@ export const questionsTable = pgTable(
     order: integer("order").notNull(),
     type: questionTypeEnum("type").default("translation").notNull(),
     direction: questionDirectionEnum("direction")
-      .default("target-to-native")
+      .default("native-to-target")
       .notNull(),
     payload: jsonb("payload").$type<QuestionPayload>().notNull(),
     answer: jsonb("answer").$type<QuestionAnswer>(),
