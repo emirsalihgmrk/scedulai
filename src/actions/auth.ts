@@ -1,22 +1,15 @@
 "use server";
 
-import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { toActionFailure } from "@/lib/action";
 import { signInSchema, signUpSchema } from "@/schemas/auth";
 import type { SignInInput, SignUpInput } from "@/schemas/auth";
 import type { ActionResult } from "@/schemas/common";
 
-// better-auth surfaces expected failures (e.g. wrong password, email in use) as
-// APIError — map those to a typed failure and let anything else bubble up.
-function toActionFailure(error: unknown): Extract<ActionResult, { ok: false }> {
-  if (error instanceof APIError) return { ok: false, error: error.message };
-  throw error;
-}
-
 export async function signUpUser(data: SignUpInput): Promise<ActionResult> {
-  const input = signUpSchema.parse(data);
   try {
+    const input = signUpSchema.parse(data);
     await auth.api.signUpEmail({
       body: {
         email: input.email,
@@ -34,8 +27,8 @@ export async function signUpUser(data: SignUpInput): Promise<ActionResult> {
 }
 
 export async function signInUser(data: SignInInput): Promise<ActionResult> {
-  const input = signInSchema.parse(data);
   try {
+    const input = signInSchema.parse(data);
     await auth.api.signInEmail({
       body: {
         email: input.email,

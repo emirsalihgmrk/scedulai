@@ -2,7 +2,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { userTable } from "@/db/schema";
 
-const _userInsert = createInsertSchema(userTable);
+const userInsertSchema = createInsertSchema(userTable);
 
 export const signUpSchema = z.object({
   name: z.string().min(1),
@@ -13,8 +13,8 @@ export const signUpSchema = z.object({
     .regex(/[A-Z]/, "Must contain an uppercase letter")
     .regex(/[a-z]/, "Must contain a lowercase letter")
     .regex(/[0-9]/, "Must contain a number"),
-  nativeLanguage: _userInsert.shape.nativeLanguage,
-  plan: _userInsert.shape.plan,
+  nativeLanguage: userInsertSchema.shape.nativeLanguage,
+  plan: userInsertSchema.shape.plan,
   rememberMe: z.boolean().optional().default(false),
 });
 export type SignUpInput = z.infer<typeof signUpSchema>;
