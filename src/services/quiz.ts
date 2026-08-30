@@ -2,14 +2,11 @@ import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getTranscriptService, getVideoService } from "@/services/video";
 import { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
 import { createQuiz, upsertAnswer } from "@/dal/quiz/mutations";
-import {
-  QuestionAnswer,
-  QuestionPayload,
-  submitAnswerSchema,
-} from "@/schemas/quiz";
+import { AnswerResponse, submitAnswerSchema } from "@/schemas/quiz";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
 import { getCurrentUser } from "@/services/auth";
+import { AppError } from "@/lib/errors";
 import {
   getNativeLanguageEnglishName,
   type SupportedNativeLanguageCode,
@@ -30,70 +27,43 @@ function userLanguages(user: {
   };
 }
 
-export async function getQuizBySectionIdService(
-  sectionId: string,
-): Promise<QuizWithQuestions | null> {
-  const user = await getCurrentUser();
-  if (!user) throw new Error("Unauthorized");
-
-  const { nativeLanguage, targetLanguage } = userLanguages(user);
-  const quiz = await getQuiz(sectionId, nativeLanguage, targetLanguage, user.id);
-  if (!quiz) return null;
-
-  return quiz;
-}
-
-export async function getQuestionByIdService(questionId: string) {
-  const question = await getQuestion(questionId);
-  if (!question) return null;
-
-  //PERMISSION
-  //
-
-  return question;
-}
-
 export async function submitAnswerService(
   questionId: string,
-  questionPayload: QuestionPayload,
-  input: QuestionAnswer,
+  input: AnswerResponse,
 ): Promise<QuestionWithAnswer> {
   const user = await getCurrentUser();
-  if (!user) throw new Error("Unauthorized");
+  if (!user) throw new AppError("Unauthorized");
 
-  const question = await getQuestionByIdService(questionId);
-  if (!question) throw new Error("Not found");
-
-  //PERMISSION
-  //
+  const question = await getQuestion(questionId);
+  if (!question) throw new AppError("Not found");
 
   const { nativeLanguage } = userLanguages(user);
 
   const aiResult = await analyzeSentence({
-    sentence: questionPayload.sourceSentence,
-    originalSentence: questionPayload.expectedTranslation ?? "",
+    sentence: question.payload.sourceSentence,
+    originalSentence: question.payload.expectedTranslation ?? "",
     userTranslation: input.userTranslation,
     nativeLanguage: getNativeLanguageEnglishName(nativeLanguage),
   });
 
   const { accuracy, ...analysis } = aiResult;
   const analyzedInput = {
-    answer: input,
-    answerAnalysis: analysis,
-    answerAccuracy: Math.round(accuracy),
+    response: input,
+    analysis: analysis,
+    accuracy: Math.round(accuracy),
   };
 
   const parsedResult = submitAnswerSchema.safeParse(analyzedInput);
-  if (!parsedResult.success) throw new Error("Invalid data");
+  if (!parsedResult.success) throw new AppError("Invalid data");
 
-  return upsertAnswer(user.id, questionId, parsedResult.data);
+  return upsertAnswer({ userId: user.id, questionId, ...parsedResult.data });
 }
 
 export async function getOrCreateQuizService(
   sectionId: string,
 ): Promise<QuizWithQuestions | null> {
   const user = await getCurrentUser();
-  if (!user) throw new Error("Unauthorized");
+  if (!user) throw new AppError("Unauthorized");
 
   const { nativeLanguage, targetLanguage } = userLanguages(user);
 
@@ -109,6 +79,8 @@ export async function getOrCreateQuizService(
   if (!video) return null;
 
   const lines = await getTranscriptService(video.id);
+  if (lines.length === 0) return null;
+
   const transcript = lines.map((line) => line.text).join("\n");
 
   const { sentences } = await generateSentences({

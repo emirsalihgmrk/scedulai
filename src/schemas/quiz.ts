@@ -8,15 +8,14 @@ import { z } from "zod";
 type QuizSelect = typeof quizzesTable.$inferSelect;
 type QuestionSelect = typeof questionsTable.$inferSelect;
 type AnswerSelect = typeof answersTable.$inferSelect;
+export type AnswerInsert = typeof answersTable.$inferInsert;
 
 // query types
 
 export type Question = Omit<QuestionSelect, "createdAt" | "updatedAt">;
 
 export type QuestionWithAnswer = Question & {
-  answer: AnswerSelect["answer"] | null;
-  answerAnalysis: AnswerSelect["answerAnalysis"] | null;
-  answerAccuracy: AnswerSelect["answerAccuracy"] | null;
+  answer: Pick<AnswerSelect, "response" | "analysis" | "accuracy"> | null;
 };
 
 export type QuizWithQuestions = Pick<QuizSelect, "id"> & {
@@ -25,7 +24,7 @@ export type QuizWithQuestions = Pick<QuizSelect, "id"> & {
 
 // column types
 
-export type QuestionAnswerAnalysis = z.infer<typeof aiAnalysisSchema>;
+export type AnswerAnalysis = z.infer<typeof aiAnalysisSchema>;
 
 export type QuestionPayload = {
   type: "translation";
@@ -36,19 +35,17 @@ export type QuestionPayload = {
 
 // schemas - derived types
 
-export const questionAnswerSchema = z.discriminatedUnion("type", [
+export const answerResponseSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("translation"),
     userTranslation: z.string().min(1),
   }),
 ]);
 
-export type QuestionAnswer = z.infer<typeof questionAnswerSchema>;
+export type AnswerResponse = z.infer<typeof answerResponseSchema>;
 
 export const submitAnswerSchema = createInsertSchema(answersTable).pick({
-  answer: true,
-  answerAnalysis: true,
-  answerAccuracy: true,
+  response: true,
+  analysis: true,
+  accuracy: true,
 });
-
-export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;

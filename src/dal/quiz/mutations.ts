@@ -2,9 +2,9 @@ import { db } from "@/db";
 import { answersTable, questionsTable, quizzesTable } from "@/db/schema";
 import { getQuestion } from "@/dal/quiz/queries";
 import type {
+  AnswerInsert,
   QuestionWithAnswer,
   QuizWithQuestions,
-  SubmitAnswerInput,
 } from "@/schemas/quiz";
 import type {
   SupportedNativeLanguageCode,
@@ -58,37 +58,33 @@ export async function createQuiz(
       questions: questions.map((question) => ({
         ...question,
         answer: null,
-        answerAnalysis: null,
-        answerAccuracy: null,
       })),
     };
   });
 }
 
 export async function upsertAnswer(
-  userId: string,
-  questionId: string,
-  input: SubmitAnswerInput,
+  input: AnswerInsert,
 ): Promise<QuestionWithAnswer> {
   const [answer] = await db
     .insert(answersTable)
-    .values({ userId, questionId, ...input })
+    .values(input)
     .onConflictDoUpdate({
       target: [answersTable.userId, answersTable.questionId],
       set: {
-        answer: input.answer,
-        answerAnalysis: input.answerAnalysis,
-        answerAccuracy: input.answerAccuracy,
+        response: input.response,
+        analysis: input.analysis,
+        accuracy: input.accuracy,
       },
     })
     .returning({
-      answer: answersTable.answer,
-      answerAnalysis: answersTable.answerAnalysis,
-      answerAccuracy: answersTable.answerAccuracy,
+      response: answersTable.response,
+      analysis: answersTable.analysis,
+      accuracy: answersTable.accuracy,
     });
 
-  const question = await getQuestion(questionId);
+  const question = await getQuestion(input.questionId);
   if (!question) throw new Error("Not found");
 
-  return { ...question, ...answer };
+  return { ...question, answer };
 }

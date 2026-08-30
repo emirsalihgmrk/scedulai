@@ -57,11 +57,11 @@ function OverviewStep({
 }) {
   const total = quiz.questions.length;
 
-  const gradedQuestions = questions.filter((q) => q.answerAccuracy !== null);
+  const gradedQuestions = questions.filter((q) => q.answer !== null);
   const avgAccuracy =
     gradedQuestions.length > 0
       ? Math.round(
-          gradedQuestions.reduce((sum, q) => sum + (q.answerAccuracy ?? 0), 0) /
+          gradedQuestions.reduce((sum, q) => sum + q.answer!.accuracy, 0) /
             gradedQuestions.length,
         )
       : null;
@@ -129,7 +129,7 @@ function OverviewStep({
             </p>
             <ul className="flex flex-col gap-1.5">
               {questions.map((q, i) => {
-                const isGraded = q.answerAccuracy !== null;
+                const isGraded = q.answer !== null;
                 return (
                   <li key={q.id}>
                     <button
@@ -145,9 +145,9 @@ function OverviewStep({
                       </span>
                       {isGraded && (
                         <span
-                          className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-bold tabular-nums ${accuracyClasses(q.answerAccuracy ?? 0)}`}
+                          className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-bold tabular-nums ${accuracyClasses(q.answer!.accuracy)}`}
                         >
-                          {q.answerAccuracy}%
+                          {q.answer!.accuracy}%
                         </span>
                       )}
                     </button>
@@ -257,11 +257,11 @@ function GradedQuestion({
   flipped: boolean;
   onFlip: (flipped: boolean) => void;
 }) {
-  const analysis = question.answerAnalysis;
-  const accuracy = question.answerAccuracy ?? 0;
+  const analysis = question.answer?.analysis;
+  const accuracy = question.answer?.accuracy ?? 0;
   const userTranslation =
-    question.answer?.type === "translation"
-      ? question.answer.userTranslation
+    question.answer?.response?.type === "translation"
+      ? question.answer.response.userTranslation
       : "";
 
   if (!analysis) return null;
@@ -446,13 +446,13 @@ function QuestionStep({
   const [error, setError] = useState<string | null>(null);
   const [flipped, setFlipped] = useState(false);
 
-  const isGraded = question.answerAnalysis !== null;
+  const isGraded = question.answer !== null;
 
   function handleSubmit() {
     setError(null);
     startTransition(async () => {
       try {
-        const result = await submitAnswerAction(question.id, question.payload, {
+        const result = await submitAnswerAction(question.id, {
           type: "translation",
           userTranslation: value,
         });

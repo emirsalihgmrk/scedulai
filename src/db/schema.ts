@@ -20,8 +20,8 @@ import {
 } from "drizzle-orm/pg-core";
 import type { TranscriptLine } from "@/schemas/video";
 import type {
-  QuestionAnswer,
-  QuestionAnswerAnalysis,
+  AnswerResponse,
+  AnswerAnalysis,
   QuestionPayload,
 } from "@/schemas/quiz";
 
@@ -247,9 +247,9 @@ export const answersTable = pgTable(
     questionId: uuid("question_id")
       .references(() => questionsTable.id, { onDelete: "cascade" })
       .notNull(),
-    answer: jsonb("answer").$type<QuestionAnswer>().notNull(),
-    answerAnalysis: jsonb("analysis").$type<QuestionAnswerAnalysis>().notNull(),
-    answerAccuracy: integer("accuracy").notNull(),
+    response: jsonb("response").$type<AnswerResponse>().notNull(),
+    analysis: jsonb("analysis").$type<AnswerAnalysis>().notNull(),
+    accuracy: integer("accuracy").notNull(),
   },
   (table) => [
     index("answers_user_id_idx").on(table.userId),

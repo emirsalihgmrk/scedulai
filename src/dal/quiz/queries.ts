@@ -28,9 +28,9 @@ export async function getQuiz(
           answers: {
             where: (answers, { eq }) => eq(answers.userId, userId),
             columns: {
-              answer: true,
-              answerAnalysis: true,
-              answerAccuracy: true,
+              response: true,
+              analysis: true,
+              accuracy: true,
             },
           },
         },
@@ -42,15 +42,10 @@ export async function getQuiz(
 
   return {
     id: quiz.id,
-    questions: quiz.questions.map(({ answers, ...question }) => {
-      const userAnswer = answers[0];
-      return {
-        ...question,
-        answer: userAnswer?.answer ?? null,
-        answerAnalysis: userAnswer?.answerAnalysis ?? null,
-        answerAccuracy: userAnswer?.answerAccuracy ?? null,
-      };
-    }),
+    questions: quiz.questions.map(({ answers, ...question }) => ({
+      ...question,
+      answer: answers[0] ?? null,
+    })),
   };
 }
 

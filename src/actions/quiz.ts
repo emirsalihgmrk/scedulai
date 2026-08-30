@@ -1,20 +1,20 @@
 "use server";
 
-import { QuestionAnswer, QuestionPayload } from "@/schemas/quiz";
+import { AnswerResponse } from "@/schemas/quiz";
 import { submitAnswerService } from "@/services/quiz";
+import { toActionFailure } from "@/lib/action";
 import type { ActionResult } from "@/schemas/common";
 import type { QuestionWithAnswer } from "@/schemas/quiz";
 
 export async function submitAnswerAction(
   questionId: string,
-  questionPayload: QuestionPayload,
-  input: QuestionAnswer,
+  input: AnswerResponse,
 ): Promise<ActionResult<QuestionWithAnswer>> {
   try {
-    const data = await submitAnswerService(questionId, questionPayload, input);
+    const data = await submitAnswerService(questionId, input);
 
     return { ok: true, data };
   } catch (error) {
-    return { ok: false, error: (error as Error).message };
+    return toActionFailure(error);
   }
 }
