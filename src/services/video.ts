@@ -5,12 +5,7 @@ export async function getVideoService(
   sectionId: string,
 ): Promise<Video | null> {
   const video = await getVideo(sectionId);
-  if (!video) return null;
-
-  //PERMISSION
-  //
-
-  return video;
+  return video ?? null;
 }
 
 export async function getTranscriptService(
