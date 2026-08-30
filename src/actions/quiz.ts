@@ -3,13 +3,13 @@
 import { QuestionAnswer, QuestionPayload } from "@/schemas/quiz";
 import { submitAnswerService } from "@/services/quiz";
 import type { ActionResult } from "@/schemas/common";
-import type { Question } from "@/schemas/quiz";
+import type { QuestionWithAnswer } from "@/schemas/quiz";
 
 export async function submitAnswerAction(
   questionId: string,
   questionPayload: QuestionPayload,
   input: QuestionAnswer,
-): Promise<ActionResult<Question>> {
+): Promise<ActionResult<QuestionWithAnswer>> {
   try {
     const data = await submitAnswerService(questionId, questionPayload, input);
 

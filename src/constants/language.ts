@@ -1,32 +1,97 @@
 export const SUPPORTED_NATIVE_LANGUAGES = [
-  { code: "tr", name: "Türkçe", nativeName: "Türkçe", countryCode: "tr" },
-  { code: "en", name: "İngilizce", nativeName: "English", countryCode: "gb" },
-  { code: "de", name: "Almanca", nativeName: "Deutsch", countryCode: "de" },
-  { code: "es", name: "İspanyolca", nativeName: "Español", countryCode: "es" },
-  { code: "fr", name: "Fransızca", nativeName: "Français", countryCode: "fr" },
-  { code: "it", name: "İtalyanca", nativeName: "Italiano", countryCode: "it" },
+  { code: "tr", nativeName: "Türkçe", englishName: "Turkish", countryCode: "tr" },
+  {
+    code: "en",
+    nativeName: "English",
+    englishName: "English",
+    countryCode: "gb",
+  },
+  {
+    code: "de",
+    nativeName: "Deutsch",
+    englishName: "German",
+    countryCode: "de",
+  },
+  {
+    code: "es",
+    nativeName: "Español",
+    englishName: "Spanish",
+    countryCode: "es",
+  },
+  {
+    code: "fr",
+    nativeName: "Français",
+    englishName: "French",
+    countryCode: "fr",
+  },
+  {
+    code: "it",
+    nativeName: "Italiano",
+    englishName: "Italian",
+    countryCode: "it",
+  },
 
-  { code: "ja", name: "Japonca", nativeName: "日本語", countryCode: "jp" },
-  { code: "ko", name: "Korece", nativeName: "한국어", countryCode: "kr" },
+  {
+    code: "ja",
+    nativeName: "日本語",
+    englishName: "Japanese",
+    countryCode: "jp",
+  },
+  { code: "ko", nativeName: "한국어", englishName: "Korean", countryCode: "kr" },
   {
     code: "zh",
-    name: "Çince (Basitleştirilmiş)",
     nativeName: "中文 (简体)",
+    englishName: "Chinese (Simplified)",
     countryCode: "cn",
   },
 
-  { code: "ru", name: "Rusça", nativeName: "Русский", countryCode: "ru" },
-  { code: "pt", name: "Portekizce", nativeName: "Português", countryCode: "pt" },
-  { code: "nl", name: "Felemenkçe", nativeName: "Nederlands", countryCode: "nl" },
-  { code: "pl", name: "Lehçe", nativeName: "Polski", countryCode: "pl" },
-  { code: "el", name: "Yunanca", nativeName: "Ελληνικά", countryCode: "gr" },
+  {
+    code: "ru",
+    nativeName: "Русский",
+    englishName: "Russian",
+    countryCode: "ru",
+  },
+  {
+    code: "pt",
+    nativeName: "Português",
+    englishName: "Portuguese",
+    countryCode: "pt",
+  },
+  {
+    code: "nl",
+    nativeName: "Nederlands",
+    englishName: "Dutch",
+    countryCode: "nl",
+  },
+  { code: "pl", nativeName: "Polski", englishName: "Polish", countryCode: "pl" },
+  {
+    code: "el",
+    nativeName: "Ελληνικά",
+    englishName: "Greek",
+    countryCode: "gr",
+  },
 
-  { code: "sv", name: "İsveççe", nativeName: "Svenska", countryCode: "se" },
-  { code: "no", name: "Norveççe", nativeName: "Norsk", countryCode: "no" },
-  { code: "da", name: "Danca", nativeName: "Dansk", countryCode: "dk" },
-  { code: "fi", name: "Fince", nativeName: "Suomi", countryCode: "fi" },
+  {
+    code: "sv",
+    nativeName: "Svenska",
+    englishName: "Swedish",
+    countryCode: "se",
+  },
+  {
+    code: "no",
+    nativeName: "Norsk",
+    englishName: "Norwegian",
+    countryCode: "no",
+  },
+  { code: "da", nativeName: "Dansk", englishName: "Danish", countryCode: "dk" },
+  { code: "fi", nativeName: "Suomi", englishName: "Finnish", countryCode: "fi" },
 
-  { code: "ar", name: "Arapça", nativeName: "العربية", countryCode: "sa" },
+  {
+    code: "ar",
+    nativeName: "العربية",
+    englishName: "Arabic",
+    countryCode: "sa",
+  },
 ] as const;
 
 export const SUPPORTED_NATIVE_LANGUAGE_CODES = SUPPORTED_NATIVE_LANGUAGES.map(
@@ -42,7 +107,7 @@ export type SupportedNativeLanguage =
   (typeof SUPPORTED_NATIVE_LANGUAGES)[number];
 
 export const SUPPORTED_TARGET_LANGUAGES = [
-  { code: "en", name: "İngilizce", nativeName: "English", flag: "🇬🇧" },
+  { code: "en", nativeName: "English", englishName: "English", flag: "🇬🇧" },
 ] as const;
 
 export const SUPPORTED_TARGET_LANGUAGE_CODES = SUPPORTED_TARGET_LANGUAGES.map(
@@ -56,3 +121,18 @@ export type SupportedTargetLanguageCode =
   (typeof SUPPORTED_TARGET_LANGUAGES)[number]["code"];
 export type SupportedTargetLanguage =
   (typeof SUPPORTED_TARGET_LANGUAGES)[number];
+
+// English display names — used when addressing an AI model, which expects
+// language names in English (e.g. "Turkish", "German") rather than endonyms.
+
+export function getNativeLanguageEnglishName(
+  code: SupportedNativeLanguageCode,
+): string {
+  return SUPPORTED_NATIVE_LANGUAGES.find((l) => l.code === code)!.englishName;
+}
+
+export function getTargetLanguageEnglishName(
+  code: SupportedTargetLanguageCode,
+): string {
+  return SUPPORTED_TARGET_LANGUAGES.find((l) => l.code === code)!.englishName;
+}

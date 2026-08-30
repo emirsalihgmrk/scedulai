@@ -201,17 +201,19 @@ export const quizzesTable = pgTable(
   "quizzes",
   {
     ...commonFields,
-    userId: text("user_id")
-      .references(() => userTable.id, { onDelete: "cascade" })
-      .notNull(),
     sectionId: uuid("section_id")
       .references(() => sectionsTable.id, { onDelete: "cascade" })
       .notNull(),
+    nativeLanguage: nativeLanguageEnum("native_language").notNull(),
+    targetLanguage: targetLanguageEnum("target_language").notNull(),
   },
   (table) => [
-    index("quizzes_user_id_idx").on(table.userId),
     index("quizzes_section_id_idx").on(table.sectionId),
-    unique("quizzes_user_section_unique").on(table.userId, table.sectionId),
+    unique("quizzes_section_langs_unique").on(
+      table.sectionId,
+      table.nativeLanguage,
+      table.targetLanguage,
+    ),
   ],
 );
 
@@ -228,9 +230,6 @@ export const questionsTable = pgTable(
       .default("native-to-target")
       .notNull(),
     payload: jsonb("payload").$type<QuestionPayload>().notNull(),
-    answer: jsonb("answer").$type<QuestionAnswer>(),
-    answerAnalysis: jsonb("analysis").$type<QuestionAnswerAnalysis>(),
-    answerAccuracy: integer("accuracy"),
   },
   (table) => [
     index("questions_quiz_id_idx").on(table.quizId),
@@ -238,9 +237,30 @@ export const questionsTable = pgTable(
   ],
 );
 
+export const answersTable = pgTable(
+  "answers",
+  {
+    ...commonFields,
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    questionId: uuid("question_id")
+      .references(() => questionsTable.id, { onDelete: "cascade" })
+      .notNull(),
+    answer: jsonb("answer").$type<QuestionAnswer>().notNull(),
+    answerAnalysis: jsonb("analysis").$type<QuestionAnswerAnalysis>().notNull(),
+    answerAccuracy: integer("accuracy").notNull(),
+  },
+  (table) => [
+    index("answers_user_id_idx").on(table.userId),
+    index("answers_question_id_idx").on(table.questionId),
+    unique("answers_user_question_unique").on(table.userId, table.questionId),
+  ],
+);
+
 // Relations
 export const userRelations = relations(userTable, ({ many }) => ({
-  quizzes: many(quizzesTable),
+  answers: many(answersTable),
   sessions: many(sessionTable),
   accounts: many(accountTable),
 }));
@@ -293,10 +313,6 @@ export const videosRelations = relations(videosTable, ({ one, many }) => ({
 }));
 
 export const quizzesRelations = relations(quizzesTable, ({ one, many }) => ({
-  user: one(userTable, {
-    fields: [quizzesTable.userId],
-    references: [userTable.id],
-  }),
   section: one(sectionsTable, {
     fields: [quizzesTable.sectionId],
     references: [sectionsTable.id],
@@ -304,10 +320,22 @@ export const quizzesRelations = relations(quizzesTable, ({ one, many }) => ({
   questions: many(questionsTable),
 }));
 
-export const questionsRelations = relations(questionsTable, ({ one }) => ({
+export const questionsRelations = relations(questionsTable, ({ one, many }) => ({
   quiz: one(quizzesTable, {
     fields: [questionsTable.quizId],
     references: [quizzesTable.id],
+  }),
+  answers: many(answersTable),
+}));
+
+export const answersRelations = relations(answersTable, ({ one }) => ({
+  user: one(userTable, {
+    fields: [answersTable.userId],
+    references: [userTable.id],
+  }),
+  question: one(questionsTable, {
+    fields: [answersTable.questionId],
+    references: [questionsTable.id],
   }),
 }));
 

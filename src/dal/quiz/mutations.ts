@@ -1,11 +1,15 @@
 import { db } from "@/db";
-import { questionsTable, quizzesTable } from "@/db/schema";
+import { answersTable, questionsTable, quizzesTable } from "@/db/schema";
+import { getQuestion } from "@/dal/quiz/queries";
 import type {
-  Question,
-  QuestionUpdate,
+  QuestionWithAnswer,
   QuizWithQuestions,
+  SubmitAnswerInput,
 } from "@/schemas/quiz";
-import { eq } from "drizzle-orm";
+import type {
+  SupportedNativeLanguageCode,
+  SupportedTargetLanguageCode,
+} from "@/constants/language";
 
 const questionColumns = {
   id: questionsTable.id,
@@ -14,34 +18,24 @@ const questionColumns = {
   type: questionsTable.type,
   direction: questionsTable.direction,
   payload: questionsTable.payload,
-  answer: questionsTable.answer,
-  answerAnalysis: questionsTable.answerAnalysis,
-  answerAccuracy: questionsTable.answerAccuracy,
 };
-
-export async function updateQuestion(
-  questionId: string,
-  input: QuestionUpdate,
-): Promise<Question> {
-  const [question] = await db
-    .update(questionsTable)
-    .set(input)
-    .where(eq(questionsTable.id, questionId))
-    .returning(questionColumns);
-
-  return question;
-}
 
 export async function createQuiz(
   sectionId: string,
-  userId: string,
+  nativeLanguage: SupportedNativeLanguageCode,
+  targetLanguage: SupportedTargetLanguageCode,
   sentences: Array<{ native: string; english: string }>,
-): Promise<QuizWithQuestions> {
+): Promise<QuizWithQuestions | null> {
   return db.transaction(async (tx) => {
     const [quiz] = await tx
       .insert(quizzesTable)
-      .values({ userId, sectionId })
+      .values({ sectionId, nativeLanguage, targetLanguage })
+      .onConflictDoNothing()
       .returning({ id: quizzesTable.id });
+
+    // A concurrent request already created the quiz for this section + language
+    // pair; signal the caller to refetch instead of duplicating questions.
+    if (!quiz) return null;
 
     const questions = await tx
       .insert(questionsTable)
@@ -59,6 +53,42 @@ export async function createQuiz(
       )
       .returning(questionColumns);
 
-    return { ...quiz, questions };
+    return {
+      id: quiz.id,
+      questions: questions.map((question) => ({
+        ...question,
+        answer: null,
+        answerAnalysis: null,
+        answerAccuracy: null,
+      })),
+    };
   });
+}
+
+export async function upsertAnswer(
+  userId: string,
+  questionId: string,
+  input: SubmitAnswerInput,
+): Promise<QuestionWithAnswer> {
+  const [answer] = await db
+    .insert(answersTable)
+    .values({ userId, questionId, ...input })
+    .onConflictDoUpdate({
+      target: [answersTable.userId, answersTable.questionId],
+      set: {
+        answer: input.answer,
+        answerAnalysis: input.answerAnalysis,
+        answerAccuracy: input.answerAccuracy,
+      },
+    })
+    .returning({
+      answer: answersTable.answer,
+      answerAnalysis: answersTable.answerAnalysis,
+      answerAccuracy: answersTable.answerAccuracy,
+    });
+
+  const question = await getQuestion(questionId);
+  if (!question) throw new Error("Not found");
+
+  return { ...question, ...answer };
 }

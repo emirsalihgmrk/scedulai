@@ -28,7 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Question, QuizWithQuestions } from "@/schemas/quiz";
+import { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
 import { EmptyState } from "./empty-state";
 import { submitAnswerAction } from "@/actions/quiz";
 
@@ -48,7 +48,7 @@ function OverviewStep({
   onGoTo,
 }: {
   quiz: QuizWithQuestions;
-  questions: Question[];
+  questions: QuestionWithAnswer[];
   answered: number;
   unanswered: number;
   progress: number;
@@ -175,7 +175,7 @@ function OverviewStep({
   );
 }
 
-function SourceSentence({ question }: { question: Question }) {
+function SourceSentence({ question }: { question: QuestionWithAnswer }) {
   return (
     <div className="rounded-xl bg-secondary/70 p-4">
       <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
@@ -197,7 +197,7 @@ function AnswerInput({
   isPending,
   error,
 }: {
-  question: Question;
+  question: QuestionWithAnswer;
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
@@ -253,7 +253,7 @@ function GradedQuestion({
   flipped,
   onFlip,
 }: {
-  question: Question;
+  question: QuestionWithAnswer;
   flipped: boolean;
   onFlip: (flipped: boolean) => void;
 }) {
@@ -425,7 +425,7 @@ function QuestionStep({
   onNext,
   onGraded,
 }: {
-  question: Question;
+  question: QuestionWithAnswer;
   index: number;
   total: number;
   nativeLangLabel: string;
@@ -435,7 +435,7 @@ function QuestionStep({
   onOverview: () => void;
   onPrev: () => void;
   onNext: () => void;
-  onGraded: (question: Question) => void;
+  onGraded: (question: QuestionWithAnswer) => void;
 }) {
   const [sourceLang, targetLang] =
     question.direction === "native-to-target"
@@ -552,7 +552,7 @@ function QuizContent({
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [graded, setGraded] = useState<Record<string, Question>>({});
+  const [graded, setGraded] = useState<Record<string, QuestionWithAnswer>>({});
 
   const questions = quiz.questions.map((q) => graded[q.id] ?? q);
   const answered = questions.filter((q) => q.answer !== null).length;
