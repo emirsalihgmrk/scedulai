@@ -5,53 +5,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev          # Start Next.js dev server
+npm run dev          # Start dev server
 npm run build        # Production build
-npm run lint         # Run ESLint
-npm run db:seed      # Seed the database (tsx)
-```
+npm run typecheck    # TypeScript check (run before committing)
+npm run lint         # ESLint
 
-Type-checking (no dedicated script — use the allowed form):
-```bash
-npx tsc --noEmit
+npm run db:push      # Push schema changes (no migration file)
+npm run db:generate  # Generate migration file
+npm run db:migrate   # Apply pending migrations
+npm run db:seed      # Seed database
+npm run db:reset     # Wipe and re-seed
 ```
-
-Database migrations are generated with Drizzle Kit:
-```bash
-npx drizzle-kit generate
-npx drizzle-kit migrate
-```
-
-After every file edit, the PostToolUse hook automatically runs `npm run typecheck && npm run lint`.
 
 ## Architecture
 
-**ScedulAI** is a language-learning platform built on Next.js 16 (App Router). Its first feature is a "15 sentences per day" program where users translate sentences derived from video transcripts.
+ScedulAI is a language learning platform: it extracts sentences from YouTube video transcripts, has users translate them, and evaluates translations with an LLM.
 
-### Key layers
+### Three-layer data flow
 
-| Layer | Path | Purpose |
-|---|---|---|
-| AI provider | `src/ai/index.ts` | OpenRouter wrapper (`getAIObjectResponse`), default model `google/gemini-2.5-flash` |
-| AI tasks | `src/ai/tasks/` | One file per task; each calls `getAIObjectResponse` with a Zod output schema |
-| AI output schemas | `src/ai/outputs/` | Zod schemas and descriptions for structured AI responses |
-| Video service | `src/services/video.ts` | Selects an unwatched video + its transcript for a user |
-| DB | `src/db/` | Drizzle ORM + Postgres (`DATABASE_URL`); schema in `src/db/schema.ts` |
-| YouTube | `src/lib/youtube.ts` | YouTube Data API v3 client (channel → uploads → videos) + transcript fetch via `youtube-transcript` |
-| Seed | `src/db/seed.ts` | Seeds users, then videos + English transcripts from a configured channel via `src/lib/youtube.ts` |
+```
+src/actions/   →  src/services/  →  src/dal/
+Server Actions    Business logic    Drizzle queries
+```
 
-> **Note:** Video metadata comes from the official YouTube Data API v3 (API key). Transcripts for third-party channels aren't available through the Data API (`captions.download` needs OAuth), so seeding uses the `youtube-transcript` package against the public timedtext endpoint — a one-time, best-effort step. The previous TED.com integration has been removed.
+- **DAL** (`src/dal/`) — raw Drizzle queries, split into `queries.ts` (reads) and `mutations.ts` (writes). No business logic.
+- **Services** (`src/services/`) — orchestrate DAL calls, LLM calls, and error handling.
+- **Actions** (`src/actions/`) — Next.js Server Actions; call services and return `ActionResult<T>`.
+- **AI** (`src/ai/`) — OpenRouter provider + Vercel AI SDK. Tasks live in `src/ai/tasks/`, their Zod output schemas in `src/ai/outputs/`.
 
-### Environment variables
+### Types and validation
 
-- `OPENROUTER_API_KEY` — required for all AI calls
-- `DATABASE_URL` — Postgres connection string
-- `NEXT_PUBLIC_APP_URL` — used as `HTTP-Referer` header in OpenRouter requests
-- `YOUTUBE_API_KEY` — YouTube Data API v3 key, used by `db:seed` to source videos
+All shared types and Zod schemas live in `src/schemas/`. Tables are defined in `src/db/schema.ts`; inferred Drizzle types feed into leaner DTO types in `schemas/`. There is no `src/types/` directory.
 
-## Naming conventions (enforced by ESLint)
+### Auth
 
-- All `.ts`/`.tsx` and `.md` files under `src/` must use **kebab-case** filenames
-- Variables/parameters: `camelCase`; `const` variables may also be `UPPER_CASE`
-- Functions: `camelCase` or `PascalCase` (React components)
-- Types/interfaces/enums: `PascalCase`; enum members: `PascalCase`
+better-auth v1 with Drizzle adapter and Resend email delivery. Server-side: `src/lib/auth.ts`. Client-side: `src/lib/auth-client.ts`. API route: `src/app/api/auth/`.
+
+### Key patterns
+
+- **ActionResult**: every Server Action returns `{ ok: true, data: T } | { ok: false, error: AppError }`. Use `toActionFailure` from `src/lib/action.ts` for error wrapping.
+- **CommonFields**: all tables share `id` (UUID), `createdAt`, `updatedAt` via a shared helper in `src/db/schema.ts`.
+- **Idempotent mutations**: `onConflictDoNothing()` / `onConflictDoUpdate()` — e.g., quiz creation is race-safe.
+- **Language narrowing**: `userLanguages()` in services maps DB enum values to supported language codes before passing to AI tasks.
+- **Promise drilling + Suspense**: pages start service calls without `await` and pass the promises down to page-local components; the component unwraps with React's `use()` (or `await` in an async component) and is wrapped in `<Suspense>` by the page. Each such component exports its own `*Fallback` from the **same file** (e.g. `ProgramHero` / `ProgramHeroFallback` in `program-hero.tsx`). Only data needed for routing (e.g. `notFound()`) is awaited/unwrapped early. See `src/app/programs/[programSlug]/`.
+
+## Conventions
+
+- File names: **kebab-case** (`.ts`, `.tsx`)
+- Functions / variables: **camelCase**; types / components: **PascalCase**
+- Path alias: `@/*` → `src/*`
+- Page-local components go in `src/app/…/_components/` co-located with the page.
+- Mock data used during development lives in `src/app/…/mock-data.ts` and is replaced once the real DAL query exists.
+
+## Database
+
+- Drizzle ORM over Supabase (PostgreSQL).
+- `DATABASE_URL` for pooled connections; `DIRECT_URL` for migrations (drizzle.config.ts).
+- Schema file: `src/db/schema.ts` — all tables and relations in one file.
+- Enums defined in Postgres: `plan`, `difficulty`, `question_type`, `question_direction`, `native_language`, `target_language`, `quiz_status`.

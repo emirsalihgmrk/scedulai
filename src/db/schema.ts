@@ -4,6 +4,7 @@ import {
   SUPPORTED_TARGET_LANGUAGE_CODES,
 } from "@/constants/language";
 import { PLANS } from "@/constants/plan";
+import { QUIZ_STATUSES } from "@/constants/progress";
 import { QUESTION_DIRECTIONS, QUESTION_TYPES } from "@/constants/question";
 import { relations } from "drizzle-orm";
 import {
@@ -41,6 +42,7 @@ export const questionDirectionEnum = pgEnum(
   "question_direction",
   QUESTION_DIRECTIONS,
 );
+export const quizStatusEnum = pgEnum("quiz_status", QUIZ_STATUSES);
 export const nativeLanguageEnum = pgEnum(
   "native_language",
   SUPPORTED_NATIVE_LANGUAGE_CODES,
@@ -258,9 +260,34 @@ export const answersTable = pgTable(
   ],
 );
 
+export const sectionProgressTable = pgTable(
+  "section_progress",
+  {
+    ...commonFields,
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    sectionId: uuid("section_id")
+      .references(() => sectionsTable.id, { onDelete: "cascade" })
+      .notNull(),
+    videoPositionSeconds: integer("video_position_seconds")
+      .default(0)
+      .notNull(),
+    quizStatus: quizStatusEnum("quiz_status").default("in_progress").notNull(),
+  },
+  (table) => [
+    unique("section_progress_user_section_unique").on(
+      table.userId,
+      table.sectionId,
+    ),
+    index("section_progress_user_id_idx").on(table.userId),
+  ],
+);
+
 // Relations
 export const userRelations = relations(userTable, ({ many }) => ({
   answers: many(answersTable),
+  sectionProgress: many(sectionProgressTable),
   sessions: many(sessionTable),
   accounts: many(accountTable),
 }));
@@ -302,6 +329,7 @@ export const sectionsRelations = relations(sectionsTable, ({ one, many }) => ({
     references: [videosTable.id],
   }),
   quizzes: many(quizzesTable),
+  progress: many(sectionProgressTable),
 }));
 
 export const videosRelations = relations(videosTable, ({ one, many }) => ({
@@ -345,3 +373,17 @@ export const transcriptsRelations = relations(transcriptsTable, ({ one }) => ({
     references: [videosTable.id],
   }),
 }));
+
+export const sectionProgressRelations = relations(
+  sectionProgressTable,
+  ({ one }) => ({
+    user: one(userTable, {
+      fields: [sectionProgressTable.userId],
+      references: [userTable.id],
+    }),
+    section: one(sectionsTable, {
+      fields: [sectionProgressTable.sectionId],
+      references: [sectionsTable.id],
+    }),
+  }),
+);

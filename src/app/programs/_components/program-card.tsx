@@ -47,8 +47,8 @@ export function ProgramCard({ program }: { program: ProgramListItem }) {
 
       <CardFooter className="justify-between gap-2">
         <Button asChild size="sm">
-          <Link href={`/programs/${slug}/section-1`}>
-            Start
+          <Link href={`/programs/${slug}`}>
+            Review
             <ArrowRight data-icon="inline-end" />
           </Link>
         </Button>
