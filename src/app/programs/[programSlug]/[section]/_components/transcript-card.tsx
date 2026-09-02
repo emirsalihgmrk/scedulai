@@ -15,32 +15,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { TranscriptLine } from "@/schemas/video";
 import { cn } from "@/lib/utils";
 
-function TranscriptCardShell({ children }: { children: React.ReactNode }) {
-  return (
-    <Card
-      aria-label="Interactive video transcript"
-      className="flex min-h-0 flex-1 flex-col gap-0 py-0"
-    >
-      <CardHeader className="grid-cols-[auto_1fr_auto] items-center gap-3 border-b py-4">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-          <Captions className="size-4" />
-        </span>
-        <div>
-          <CardTitle className="font-display">Transcript</CardTitle>
-          <CardDescription className="text-xs">
-            Tap a line to jump
-          </CardDescription>
-        </div>
-        <CardAction className="row-span-1 self-center">
-          <Badge variant="secondary">English · Auto</Badge>
-        </CardAction>
-      </CardHeader>
-
-      <CardContent className="min-h-0 flex-1 px-0">{children}</CardContent>
-    </Card>
-  );
-}
-
 export function TranscriptCard({
   transcriptPromise,
 }: {
@@ -99,6 +73,32 @@ export function TranscriptCard({
         </ol>
       </ScrollArea>
     </TranscriptCardShell>
+  );
+}
+
+function TranscriptCardShell({ children }: { children: React.ReactNode }) {
+  return (
+    <Card
+      aria-label="Interactive video transcript"
+      className="flex min-h-0 flex-1 flex-col gap-0 py-0"
+    >
+      <CardHeader className="grid-cols-[auto_1fr_auto] items-center gap-3 border-b py-4">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+          <Captions className="size-4" />
+        </span>
+        <div>
+          <CardTitle className="font-display">Transcript</CardTitle>
+          <CardDescription className="text-xs">
+            Tap a line to jump
+          </CardDescription>
+        </div>
+        <CardAction className="row-span-1 self-center">
+          <Badge variant="secondary">English · Auto</Badge>
+        </CardAction>
+      </CardHeader>
+
+      <CardContent className="min-h-0 flex-1 px-0">{children}</CardContent>
+    </Card>
   );
 }
 

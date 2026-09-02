@@ -29,13 +29,46 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
-import { EmptyState } from "./empty-state";
+import { EmptyState } from "../../../../../components/shared/empty-state";
 import { submitAnswerAction } from "@/actions/quiz";
 
 function accuracyClasses(accuracy: number) {
   return accuracy < 75
     ? "bg-warning/12 text-warning-foreground"
     : "bg-success/12 text-success";
+}
+
+export function QuizPanel({
+  quizPromise,
+  nativeLangLabel,
+  targetLangLabel,
+}: {
+  quizPromise: Promise<QuizWithQuestions | null>;
+  nativeLangLabel: string;
+  targetLangLabel: string;
+}) {
+  const quiz = use(quizPromise);
+
+  if (!quiz) {
+    return (
+      <div className="sticky top-20">
+        <EmptyState
+          icon={FileQuestion}
+          title="Quiz hazırlanamadı"
+          description="Bu section'a bağlı bir video/transkript olmadığı için quiz üretilemedi."
+          className="h-[80vh]"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <QuizContent
+      quiz={quiz}
+      nativeLangLabel={nativeLangLabel}
+      targetLangLabel={targetLangLabel}
+    />
+  );
 }
 
 function OverviewStep({
@@ -603,39 +636,6 @@ function QuizContent({
         )}
       </Card>
     </div>
-  );
-}
-
-export function QuizPanel({
-  quizPromise,
-  nativeLangLabel,
-  targetLangLabel,
-}: {
-  quizPromise: Promise<QuizWithQuestions | null>;
-  nativeLangLabel: string;
-  targetLangLabel: string;
-}) {
-  const quiz = use(quizPromise);
-
-  if (!quiz) {
-    return (
-      <div className="sticky top-20">
-        <EmptyState
-          icon={FileQuestion}
-          title="Quiz hazırlanamadı"
-          description="Bu section'a bağlı bir video/transkript olmadığı için quiz üretilemedi."
-          className="h-[80vh]"
-        />
-      </div>
-    );
-  }
-
-  return (
-    <QuizContent
-      quiz={quiz}
-      nativeLangLabel={nativeLangLabel}
-      targetLangLabel={targetLangLabel}
-    />
   );
 }
 

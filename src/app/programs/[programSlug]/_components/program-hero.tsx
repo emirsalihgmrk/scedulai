@@ -1,5 +1,6 @@
 import { Suspense, use } from "react";
 import { notFound } from "next/navigation";
+import { getProgramService } from "@/services/program";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -19,37 +20,83 @@ import { Progress } from "@/components/ui/progress";
 import type { ProgramDetail, SectionListItem } from "@/schemas/program";
 import { currentSectionId, isSectionCompleted } from "./section-progress";
 
-// ─── ProgramSectionsInfo ─────────────────────────────────────────────────────
+export async function ProgramHero({
+  programSlug,
+  sectionsPromise,
+}: {
+  programSlug: string;
+  sectionsPromise: Promise<SectionListItem[]>;
+}) {
+  const program = await getProgramService(programSlug);
+  if (!program) notFound();
+  const {
+    title,
+    description,
+    thumbnailUrl,
+    difficulty,
+    referenceUrl,
+    channel,
+  } = program;
 
-export function ProgramSectionsInfoFallback() {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-5">
-        <div className="h-4 w-20 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-28 animate-pulse rounded bg-muted" />
-      </div>
-      <div className="flex flex-col gap-2">
-        <div className="h-3 w-full animate-pulse rounded bg-muted" />
-        <div className="h-2 w-full animate-pulse rounded bg-muted" />
-      </div>
-      <div className="mt-1 flex gap-2">
-        <div className="h-9 w-44 animate-pulse rounded-md bg-muted" />
-        <div className="h-9 w-24 animate-pulse rounded-md bg-muted" />
-      </div>
+    <div className="flex flex-col gap-6">
+      <Link
+        href="/programs"
+        className="inline-flex w-fit items-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      >
+        <ArrowLeft className="size-4" />
+        Tüm programlar
+      </Link>
+
+      <Card className="grid grid-cols-1 gap-6 p-(--card-spacing) [--card-spacing:--spacing(5)] md:grid-cols-[minmax(0,320px)_1fr] md:items-start">
+        {/* Thumbnail */}
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={thumbnailUrl} alt="" className="size-full object-cover" />
+          {difficulty && (
+            <Badge
+              className={`absolute top-3 left-3 ${DIFFICULTY_BADGE_CLASSES[difficulty]}`}
+            >
+              {difficulty}
+            </Badge>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <h1 className="font-display text-2xl leading-tight font-bold text-balance text-foreground sm:text-3xl">
+              {title}
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          </div>
+
+          <Suspense fallback={<ProgramSectionsInfoFallback />}>
+            <ProgramSectionsInfo
+              sectionsPromise={sectionsPromise}
+              programSlug={programSlug}
+              channel={channel}
+              referenceUrl={referenceUrl}
+              title={title}
+            />
+          </Suspense>
+        </div>
+      </Card>
     </div>
   );
 }
 
-export function ProgramSectionsInfo({
+function ProgramSectionsInfo({
   sectionsPromise,
-  slug,
+  programSlug,
   channel,
   referenceUrl,
   title,
 }: {
   sectionsPromise: Promise<SectionListItem[]>;
-  slug: string;
+  programSlug: string;
   channel: ProgramDetail["channel"];
   referenceUrl: string | null;
   title: string;
@@ -111,7 +158,9 @@ export function ProgramSectionsInfo({
       <div className="mt-1 flex flex-wrap items-center gap-2">
         {resumeSection && (
           <Button asChild>
-            <Link href={`/programs/${slug}/section-${resumeSection.order}`}>
+            <Link
+              href={`/programs/${programSlug}/section-${resumeSection.order}`}
+            >
               <PlayCircle data-icon="inline-start" />
               {resumeLabel}
               <ArrowRight data-icon="inline-end" />
@@ -136,76 +185,6 @@ export function ProgramSectionsInfo({
   );
 }
 
-// ─── ProgramHero ─────────────────────────────────────────────────────────────
-
-export function ProgramHero({
-  programPromise,
-  sectionsPromise,
-}: {
-  programPromise: Promise<ProgramDetail | null>;
-  sectionsPromise: Promise<SectionListItem[]>;
-}) {
-  const program = use(programPromise);
-  if (!program) notFound();
-  const { slug, title, description, thumbnailUrl, difficulty, referenceUrl, channel } =
-    program;
-
-  return (
-    <div className="flex flex-col gap-6">
-      <Link
-        href="/programs"
-        className="inline-flex w-fit items-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-      >
-        <ArrowLeft className="size-4" />
-        Tüm programlar
-      </Link>
-
-      <Card className="grid grid-cols-1 gap-6 p-(--card-spacing) [--card-spacing:--spacing(5)] md:grid-cols-[minmax(0,320px)_1fr] md:items-start">
-        {/* Thumbnail */}
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={thumbnailUrl}
-            alt=""
-            className="size-full object-cover"
-          />
-          {difficulty && (
-            <Badge
-              className={`absolute top-3 left-3 ${DIFFICULTY_BADGE_CLASSES[difficulty]}`}
-            >
-              {difficulty}
-            </Badge>
-          )}
-        </div>
-
-        {/* Info */}
-        <div className="flex min-w-0 flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <h1 className="font-display text-2xl leading-tight font-bold text-balance text-foreground sm:text-3xl">
-              {title}
-            </h1>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {description}
-            </p>
-          </div>
-
-          <Suspense fallback={<ProgramSectionsInfoFallback />}>
-            <ProgramSectionsInfo
-              sectionsPromise={sectionsPromise}
-              slug={slug}
-              channel={channel}
-              referenceUrl={referenceUrl}
-              title={title}
-            />
-          </Suspense>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-// ─── ProgramHeroFallback ─────────────────────────────────────────────────────
-
 export function ProgramHeroFallback() {
   return (
     <div className="flex flex-col gap-6">
@@ -224,6 +203,26 @@ export function ProgramHeroFallback() {
           <ProgramSectionsInfoFallback />
         </div>
       </Card>
+    </div>
+  );
+}
+
+function ProgramSectionsInfoFallback() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-5">
+        <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <div className="h-3 w-full animate-pulse rounded bg-muted" />
+        <div className="h-2 w-full animate-pulse rounded bg-muted" />
+      </div>
+      <div className="mt-1 flex gap-2">
+        <div className="h-9 w-44 animate-pulse rounded-md bg-muted" />
+        <div className="h-9 w-24 animate-pulse rounded-md bg-muted" />
+      </div>
     </div>
   );
 }

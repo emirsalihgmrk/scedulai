@@ -122,6 +122,28 @@ export type SupportedTargetLanguageCode =
 export type SupportedTargetLanguage =
   (typeof SUPPORTED_TARGET_LANGUAGES)[number];
 
+type UserLanguageCodes = {
+  nativeLanguage?: string | null;
+  targetLanguage?: string | null;
+};
+
+export function getUserLanguageLabels({
+  nativeLanguage,
+  targetLanguage,
+}: UserLanguageCodes) {
+  const nativeLang = SUPPORTED_NATIVE_LANGUAGES.find(
+    (language) => language.code === nativeLanguage,
+  );
+  const targetLang = SUPPORTED_TARGET_LANGUAGES.find(
+    (language) => language.code === targetLanguage,
+  );
+
+  return {
+    nativeLangLabel: nativeLang?.nativeName ?? "Native",
+    targetLangLabel: targetLang?.nativeName ?? "English",
+  };
+}
+
 // English display names — used when addressing an AI model, which expects
 // language names in English (e.g. "Turkish", "German") rather than endonyms.
 

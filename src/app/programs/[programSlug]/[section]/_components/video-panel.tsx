@@ -4,17 +4,12 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { VideoPlayer } from "./video-player";
 import { TranscriptCard, TranscriptCardFallback } from "./transcript-card";
-import { EmptyState } from "./empty-state";
-import { getTranscriptService } from "@/services/video";
-import { Video } from "@/schemas/video";
+import { EmptyState } from "../../../../../components/shared/empty-state";
+import { getTranscriptService, getVideoService } from "@/services/video";
 import { formatDate } from "@/lib/utils";
 
-export async function VideoPanel({
-  videoPromise,
-}: {
-  videoPromise: Promise<Video | null>;
-}) {
-  const video = await videoPromise;
+export async function VideoPanel({ sectionId }: { sectionId: string }) {
+  const video = await getVideoService(sectionId);
 
   if (!video) {
     return (

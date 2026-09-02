@@ -2,13 +2,9 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import Header from "@/components/shared/header";
-import {
-  SUPPORTED_NATIVE_LANGUAGES,
-  SUPPORTED_TARGET_LANGUAGES,
-} from "@/constants/language";
+import { getUserLanguageLabels } from "@/constants/language";
 import { getCurrentUser } from "@/services/auth";
 import { getSectionByOrderService } from "@/services/program";
-import { getVideoService } from "@/services/video";
 import { getOrCreateQuizService } from "@/services/quiz";
 import { VideoPanel, VideoPanelFallback } from "./_components/video-panel";
 import { QuizPanel, QuizPanelFallback } from "./_components/quiz-panel";
@@ -36,16 +32,8 @@ export default async function Page({
 
   if (!currentSection) notFound();
 
-  const nativeLang = SUPPORTED_NATIVE_LANGUAGES.find(
-    (l) => l.code === user?.nativeLanguage,
-  );
-  const targetLang = SUPPORTED_TARGET_LANGUAGES.find(
-    (l) => l.code === user?.targetLanguage,
-  );
-  const nativeLangLabel = nativeLang?.nativeName ?? "Native";
-  const targetLangLabel = targetLang?.nativeName ?? "English";
+  const { nativeLangLabel, targetLangLabel } = getUserLanguageLabels(user ?? {});
 
-  const videoPromise = getVideoService(currentSection.id);
   const quizPromise = getOrCreateQuizService(currentSection.id);
 
   return (
@@ -55,7 +43,7 @@ export default async function Page({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_minmax(0,1fr)] xl:gap-8">
           <section aria-label="Video and transcript" className="min-w-0">
             <Suspense fallback={<VideoPanelFallback />}>
-              <VideoPanel videoPromise={videoPromise} />
+              <VideoPanel sectionId={currentSection.id} />
             </Suspense>
           </section>
           <section aria-label="AI interactive quiz" className="min-w-0">
