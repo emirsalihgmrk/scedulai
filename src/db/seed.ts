@@ -136,66 +136,247 @@ const PROGRAMS_SEED: {
   },
   {
     channelHandle: "@bbclearningenglish",
-    title: "6 Minute Vocabulary",
-    slug: "6-minutes-vocabulary",
-    difficulty: "beginner",
+    title: "Alice in Wonderland",
+    slug: "alice-in-wonderland",
+    difficulty: "intermediate",
     shortDescription:
-      "Expand your vocabulary and learn to use words in the right context. Grasp prefixes, suffixes, synonyms, and antonyms with fast, effective 6-minute lessons.",
+      "Follow Alice through a curious world of riddles, wordplay, and surprising encounters. Build listening confidence with vivid storytelling and memorable English expressions.",
     description:
-      "Content designed to expand your vocabulary and help you use words in the correct contexts.\nGrasp the logic of language structures such as prefixes, suffixes, synonyms, and antonyms.\nEnrich your vocabulary step-by-step with fast and effective 6-minute lessons.",
+      "Follow Alice as she tumbles into a strange and imaginative world filled with riddles, playful conversations, and unforgettable characters.\nStrengthen your listening comprehension through a classic story with clear narrative context and naturally recurring vocabulary.\nDiscover idioms, descriptive language, and literary expressions while enjoying one of English literature's most beloved adventures.",
     thumbnailUrl:
-      "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1642192328313-ee18ab51c84d?w=800&auto=format&fit=crop&q=80",
     referenceUrl:
-      "https://www.youtube.com/playlist?list=PLcetZ6gSk96-GbYhcN0KkFtIL8LJPOG5x",
+      "https://www.youtube.com/playlist?list=PLcetZ6gSk96_Kh2b2K2O2uaI14lnp6w4h",
   },
 ];
 
 // Duplicate 6Af6b_wyiwI removed from ted-talks (was listed twice)
-const VIDEOS_SEED: { youtubeId: string; programSlug: string }[] = [
-  { youtubeId: "6Af6b_wyiwI", programSlug: "ted-talks" },
-  { youtubeId: "_QdPW8JrYzQ", programSlug: "ted-talks" },
-  { youtubeId: "eIho2S0ZahI", programSlug: "ted-talks" },
-  { youtubeId: "DFjIi2hxxf0", programSlug: "ted-talks" },
-  { youtubeId: "36m1o-tM05g", programSlug: "tedx-talks" },
-  { youtubeId: "LNHBMFCzznE", programSlug: "tedx-talks" },
-  { youtubeId: "5MgBikgcWnY", programSlug: "tedx-talks" },
-  { youtubeId: "F4Zu5ZZAG7I", programSlug: "tedx-talks" },
-  { youtubeId: "w-HYZv6HzAs", programSlug: "tedx-talks" },
-  { youtubeId: "xKxrkht7CpY", programSlug: "teded-talks" },
-  { youtubeId: "N5vJSNXPEwA", programSlug: "teded-talks" },
-  { youtubeId: "7SWvDHvWXok", programSlug: "teded-talks" },
-  { youtubeId: "z-IR48Mb3W0", programSlug: "teded-talks" },
-  { youtubeId: "Uj3_KqkI9Zo", programSlug: "teded-talks" },
-  { youtubeId: "xwseWCSXD3Y", programSlug: "6-minutes-english" },
-  { youtubeId: "SC_opiKLohg", programSlug: "6-minutes-english" },
-  { youtubeId: "D9jZMLm72a8", programSlug: "6-minutes-english" },
-  { youtubeId: "sv9DItmJvlI", programSlug: "6-minutes-english" },
-  { youtubeId: "0XccoTXPu_c", programSlug: "6-minutes-english" },
-  { youtubeId: "zl0dwwKhmuM", programSlug: "learning-english-from-the-news" },
-  { youtubeId: "8ip3fMwdhx0", programSlug: "learning-english-from-the-news" },
-  { youtubeId: "K8Dwy0u5pp8", programSlug: "learning-english-from-the-news" },
-  { youtubeId: "MlHJCNLa__k", programSlug: "learning-english-from-the-news" },
-  { youtubeId: "zXz72SmVg2E", programSlug: "learning-english-from-the-news" },
-  { youtubeId: "BFJsSnEEGrI", programSlug: "really-easy-english" },
-  { youtubeId: "qfQ61oYIbxY", programSlug: "really-easy-english" },
-  { youtubeId: "ChYnYM0txRk", programSlug: "really-easy-english" },
-  { youtubeId: "bGxdYW_6rjQ", programSlug: "really-easy-english" },
-  { youtubeId: "W_yFHgHafKM", programSlug: "really-easy-english" },
-  { youtubeId: "bwYEdYaXExw", programSlug: "the-english-we-speak" },
-  { youtubeId: "S2Dyi7qf4k4", programSlug: "the-english-we-speak" },
-  { youtubeId: "HblUS4Ha1io", programSlug: "the-english-we-speak" },
-  { youtubeId: "8D5Ag-TxErg", programSlug: "the-english-we-speak" },
-  { youtubeId: "WHCsOQvDkeQ", programSlug: "the-english-we-speak" },
-  { youtubeId: "k188_aGDklQ", programSlug: "learning-english-for-work" },
-  { youtubeId: "m2UD0-IC7iY", programSlug: "learning-english-for-work" },
-  { youtubeId: "7sDcsE_HsDw", programSlug: "learning-english-for-work" },
-  { youtubeId: "umVkjRE73sE", programSlug: "learning-english-for-work" },
-  { youtubeId: "o295dPuPNGo", programSlug: "learning-english-for-work" },
-  { youtubeId: "j2YsroEPH5M", programSlug: "6-minutes-vocabulary" },
-  { youtubeId: "bdczLkc4Dns", programSlug: "6-minutes-vocabulary" },
-  { youtubeId: "c49E-dLNkkE", programSlug: "6-minutes-vocabulary" },
-  { youtubeId: "DsWM3eJW9IM", programSlug: "6-minutes-vocabulary" },
-  { youtubeId: "Pu_3OgQxe2s", programSlug: "6-minutes-vocabulary" },
+const VIDEOS_SEED: {
+  youtubeId: string;
+  programSlug: string;
+  sectionTitle: string;
+}[] = [
+  {
+    youtubeId: "6Af6b_wyiwI",
+    programSlug: "ted-talks",
+    sectionTitle: "Global Health & Pandemics",
+  },
+  {
+    youtubeId: "_QdPW8JrYzQ",
+    programSlug: "ted-talks",
+    sectionTitle: "Internet Humor & Spam Mail",
+  },
+  {
+    youtubeId: "eIho2S0ZahI",
+    programSlug: "ted-talks",
+    sectionTitle: "Powerful Speaking & Listening",
+  },
+  {
+    youtubeId: "DFjIi2hxxf0",
+    programSlug: "ted-talks",
+    sectionTitle: "Vocal Arts & Human Sound",
+  },
+  {
+    youtubeId: "36m1o-tM05g",
+    programSlug: "tedx-talks",
+    sectionTitle: "Philosophy for a Happy Life",
+  },
+  {
+    youtubeId: "LNHBMFCzznE",
+    programSlug: "tedx-talks",
+    sectionTitle: "Neuroplasticity & Brain Change",
+  },
+  {
+    youtubeId: "5MgBikgcWnY",
+    programSlug: "tedx-talks",
+    sectionTitle: "Rapid Skill Acquisition (20 Hours)",
+  },
+  {
+    youtubeId: "F4Zu5ZZAG7I",
+    programSlug: "tedx-talks",
+    sectionTitle: "The Art of Conversation & Mingling",
+  },
+  {
+    youtubeId: "w-HYZv6HzAs",
+    programSlug: "tedx-talks",
+    sectionTitle: "Building Self-Confidence as a Skill",
+  },
+  {
+    youtubeId: "xKxrkht7CpY",
+    programSlug: "teded-talks",
+    sectionTitle: "How Solar Energy Works",
+  },
+  {
+    youtubeId: "N5vJSNXPEwA",
+    programSlug: "teded-talks",
+    sectionTitle: "Logic Puzzles & Problem Solving",
+  },
+  {
+    youtubeId: "7SWvDHvWXok",
+    programSlug: "teded-talks",
+    sectionTitle: "Unsolved Mysteries of Science",
+  },
+  {
+    youtubeId: "z-IR48Mb3W0",
+    programSlug: "teded-talks",
+    sectionTitle: "Understanding Mental Health",
+  },
+  {
+    youtubeId: "Uj3_KqkI9Zo",
+    programSlug: "teded-talks",
+    sectionTitle: "Infinity & Mathematical Paradoxes",
+  },
+  {
+    youtubeId: "xwseWCSXD3Y",
+    programSlug: "6-minutes-english",
+    sectionTitle: "Describing Smells & Senses",
+  },
+  {
+    youtubeId: "SC_opiKLohg",
+    programSlug: "6-minutes-english",
+    sectionTitle: "Autonomous Tech & Driving",
+  },
+  {
+    youtubeId: "D9jZMLm72a8",
+    programSlug: "6-minutes-english",
+    sectionTitle: "Household Chores & Equality",
+  },
+  {
+    youtubeId: "sv9DItmJvlI",
+    programSlug: "6-minutes-english",
+    sectionTitle: "Climate Science & Predictions",
+  },
+  {
+    youtubeId: "0XccoTXPu_c",
+    programSlug: "6-minutes-english",
+    sectionTitle: "Doping & Sports Ethics",
+  },
+  {
+    youtubeId: "zl0dwwKhmuM",
+    programSlug: "learning-english-from-the-news",
+    sectionTitle: "AI Security & Cyber Threats",
+  },
+  {
+    youtubeId: "8ip3fMwdhx0",
+    programSlug: "learning-english-from-the-news",
+    sectionTitle: "Social Media Regulation & Meta",
+  },
+  {
+    youtubeId: "K8Dwy0u5pp8",
+    programSlug: "learning-english-from-the-news",
+    sectionTitle: "Astronomy: The Solar Eclipse",
+  },
+  {
+    youtubeId: "MlHJCNLa__k",
+    programSlug: "learning-english-from-the-news",
+    sectionTitle: "Border Crises & Global Migration",
+  },
+  {
+    youtubeId: "zXz72SmVg2E",
+    programSlug: "learning-english-from-the-news",
+    sectionTitle: "Gaming Industry & Digital Media",
+  },
+  {
+    youtubeId: "BFJsSnEEGrI",
+    programSlug: "really-easy-english",
+    sectionTitle: "Coffee Culture & Phrasal Verbs",
+  },
+  {
+    youtubeId: "qfQ61oYIbxY",
+    programSlug: "really-easy-english",
+    sectionTitle: "Moods, Feelings & Reactions",
+  },
+  {
+    youtubeId: "ChYnYM0txRk",
+    programSlug: "really-easy-english",
+    sectionTitle: "Talking About Food & Spiciness",
+  },
+  {
+    youtubeId: "bGxdYW_6rjQ",
+    programSlug: "really-easy-english",
+    sectionTitle: "Urban Living: Pros & Cons",
+  },
+  {
+    youtubeId: "W_yFHgHafKM",
+    programSlug: "really-easy-english",
+    sectionTitle: "Family Tree & Relationships",
+  },
+  {
+    youtubeId: "bwYEdYaXExw",
+    programSlug: "the-english-we-speak",
+    sectionTitle: "Body Part Idioms & Expressions",
+  },
+  {
+    youtubeId: "S2Dyi7qf4k4",
+    programSlug: "the-english-we-speak",
+    sectionTitle: "Essential Daily Phrasal Verbs",
+  },
+  {
+    youtubeId: "HblUS4Ha1io",
+    programSlug: "the-english-we-speak",
+    sectionTitle: "Two-Word Expressions: Part 1",
+  },
+  {
+    youtubeId: "8D5Ag-TxErg",
+    programSlug: "the-english-we-speak",
+    sectionTitle: "Two-Word Expressions: Part 2",
+  },
+  {
+    youtubeId: "WHCsOQvDkeQ",
+    programSlug: "the-english-we-speak",
+    sectionTitle: "Core Everyday Idiomatic English",
+  },
+  {
+    youtubeId: "k188_aGDklQ",
+    programSlug: "learning-english-for-work",
+    sectionTitle: "Professional Email Etiquette",
+  },
+  {
+    youtubeId: "m2UD0-IC7iY",
+    programSlug: "learning-english-for-work",
+    sectionTitle: "Running Effective Meetings",
+  },
+  {
+    youtubeId: "7sDcsE_HsDw",
+    programSlug: "learning-english-for-work",
+    sectionTitle: "Following Up & Chasing People",
+  },
+  {
+    youtubeId: "umVkjRE73sE",
+    programSlug: "learning-english-for-work",
+    sectionTitle: "Phone Calls & Quick Messaging",
+  },
+  {
+    youtubeId: "o295dPuPNGo",
+    programSlug: "learning-english-for-work",
+    sectionTitle: "Managing & Resolving Mistakes",
+  },
+  //
+  {
+    youtubeId: "yZxlx7FegBM",
+    programSlug: "alice-in-wonderland",
+    sectionTitle: "Entering Wonderland & Fantasy",
+  },
+  {
+    youtubeId: "_fpLGvoEiEg",
+    programSlug: "alice-in-wonderland",
+    sectionTitle: "Emotions, Crying & Body Size",
+  },
+  {
+    youtubeId: "svI_6zz9yPk",
+    programSlug: "alice-in-wonderland",
+    sectionTitle: "Absurd Logic & Playful Riddles",
+  },
+  {
+    youtubeId: "_H-zhw0YJh4",
+    programSlug: "alice-in-wonderland",
+    sectionTitle: "Curiosity, Rooms & Transformations",
+  },
+  {
+    youtubeId: "h9-23pAqouo",
+    programSlug: "alice-in-wonderland",
+    sectionTitle: "Identity, Wisdom & Dialogue",
+  },
 ];
 
 async function seed() {
@@ -221,7 +402,8 @@ async function seed() {
     const firstVideo = VIDEOS_SEED.find((v) => v.programSlug === prog.slug);
     if (!firstVideo) throw new Error(`No videos for program: ${prog.slug}`);
     const meta = metaById.get(firstVideo.youtubeId);
-    if (!meta) throw new Error(`No metadata for video: ${firstVideo.youtubeId}`);
+    if (!meta)
+      throw new Error(`No metadata for video: ${firstVideo.youtubeId}`);
     handleToChannelYoutubeId.set(prog.channelHandle, meta.channelId);
     channelTitleByHandle.set(prog.channelHandle, meta.channelTitle);
   }
@@ -238,7 +420,8 @@ async function seed() {
       uniqueHandles.map((handle) => {
         const channelYoutubeId = handleToChannelYoutubeId.get(handle)!;
         const thumbnailUrl = channelThumbnails.get(channelYoutubeId);
-        if (!thumbnailUrl) throw new Error(`No thumbnail for channel: ${handle}`);
+        if (!thumbnailUrl)
+          throw new Error(`No thumbnail for channel: ${handle}`);
         return {
           youtubeSlug: handle,
           title: channelTitleByHandle.get(handle)!,
@@ -246,7 +429,10 @@ async function seed() {
         };
       }),
     )
-    .returning({ id: channelsTable.id, youtubeSlug: channelsTable.youtubeSlug });
+    .returning({
+      id: channelsTable.id,
+      youtubeSlug: channelsTable.youtubeSlug,
+    });
 
   const channelDbIdBySlug = new Map(
     insertedChannels.map((c) => [c.youtubeSlug, c.id]),
@@ -286,7 +472,7 @@ async function seed() {
   let skipped = 0;
   let videoCount = 0;
 
-  for (const { youtubeId, programSlug } of VIDEOS_SEED) {
+  for (const { youtubeId, programSlug, sectionTitle } of VIDEOS_SEED) {
     const meta = metaById.get(youtubeId);
     if (!meta) {
       console.warn(`  ⵜ No metadata, skipping: ${youtubeId}`);
@@ -332,7 +518,7 @@ async function seed() {
     await db.insert(sectionsTable).values({
       programId: programDbIdBySlug.get(programSlug)!,
       videoId: video.id,
-      title: meta.title,
+      title: sectionTitle,
       order,
     });
 
