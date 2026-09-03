@@ -63,7 +63,7 @@ export async function getOrCreateQuizService(
   sectionId: string,
 ): Promise<QuizWithQuestions | null> {
   const user = await getCurrentUser();
-  if (!user) throw new AppError("Unauthorized");
+  if (!user) return null;
 
   const { nativeLanguage, targetLanguage } = userLanguages(user);
 

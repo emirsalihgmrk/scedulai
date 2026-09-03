@@ -1,6 +1,6 @@
-import { Suspense, use } from "react";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getProgramService } from "@/services/program";
+import { getProgramService, getSectionsService } from "@/services/program";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -17,16 +17,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import type { ProgramDetail, SectionListItem } from "@/schemas/program";
+import type { ProgramDetail } from "@/schemas/program";
 import { currentSectionId, isSectionCompleted } from "./section-progress";
+import { getCurrentUser } from "@/services/auth";
 
-export async function ProgramHero({
-  programSlug,
-  sectionsPromise,
-}: {
-  programSlug: string;
-  sectionsPromise: Promise<SectionListItem[]>;
-}) {
+export async function ProgramHero({ programSlug }: { programSlug: string }) {
   const program = await getProgramService(programSlug);
   if (!program) notFound();
   const {
@@ -75,7 +70,6 @@ export async function ProgramHero({
 
           <Suspense fallback={<ProgramSectionsInfoFallback />}>
             <ProgramSectionsInfo
-              sectionsPromise={sectionsPromise}
               programSlug={programSlug}
               channel={channel}
               referenceUrl={referenceUrl}
@@ -88,20 +82,19 @@ export async function ProgramHero({
   );
 }
 
-function ProgramSectionsInfo({
-  sectionsPromise,
+async function ProgramSectionsInfo({
   programSlug,
   channel,
   referenceUrl,
   title,
 }: {
-  sectionsPromise: Promise<SectionListItem[]>;
   programSlug: string;
   channel: ProgramDetail["channel"];
   referenceUrl: string | null;
   title: string;
 }) {
-  const sections = use(sectionsPromise);
+  const user = await getCurrentUser();
+  const sections = await getSectionsService(programSlug, user?.id ?? null);
 
   const totalSeconds = sections.reduce(
     (sum, section) => sum + (section.video?.durationSeconds ?? 0),

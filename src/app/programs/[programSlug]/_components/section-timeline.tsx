@@ -1,4 +1,3 @@
-import { use } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Clock, Play } from "lucide-react";
 
@@ -6,15 +5,16 @@ import { cn, formatDuration } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import type { SectionListItem } from "@/schemas/program";
 import { currentSectionId, isSectionCompleted } from "./section-progress";
+import { getCurrentUser } from "@/services/auth";
+import { getSectionsService } from "@/services/program";
 
-export function SectionTimeline({
+export async function SectionTimeline({
   programSlug,
-  sectionsPromise,
 }: {
   programSlug: string;
-  sectionsPromise: Promise<SectionListItem[]>;
 }) {
-  const sections = use(sectionsPromise);
+  const user = await getCurrentUser();
+  const sections = await getSectionsService(programSlug, user?.id ?? null);
   const currentId = currentSectionId(sections);
 
   return (

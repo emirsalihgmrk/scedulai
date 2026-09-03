@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import {
   getFirstSection,
   getProgram,
@@ -23,12 +25,14 @@ export async function getProgramService(
   return program ?? null;
 }
 
-export async function getSectionsService(
-  programSlug: string,
-  userId: string | null,
-): Promise<SectionListItem[]> {
-  return getSections(programSlug, userId);
-}
+export const getSectionsService = cache(
+  async (
+    programSlug: string,
+    userId: string | null,
+  ): Promise<SectionListItem[]> => {
+    return getSections(programSlug, userId);
+  },
+);
 
 export async function getFirstSectionService(
   programSlug: string,
@@ -37,10 +41,9 @@ export async function getFirstSectionService(
   return section ?? null;
 }
 
-export async function getSectionByOrderService(
-  programSlug: string,
-  order: number,
-): Promise<Section | null> {
-  const section = await getSectionByOrder(programSlug, order);
-  return section ?? null;
-}
+export const getSectionByOrderService = cache(
+  async (programSlug: string, order: number): Promise<Section | null> => {
+    const section = await getSectionByOrder(programSlug, order);
+    return section ?? null;
+  },
+);
