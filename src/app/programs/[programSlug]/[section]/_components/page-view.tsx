@@ -1,7 +1,12 @@
 import { Suspense } from "react";
+import { after } from "next/server";
 import { notFound } from "next/navigation";
 
-import { getSectionByOrderService } from "@/services/program";
+import {
+  createSectionProgressService,
+  getSectionByOrderService,
+  getSectionProgressService,
+} from "@/services/program";
 import { VideoPanel, VideoPanelFallback } from "./video-panel";
 import { QuizPanel, QuizPanelFallback } from "./quiz-panel";
 
@@ -18,6 +23,11 @@ export default async function PageView({
   );
 
   if (!currentSection) notFound();
+
+  const progress = await getSectionProgressService(currentSection.id);
+  if (!progress) {
+    after(() => createSectionProgressService(currentSection.id));
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_minmax(0,1fr)] xl:gap-8">

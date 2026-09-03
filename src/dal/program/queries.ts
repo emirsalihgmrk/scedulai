@@ -1,11 +1,12 @@
 import { db } from "@/db";
-import { programsTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { programsTable, sectionProgressTable } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 import type {
   ProgramDetail,
   ProgramListItem,
   Section,
   SectionListItem,
+  SectionProgress,
 } from "@/schemas/program";
 
 export async function getPrograms(): Promise<ProgramListItem[]> {
@@ -98,6 +99,23 @@ export async function getFirstSection(
   });
 
   return row?.sections[0];
+}
+
+export async function getSectionProgress(
+  userId: string,
+  sectionId: string,
+): Promise<SectionProgress | undefined> {
+  return db.query.sectionProgressTable.findFirst({
+    where: and(
+      eq(sectionProgressTable.userId, userId),
+      eq(sectionProgressTable.sectionId, sectionId),
+    ),
+    columns: {
+      quizStatus: true,
+      videoPositionSeconds: true,
+      updatedAt: true,
+    },
+  });
 }
 
 export async function getSectionByOrder(

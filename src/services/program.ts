@@ -5,13 +5,17 @@ import {
   getProgram,
   getPrograms,
   getSectionByOrder,
+  getSectionProgress,
   getSections,
 } from "@/dal/program/queries";
+import { createSectionProgress } from "@/dal/program/mutations";
+import { getCurrentUser } from "@/services/auth";
 import {
   ProgramDetail,
   ProgramListItem,
   Section,
   SectionListItem,
+  SectionProgress,
 } from "@/schemas/program";
 
 export async function getProgramsService(): Promise<ProgramListItem[]> {
@@ -47,3 +51,22 @@ export const getSectionByOrderService = cache(
     return section ?? null;
   },
 );
+
+export const getSectionProgressService = cache(
+  async (sectionId: string): Promise<SectionProgress | null> => {
+    const user = await getCurrentUser();
+    if (!user) return null;
+
+    const progress = await getSectionProgress(user.id, sectionId);
+    return progress ?? null;
+  },
+);
+
+export async function createSectionProgressService(
+  sectionId: string,
+): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) return; // anonim → no-op
+
+  await createSectionProgress(user.id, sectionId);
+}
