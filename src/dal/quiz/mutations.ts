@@ -33,8 +33,6 @@ export async function createQuiz(
       .onConflictDoNothing()
       .returning({ id: quizzesTable.id });
 
-    // A concurrent request already created the quiz for this section + language
-    // pair; signal the caller to refetch instead of duplicating questions.
     if (!quiz) return null;
 
     const questions = await tx
