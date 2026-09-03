@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Check, Clock, Play } from "lucide-react";
+import { ArrowRight, Check, CirclePlay, Clock, Play } from "lucide-react";
 
 import { cn, formatDuration } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import type { SectionListItem } from "@/schemas/program";
 import { currentSectionId, isSectionCompleted } from "./section-progress";
 import { getCurrentUser } from "@/services/auth";
@@ -64,16 +63,18 @@ function SectionRow({
       : "bg-secondary text-secondary-foreground ring-border";
 
   const statusLabel = isCompleted
-    ? "Tamamlandı"
+    ? "Completed"
     : isCurrent
-      ? "Kaldığın yer"
-      : "Hazır";
+      ? "Recently viewed"
+      : null;
 
-  const badgeClass = isCompleted
-    ? "bg-success text-success-foreground"
-    : isCurrent
-      ? "bg-primary text-primary-foreground"
-      : "";
+  // Video izleme ilerlemesi (kullanıcı pozisyonu / toplam süre).
+  const durationSeconds = section.video?.durationSeconds ?? 0;
+  const positionSeconds = section.progress?.videoPositionSeconds ?? 0;
+  const watchPercent =
+    durationSeconds > 0
+      ? Math.min(100, Math.round((positionSeconds / durationSeconds) * 100))
+      : 0;
 
   return (
     <li className="relative flex gap-4 pb-4 last:pb-0">
@@ -88,7 +89,7 @@ function SectionRow({
       {/* Order node */}
       <div
         className={cn(
-          "z-10 flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4",
+          "hidden sm:flex z-10 size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4",
           nodeClass,
         )}
       >
@@ -98,7 +99,7 @@ function SectionRow({
       {/* Content */}
       <Link
         href={`/programs/${programSlug}/section-${section.order}`}
-        className="group/section flex flex-1 items-center rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-all hover:ring-foreground/25 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        className="group/section relative flex flex-1 items-center overflow-hidden rounded-xl bg-card p-3 ring-2 ring-foreground/10 transition-all hover:ring-foreground/25 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <div className="flex min-w-0 flex-1 items-center gap-4">
           {/* Thumbnail */}
@@ -115,16 +116,16 @@ function SectionRow({
 
           {/* Text */}
           <div className="flex min-w-0 flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">
-                Bölüm {section.order}
-              </span>
-              <Badge
-                variant={badgeClass ? "default" : "outline"}
-                className={badgeClass}
-              >
-                {statusLabel}
-              </Badge>
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <span>Bölüm {section.order}</span>
+              {statusLabel && (
+                <>
+                  <span className="" aria-hidden>
+                    ·
+                  </span>
+                  <span>{statusLabel}</span>
+                </>
+              )}
             </div>
             <h3 className="truncate font-display text-base leading-snug font-semibold text-foreground">
               {section.title}
@@ -133,7 +134,9 @@ function SectionRow({
               <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Clock className="size-3.5" />
                 {formatDuration(section.video.durationSeconds)}
-                <span className="truncate">· {section.video.title}</span>
+                <span aria-hidden>·</span>
+                <CirclePlay className="size-3.5" />
+                <span className="truncate">{section.video.title}</span>
               </span>
             )}
           </div>
@@ -143,10 +146,26 @@ function SectionRow({
             {isCurrent ? (
               <ArrowRight className="size-5 text-primary" />
             ) : (
-              <Play className="size-5 transition-colors group-hover/section:text-foreground" />
+              <>
+                <Play className="size-5 group-hover/section:hidden" />
+                <ArrowRight className="hidden size-5 text-primary group-hover/section:block" />
+              </>
             )}
           </div>
         </div>
+
+        {/* YouTube tarzı izleme çubuğu — tabana yapışık, satıra yükseklik eklemez */}
+        {section.video && watchPercent > 0 && (
+          <span
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-[2.5px] bg-foreground/10"
+          >
+            <span
+              className="block h-full bg-highlight"
+              style={{ width: `${watchPercent}%` }}
+            />
+          </span>
+        )}
       </Link>
     </li>
   );
