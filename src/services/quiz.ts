@@ -22,8 +22,10 @@ function userLanguages(user: {
   targetLanguage?: string | null;
 }) {
   return {
-    nativeLanguage: (user.nativeLanguage ?? "tr") as SupportedNativeLanguageCode,
-    targetLanguage: (user.targetLanguage ?? "en") as SupportedTargetLanguageCode,
+    nativeLanguage: (user.nativeLanguage ??
+      "tr") as SupportedNativeLanguageCode,
+    targetLanguage: (user.targetLanguage ??
+      "en") as SupportedTargetLanguageCode,
   };
 }
 
@@ -56,7 +58,7 @@ export async function submitAnswerService(
   const parsedResult = submitAnswerSchema.safeParse(analyzedInput);
   if (!parsedResult.success) throw new AppError("Invalid data");
 
-  return upsertAnswer({ userId: user.id, questionId, ...parsedResult.data });
+  return upsertAnswer(user.id, questionId, parsedResult.data);
 }
 
 export async function getOrCreateQuizService(

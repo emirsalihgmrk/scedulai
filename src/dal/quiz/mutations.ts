@@ -2,9 +2,9 @@ import { db } from "@/db";
 import { answersTable, questionsTable, quizzesTable } from "@/db/schema";
 import { getQuestion } from "@/dal/quiz/queries";
 import type {
-  AnswerInsert,
   QuestionWithAnswer,
   QuizWithQuestions,
+  SubmitAnswerInput,
 } from "@/schemas/quiz";
 import type {
   SupportedNativeLanguageCode,
@@ -62,11 +62,13 @@ export async function createQuiz(
 }
 
 export async function upsertAnswer(
-  input: AnswerInsert,
+  userId: string,
+  questionId: string,
+  input: SubmitAnswerInput,
 ): Promise<QuestionWithAnswer> {
   const [answer] = await db
     .insert(answersTable)
-    .values(input)
+    .values({ userId, questionId, ...input })
     .onConflictDoUpdate({
       target: [answersTable.userId, answersTable.questionId],
       set: {
@@ -81,7 +83,7 @@ export async function upsertAnswer(
       accuracy: answersTable.accuracy,
     });
 
-  const question = await getQuestion(input.questionId);
+  const question = await getQuestion(questionId);
   if (!question) throw new Error("Not found");
 
   return { ...question, answer };

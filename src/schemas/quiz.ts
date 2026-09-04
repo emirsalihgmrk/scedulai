@@ -46,3 +46,5 @@ export const submitAnswerSchema = createAnswerSchema.pick({
   analysis: true,
   accuracy: true,
 });
+
+export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;
