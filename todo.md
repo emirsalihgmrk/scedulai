@@ -16,6 +16,8 @@
 
 # Next
 
+- [] backend (tip/şema tanımlamaları, action-service-dal metod yapıları, error handling) ve frontend (dosya mimarisi, api çağrıları, prop drilling kuralları) katmanlarına katı kurallar koy bütün projeyi tutarlı hale getir
+
 ## 💡 Fikir Kutusu (Backlog / İleride Düşünülecekler)
 
 - **VideoPlayer → YouTube IFrame Player API'ye geçiş** (`react-youtube` veya doğrudan `YT.Player`): Şu an play tuşuna basılınca thumbnail yerine basit bir `<iframe>` geliyor; YouTube'un kendi UI'ı gösteriliyor. İleride custom control bar'ı (scrubber, rewind/forward, ses, tam ekran) gerçekten çalıştırmak için IFrame Player API kullanılmalı — `playerRef.current.playVideo()`, `pauseVideo()`, `seekTo()`, `getCurrentTime()` ile tam kontrol sağlanabilir.
