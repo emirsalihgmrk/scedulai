@@ -1,24 +1,17 @@
-import type {
-  channelsTable,
-  programsTable,
-  sectionProgressTable,
-  sectionsTable,
-  videosTable,
-} from "@/db/schema";
-
-// db types
-export type ProgramSelect = typeof programsTable.$inferSelect;
-export type SectionSelect = typeof sectionsTable.$inferSelect;
-export type SectionProgressSelect = typeof sectionProgressTable.$inferSelect;
-type ChannelSelect = typeof channelsTable.$inferSelect;
-type VideoSelect = typeof videosTable.$inferSelect;
+import {
+  ProgramRow,
+  SectionRow,
+  ChannelRow,
+  VideoRow,
+  SectionProgressRow,
+} from "@/db/types";
 
 // query types
-export type Program = Omit<ProgramSelect, "createdAt" | "updatedAt">;
-export type Section = Omit<SectionSelect, "createdAt" | "updatedAt">;
+export type Program = Omit<ProgramRow, "createdAt" | "updatedAt">;
+export type Section = Omit<SectionRow, "createdAt" | "updatedAt">;
 
 export type ProgramListItem = Pick<
-  ProgramSelect,
+  ProgramRow,
   | "id"
   | "slug"
   | "title"
@@ -29,7 +22,7 @@ export type ProgramListItem = Pick<
 >;
 
 export type ProgramDetail = Pick<
-  ProgramSelect,
+  ProgramRow,
   | "id"
   | "slug"
   | "title"
@@ -39,15 +32,15 @@ export type ProgramDetail = Pick<
   | "difficulty"
   | "referenceUrl"
 > & {
-  channel: Pick<ChannelSelect, "title" | "thumbnailUrl"> | null;
+  channel: Pick<ChannelRow, "title" | "thumbnailUrl"> | null;
 };
 
 export type SectionProgress = Pick<
-  SectionProgressSelect,
+  SectionProgressRow,
   "quizStatus" | "videoPositionSeconds" | "updatedAt"
 >;
 
-export type SectionListItem = Pick<SectionSelect, "id" | "title" | "order"> & {
-  video: Pick<VideoSelect, "title" | "durationSeconds" | "thumbnailUrl"> | null;
+export type SectionListItem = Pick<SectionRow, "id" | "title" | "order"> & {
+  video: Pick<VideoRow, "title" | "durationSeconds" | "thumbnailUrl"> | null;
   progress: SectionProgress | null;
 };

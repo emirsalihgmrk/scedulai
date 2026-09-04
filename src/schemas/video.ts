@@ -1,12 +1,8 @@
-import type { channelsTable, videosTable } from "@/db/schema";
-
-// db types
-export type ChannelSelect = typeof channelsTable.$inferSelect;
-export type VideoSelect = typeof videosTable.$inferSelect;
+import { ChannelRow, VideoRow } from "@/db/types";
 
 // query types
 export type Video = Pick<
-  VideoSelect,
+  VideoRow,
   | "id"
   | "youtubeId"
   | "url"
@@ -15,7 +11,7 @@ export type Video = Pick<
   | "durationSeconds"
   | "thumbnailUrl"
 > & {
-  channel: Pick<ChannelSelect, "title" | "thumbnailUrl">;
+  channel: Pick<ChannelRow, "title" | "thumbnailUrl">;
 };
 
 // column types

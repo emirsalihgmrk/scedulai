@@ -1,24 +1,21 @@
-import { answersTable, questionsTable, quizzesTable } from "@/db/schema";
 import { aiAnalysisSchema } from "@/ai/outputs/analyze-sentence";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-
-// db types
-
-type QuizSelect = typeof quizzesTable.$inferSelect;
-type QuestionSelect = typeof questionsTable.$inferSelect;
-type AnswerSelect = typeof answersTable.$inferSelect;
-export type AnswerInsert = typeof answersTable.$inferInsert;
+import {
+  QuizRow,
+  QuestionRow,
+  AnswerRow,
+  createAnswerSchema,
+} from "@/db/types";
 
 // query types
 
-export type Question = Omit<QuestionSelect, "createdAt" | "updatedAt">;
+export type Question = Omit<QuestionRow, "createdAt" | "updatedAt">;
 
 export type QuestionWithAnswer = Question & {
-  answer: Pick<AnswerSelect, "response" | "analysis" | "accuracy"> | null;
+  answer: Pick<AnswerRow, "response" | "analysis" | "accuracy"> | null;
 };
 
-export type QuizWithQuestions = Pick<QuizSelect, "id"> & {
+export type QuizWithQuestions = Pick<QuizRow, "id"> & {
   questions: QuestionWithAnswer[];
 };
 
@@ -44,7 +41,7 @@ export const answerResponseSchema = z.discriminatedUnion("type", [
 
 export type AnswerResponse = z.infer<typeof answerResponseSchema>;
 
-export const submitAnswerSchema = createInsertSchema(answersTable).pick({
+export const submitAnswerSchema = createAnswerSchema.pick({
   response: true,
   analysis: true,
   accuracy: true,
