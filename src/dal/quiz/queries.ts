@@ -13,7 +13,7 @@ export async function getQuiz(
   targetLanguage: SupportedTargetLanguageCode,
   userId: string,
 ): Promise<QuizWithQuestions | undefined> {
-  const quiz = await db.query.quizzesTable.findFirst({
+  const row = await db.query.quizzesTable.findFirst({
     where: and(
       eq(quizzesTable.sectionId, sectionId),
       eq(quizzesTable.nativeLanguage, nativeLanguage),
@@ -38,11 +38,11 @@ export async function getQuiz(
     },
   });
 
-  if (!quiz) return undefined;
+  if (!row) return undefined;
 
   return {
-    id: quiz.id,
-    questions: quiz.questions.map(({ answers, ...question }) => ({
+    id: row.id,
+    questions: row.questions.map(({ answers, ...question }) => ({
       ...question,
       answer: answers[0] ?? null,
     })),

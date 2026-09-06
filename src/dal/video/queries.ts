@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { sectionsTable, transcriptsTable } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
-import type { TranscriptLine, Video } from "@/schemas/video";
+import type { Transcript, Video } from "@/schemas/video";
 
 export async function getVideo(sectionId: string): Promise<Video | undefined> {
   const row = await db.query.sectionsTable.findFirst({
@@ -35,7 +35,7 @@ export async function getVideo(sectionId: string): Promise<Video | undefined> {
 
 export async function getTranscript(
   videoId: string,
-): Promise<TranscriptLine[] | undefined> {
+): Promise<Transcript | undefined> {
   const row = await db.query.transcriptsTable.findFirst({
     where: and(
       eq(transcriptsTable.videoId, videoId),
@@ -44,5 +44,5 @@ export async function getTranscript(
     columns: { content: true },
   });
 
-  return row?.content;
+  return row;
 }

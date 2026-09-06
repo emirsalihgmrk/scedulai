@@ -1,4 +1,6 @@
-import { ChannelRow, VideoRow } from "@/db/types";
+import { ChannelRow, TranscriptRow, VideoRow } from "@/db/types";
+
+export type { TranscriptLine } from "@/db/schema";
 
 // query types
 export type Video = Pick<
@@ -14,8 +16,4 @@ export type Video = Pick<
   channel: Pick<ChannelRow, "title" | "thumbnailUrl">;
 };
 
-// column types
-export interface TranscriptLine {
-  time: string;
-  text: string;
-}
+export type Transcript = Pick<TranscriptRow, "content">;

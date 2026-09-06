@@ -68,7 +68,9 @@ export async function submitAnswerService(
   const parsedResult = submitAnswerSchema.safeParse(analyzedInput);
   if (!parsedResult.success) throw new AppError("Invalid data");
 
-  return upsertAnswer(user.id, questionId, parsedResult.data);
+  const answer = await upsertAnswer(user.id, questionId, parsedResult.data);
+
+  return { ...question, answer };
 }
 
 export async function getQuizService(
@@ -94,7 +96,7 @@ export async function createQuizService(
   if (!user) return null;
   const quizInput = userLanguages(user);
   const result = await createQuiz(sectionId, quizInput, tx);
-  return result.id ?? null;
+  return result?.id ?? null;
 }
 
 export async function createQuestionsService(

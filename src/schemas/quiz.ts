@@ -1,4 +1,3 @@
-import { aiAnalysisSchema } from "@/ai/outputs/analyze-sentence";
 import { z } from "zod";
 import {
   QuizRow,
@@ -9,49 +8,29 @@ import {
   createQuestionRowSchema,
 } from "@/db/types";
 
-// query types
+export type {
+  QuestionPayload,
+  AnswerAnalysis,
+  AnswerResponse,
+} from "@/db/schema";
+
+// query
 
 export type Question = Omit<QuestionRow, "createdAt" | "updatedAt">;
 
+export type Answer = Pick<AnswerRow, "response" | "analysis" | "accuracy">;
+
 export type QuestionWithAnswer = Question & {
-  answer: Pick<AnswerRow, "response" | "analysis" | "accuracy"> | null;
+  answer: Answer | null;
 };
 
 export type QuizWithQuestions = Pick<QuizRow, "id"> & {
   questions: QuestionWithAnswer[];
 };
 
-// column types
+// mutation
 
-export type AnswerAnalysis = z.infer<typeof aiAnalysisSchema>;
-
-export type QuestionPayload = {
-  type: "translation";
-  sourceSentence: string;
-  expectedTranslation: string;
-  hint?: string;
-};
-
-// schemas - derived types
-
-export const answerResponseSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("translation"),
-    userTranslation: z.string().min(1),
-  }),
-]);
-
-export type AnswerResponse = z.infer<typeof answerResponseSchema>;
-
-export const submitAnswerSchema = createAnswerRowSchema.pick({
-  response: true,
-  analysis: true,
-  accuracy: true,
-});
-
-export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;
-
-////////////
+//// quiz
 
 export const createQuizSchema = createQuizRowSchema.pick({
   nativeLanguage: true,
@@ -60,6 +39,8 @@ export const createQuizSchema = createQuizRowSchema.pick({
 
 export type CreateQuizInput = z.infer<typeof createQuizSchema>;
 
+//// question
+
 export const createQuestionSchema = createQuestionRowSchema.pick({
   quizId: true,
   order: true,
@@ -67,3 +48,17 @@ export const createQuestionSchema = createQuestionRowSchema.pick({
   payload: true,
 });
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
+
+//// answer
+
+export const submitAnswerSchema = createAnswerRowSchema.pick({
+  response: true,
+  analysis: true,
+  accuracy: true,
+});
+export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;
+
+export const createAnswerSchema = z.object({
+  ...submitAnswerSchema.shape,
+});
+export type CreateAnswerInput = z.infer<typeof createAnswerSchema>;

@@ -14,6 +14,6 @@ export const getTranscriptService = cache(
   async (videoId: string): Promise<TranscriptLine[]> => {
     const transcript = await getTranscript(videoId);
     if (!transcript) return [];
-    return transcript;
+    return transcript.content;
   },
 );

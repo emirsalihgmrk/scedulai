@@ -1,11 +1,11 @@
 import { db } from "@/db";
 import { answersTable, questionsTable, quizzesTable } from "@/db/schema";
-import { getQuestion } from "@/dal/quiz/queries";
 import type {
+  Answer,
+  CreateAnswerInput,
   CreateQuestionInput,
   CreateQuizInput,
-  QuestionWithAnswer,
-  SubmitAnswerInput,
+  Question,
 } from "@/schemas/quiz";
 
 import { Transaction } from "@/schemas/common";
@@ -23,7 +23,7 @@ export async function createQuiz(
   sectionId: string,
   input: CreateQuizInput,
   tx?: Transaction,
-) {
+): Promise<{ id: string } | null> {
   const executor = tx ?? db;
 
   const [result] = await executor
@@ -39,7 +39,7 @@ export async function createQuestions(
   quizId: string,
   input: CreateQuestionInput[],
   tx?: Transaction,
-) {
+): Promise<Question[]> {
   const executor = tx ?? db;
   return executor
     .insert(questionsTable)
@@ -50,8 +50,8 @@ export async function createQuestions(
 export async function upsertAnswer(
   userId: string,
   questionId: string,
-  input: SubmitAnswerInput,
-): Promise<QuestionWithAnswer> {
+  input: CreateAnswerInput,
+): Promise<Answer> {
   const [answer] = await db
     .insert(answersTable)
     .values({ userId, questionId, ...input })
@@ -69,8 +69,5 @@ export async function upsertAnswer(
       accuracy: answersTable.accuracy,
     });
 
-  const question = await getQuestion(questionId);
-  if (!question) throw new Error("Not found");
-
-  return { ...question, answer };
+  return answer;
 }

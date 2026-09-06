@@ -19,12 +19,8 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { TranscriptLine } from "@/schemas/video";
-import type {
-  AnswerResponse,
-  AnswerAnalysis,
-  QuestionPayload,
-} from "@/schemas/quiz";
+import { z } from "zod";
+import { aiAnalysisSchema } from "@/ai/outputs/analyze-sentence";
 
 const commonFields = {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -51,6 +47,26 @@ export const targetLanguageEnum = pgEnum(
   "target_language",
   SUPPORTED_TARGET_LANGUAGE_CODES,
 );
+
+// jsonb column types
+export interface TranscriptLine {
+  time: string;
+  text: string;
+}
+
+export type QuestionPayload = {
+  type: "translation";
+  sourceSentence: string;
+  expectedTranslation: string;
+  hint?: string;
+};
+
+export type AnswerResponse = {
+  type: "translation";
+  userTranslation: string;
+};
+
+export type AnswerAnalysis = z.infer<typeof aiAnalysisSchema>;
 
 // better-auth managed tables
 export const userTable = pgTable("user", {
