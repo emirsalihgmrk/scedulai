@@ -4,7 +4,9 @@ import {
   QuizRow,
   QuestionRow,
   AnswerRow,
-  createAnswerSchema,
+  createAnswerRowSchema,
+  createQuizRowSchema,
+  createQuestionRowSchema,
 } from "@/db/types";
 
 // query types
@@ -41,10 +43,27 @@ export const answerResponseSchema = z.discriminatedUnion("type", [
 
 export type AnswerResponse = z.infer<typeof answerResponseSchema>;
 
-export const submitAnswerSchema = createAnswerSchema.pick({
+export const submitAnswerSchema = createAnswerRowSchema.pick({
   response: true,
   analysis: true,
   accuracy: true,
 });
 
 export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;
+
+////////////
+
+export const createQuizSchema = createQuizRowSchema.pick({
+  nativeLanguage: true,
+  targetLanguage: true,
+});
+
+export type CreateQuizInput = z.infer<typeof createQuizSchema>;
+
+export const createQuestionSchema = createQuestionRowSchema.pick({
+  quizId: true,
+  order: true,
+  type: true,
+  payload: true,
+});
+export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;

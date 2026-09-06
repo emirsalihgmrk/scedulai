@@ -1,5 +1,13 @@
-// Shared contract for all server actions: expected errors are returned as a
-// typed result instead of thrown, so client callers can branch on `ok`.
+import { ExtractTablesWithRelations } from "drizzle-orm";
+import { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
+import { PgTransaction } from "drizzle-orm/pg-core";
+
 export type ActionResult<T = undefined> =
   | { ok: true; data: T }
   | { ok: false; error: string };
+
+export type Transaction = PgTransaction<
+  PostgresJsQueryResultHKT,
+  typeof import("@/db/schema"),
+  ExtractTablesWithRelations<typeof import("@/db/schema")>
+>;
