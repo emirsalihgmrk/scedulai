@@ -5,16 +5,16 @@ import type { SectionProgress } from "@/schemas/program";
 export async function createSectionProgress(
   userId: string,
   sectionId: string,
-): Promise<SectionProgress | null> {
+): Promise<SectionProgress | undefined> {
   const [progress] = await db
     .insert(sectionProgressTable)
     .values({ userId, sectionId })
-    .onConflictDoNothing() // unique(userId, sectionId) — eşzamanlı istekte no-op
+    .onConflictDoNothing()
     .returning({
       quizStatus: sectionProgressTable.quizStatus,
       videoPositionSeconds: sectionProgressTable.videoPositionSeconds,
       updatedAt: sectionProgressTable.updatedAt,
     });
 
-  return progress ?? null;
+  return progress;
 }
