@@ -3,14 +3,16 @@ import { FileQuestion, LogIn, Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { getUserLanguageLabels } from "@/constants/language";
 import { getCurrentUser } from "@/services/auth";
-import { getOrCreateQuizService } from "@/services/quiz";
+import { generateQuizByAi, getQuizService } from "@/services/quiz";
 import { QuizCard } from "./quiz-card";
 
 export async function QuizPanel({ sectionId }: { sectionId: string }) {
-  const [user, quiz] = await Promise.all([
-    getCurrentUser(),
-    getOrCreateQuizService(sectionId),
-  ]);
+  const user = await getCurrentUser();
+  let quiz = await getQuizService(sectionId);
+
+  if (!quiz) {
+    quiz = await generateQuizByAi(sectionId);
+  }
 
   if (!quiz) {
     return (
@@ -34,7 +36,9 @@ export async function QuizPanel({ sectionId }: { sectionId: string }) {
     );
   }
 
-  const { nativeLangLabel, targetLangLabel } = getUserLanguageLabels(user ?? {});
+  const { nativeLangLabel, targetLangLabel } = getUserLanguageLabels(
+    user ?? {},
+  );
 
   return (
     <QuizCard

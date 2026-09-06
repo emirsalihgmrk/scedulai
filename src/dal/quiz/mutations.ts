@@ -2,14 +2,13 @@ import { db } from "@/db";
 import { answersTable, questionsTable, quizzesTable } from "@/db/schema";
 import { getQuestion } from "@/dal/quiz/queries";
 import type {
+  CreateQuestionInput,
+  CreateQuizInput,
   QuestionWithAnswer,
-  QuizWithQuestions,
   SubmitAnswerInput,
 } from "@/schemas/quiz";
-import type {
-  SupportedNativeLanguageCode,
-  SupportedTargetLanguageCode,
-} from "@/constants/language";
+
+import { Transaction } from "@/schemas/common";
 
 const questionColumns = {
   id: questionsTable.id,
@@ -22,43 +21,30 @@ const questionColumns = {
 
 export async function createQuiz(
   sectionId: string,
-  nativeLanguage: SupportedNativeLanguageCode,
-  targetLanguage: SupportedTargetLanguageCode,
-  sentences: Array<{ native: string; english: string }>,
-): Promise<QuizWithQuestions | null> {
-  return db.transaction(async (tx) => {
-    const [quiz] = await tx
-      .insert(quizzesTable)
-      .values({ sectionId, nativeLanguage, targetLanguage })
-      .onConflictDoNothing()
-      .returning({ id: quizzesTable.id });
+  input: CreateQuizInput,
+  tx?: Transaction,
+) {
+  const executor = tx ?? db;
 
-    if (!quiz) return null;
+  const [result] = await executor
+    .insert(quizzesTable)
+    .values({ sectionId, ...input })
+    .onConflictDoNothing()
+    .returning({ id: quizzesTable.id });
 
-    const questions = await tx
-      .insert(questionsTable)
-      .values(
-        sentences.map((sentence, index) => ({
-          quizId: quiz.id,
-          order: index,
-          type: "translation" as const,
-          payload: {
-            type: "translation" as const,
-            sourceSentence: sentence.native,
-            expectedTranslation: sentence.english,
-          },
-        })),
-      )
-      .returning(questionColumns);
+  return result;
+}
 
-    return {
-      id: quiz.id,
-      questions: questions.map((question) => ({
-        ...question,
-        answer: null,
-      })),
-    };
-  });
+export async function createQuestions(
+  quizId: string,
+  input: CreateQuestionInput[],
+  tx?: Transaction,
+) {
+  const executor = tx ?? db;
+  return executor
+    .insert(questionsTable)
+    .values(input.map((q) => ({ ...q, quizId })))
+    .returning(questionColumns);
 }
 
 export async function upsertAnswer(

@@ -1,7 +1,15 @@
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getTranscriptService, getVideoService } from "@/services/video";
-import { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
-import { createQuiz, upsertAnswer } from "@/dal/quiz/mutations";
+import {
+  CreateQuestionInput,
+  QuestionWithAnswer,
+  QuizWithQuestions,
+} from "@/schemas/quiz";
+import {
+  createQuestions,
+  createQuiz,
+  upsertAnswer,
+} from "@/dal/quiz/mutations";
 import { AnswerResponse, submitAnswerSchema } from "@/schemas/quiz";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
@@ -12,6 +20,8 @@ import {
   type SupportedNativeLanguageCode,
   type SupportedTargetLanguageCode,
 } from "@/constants/language";
+import { db } from "@/db";
+import { Transaction } from "@/schemas/common";
 
 const QUESTION_COUNT = 5;
 
@@ -61,21 +71,48 @@ export async function submitAnswerService(
   return upsertAnswer(user.id, questionId, parsedResult.data);
 }
 
-export async function getOrCreateQuizService(
+export async function getQuizService(
   sectionId: string,
 ): Promise<QuizWithQuestions | null> {
   const user = await getCurrentUser();
   if (!user) return null;
-
   const { nativeLanguage, targetLanguage } = userLanguages(user);
-
-  const existing = await getQuiz(
+  const quiz = await getQuiz(
     sectionId,
     nativeLanguage,
     targetLanguage,
     user.id,
   );
-  if (existing) return existing;
+  return quiz ?? null;
+}
+
+export async function createQuizService(
+  sectionId: string,
+  tx?: Transaction,
+): Promise<string | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const quizInput = userLanguages(user);
+  const result = await createQuiz(sectionId, quizInput, tx);
+  return result.id ?? null;
+}
+
+export async function createQuestionsService(
+  quizId: string,
+  input: CreateQuestionInput[],
+  tx?: Transaction,
+) {
+  const user = await getCurrentUser();
+  if (!user) return [];
+  const result = await createQuestions(quizId, input, tx);
+  return result ?? [];
+}
+
+export async function generateQuizByAi(
+  sectionId: string,
+): Promise<QuizWithQuestions | null> {
+  const user = await getCurrentUser();
+  const { nativeLanguage } = userLanguages(user!);
 
   const video = await getVideoService(sectionId);
   if (!video) return null;
@@ -90,17 +127,33 @@ export async function getOrCreateQuizService(
     nativeLanguage: getNativeLanguageEnglishName(nativeLanguage),
     count: QUESTION_COUNT,
   });
+  const query = db.transaction(async (tx) => {
+    const createdQuizId = await createQuizService(sectionId, tx);
+    if (!createdQuizId) return null;
+    const questionInput = sentences.map((sentence, index) => ({
+      quizId: createdQuizId,
+      order: index,
+      type: "translation" as const,
+      payload: {
+        type: "translation" as const,
+        sourceSentence: sentence.native,
+        expectedTranslation: sentence.english,
+      },
+    }));
+    const createdQuestions = await createQuestionsService(
+      createdQuizId,
+      questionInput,
+      tx,
+    );
 
-  const created = await createQuiz(
-    sectionId,
-    nativeLanguage,
-    targetLanguage,
-    sentences,
-  );
-  if (created) return created;
-
-  // A concurrent request created the quiz first — return the shared one.
-  return (
-    (await getQuiz(sectionId, nativeLanguage, targetLanguage, user.id)) ?? null
-  );
+    return {
+      id: createdQuizId,
+      questions: createdQuestions.map((question) => ({
+        ...question,
+        answer: null,
+      })),
+    };
+  });
+  const result = await query;
+  return result ?? null;
 }
