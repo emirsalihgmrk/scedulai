@@ -2,43 +2,50 @@ import { FileQuestion, LogIn, Sparkles } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { getUserLanguageLabels } from "@/constants/language";
+import { AppError } from "@/lib/errors";
 import { getCurrentUser } from "@/services/auth";
 import { generateQuizByAi, getQuizService } from "@/services/quiz";
 import { QuizCard } from "./quiz-card";
 
 export async function QuizPanel({ sectionId }: { sectionId: string }) {
   const user = await getCurrentUser();
-  let quiz = await getQuizService(sectionId);
 
-  if (!quiz) {
-    quiz = await generateQuizByAi(sectionId);
-  }
-
-  if (!quiz) {
+  if (!user) {
     return (
       <div className="sticky top-20">
-        {user ? (
-          <EmptyState
-            icon={FileQuestion}
-            title="Quiz hazırlanamadı"
-            description="Bu section'a bağlı bir video/transkript olmadığı için quiz üretilemedi."
-            className="h-[80vh]"
-          />
-        ) : (
-          <EmptyState
-            icon={LogIn}
-            title="Quiz için giriş yapın"
-            description="Bu section'ın quiz'ini çözebilmek için hesabınıza giriş yapmanız gerekiyor."
-            className="h-[80vh]"
-          />
-        )}
+        <EmptyState
+          icon={LogIn}
+          title="Sign in for the quiz"
+          description="You need to sign in to your account to take this section's quiz."
+          className="h-[80vh]"
+        />
       </div>
     );
   }
 
-  const { nativeLangLabel, targetLangLabel } = getUserLanguageLabels(
-    user ?? {},
-  );
+  let quiz = await getQuizService(sectionId);
+
+  if (!quiz) {
+    try {
+      quiz = await generateQuizByAi(sectionId);
+    } catch (error) {
+      if (error instanceof AppError) {
+        return (
+          <div className="sticky top-20">
+            <EmptyState
+              icon={FileQuestion}
+              title="Quiz could not be prepared"
+              description={error.message}
+              className="h-[80vh]"
+            />
+          </div>
+        );
+      }
+      throw error;
+    }
+  }
+
+  const { nativeLangLabel, targetLangLabel } = getUserLanguageLabels(user);
 
   return (
     <QuizCard

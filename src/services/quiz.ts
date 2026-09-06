@@ -112,15 +112,16 @@ export async function createQuestionsService(
 
 export async function generateQuizByAi(
   sectionId: string,
-): Promise<QuizWithQuestions | null> {
+): Promise<QuizWithQuestions> {
   const user = await getCurrentUser();
-  const { nativeLanguage } = userLanguages(user!);
+  if (!user) throw new AppError("Unauthorized");
+  const { nativeLanguage } = userLanguages(user);
 
   const video = await getVideoService(sectionId);
-  if (!video) return null;
+  if (!video) throw new AppError("There is no video");
 
   const lines = await getTranscriptService(video.id);
-  if (lines.length === 0) return null;
+  if (lines.length === 0) throw new AppError("The video has no transcript");
 
   const transcript = lines.map((line) => line.text).join("\n");
 
@@ -129,9 +130,9 @@ export async function generateQuizByAi(
     nativeLanguage: getNativeLanguageEnglishName(nativeLanguage),
     count: QUESTION_COUNT,
   });
-  const query = db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
     const createdQuizId = await createQuizService(sectionId, tx);
-    if (!createdQuizId) return null;
+    if (!createdQuizId) throw new AppError("Quiz could not be created");
     const questionInput = sentences.map((sentence, index) => ({
       quizId: createdQuizId,
       order: index,
@@ -156,6 +157,4 @@ export async function generateQuizByAi(
       })),
     };
   });
-  const result = await query;
-  return result ?? null;
 }
