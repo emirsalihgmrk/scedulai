@@ -65,7 +65,7 @@ export function QuestionStep({
           setError(result.error);
         }
       } catch {
-        setError("Değerlendirme başarısız oldu, lütfen tekrar deneyin.");
+        setError("Evaluation failed, please try again.");
       }
     });
   }

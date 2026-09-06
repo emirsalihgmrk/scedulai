@@ -17,13 +17,13 @@ export async function SectionTimeline({
   const currentId = currentSectionId(sections);
 
   return (
-    <section aria-label="Program bölümleri" className="flex flex-col gap-5">
+    <section aria-label="Program sections" className="flex flex-col gap-5">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="font-display text-xl font-bold text-foreground">
-          Bölümler
+          Sections
         </h2>
         <span className="text-sm text-muted-foreground">
-          {sections.length} bölüm
+          {sections.length} sections
         </span>
       </div>
 
@@ -68,7 +68,7 @@ function SectionRow({
       ? "Recently viewed"
       : null;
 
-  // Video izleme ilerlemesi (kullanıcı pozisyonu / toplam süre).
+  // Video watch progress (user position / total duration).
   const durationSeconds = section.video?.durationSeconds ?? 0;
   const positionSeconds = section.progress?.videoPositionSeconds ?? 0;
   const watchPercent =
@@ -117,7 +117,7 @@ function SectionRow({
           {/* Text */}
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <span>Bölüm {section.order}</span>
+              <span>Section {section.order}</span>
               {statusLabel && (
                 <>
                   <span className="" aria-hidden>
@@ -154,7 +154,7 @@ function SectionRow({
           </div>
         </div>
 
-        {/* YouTube tarzı izleme çubuğu — tabana yapışık, satıra yükseklik eklemez */}
+        {/* YouTube-style watch bar — pinned to the bottom, adds no row height */}
         {section.video && watchPercent > 0 && (
           <span
             aria-hidden
@@ -173,7 +173,7 @@ function SectionRow({
 
 export function SectionTimelineFallback() {
   return (
-    <section aria-label="Program bölümleri" className="flex flex-col gap-5">
+    <section aria-label="Program sections" className="flex flex-col gap-5">
       <div className="flex items-baseline justify-between gap-3">
         <div className="h-6 w-24 animate-pulse rounded bg-muted" />
         <div className="h-4 w-16 animate-pulse rounded bg-muted" />

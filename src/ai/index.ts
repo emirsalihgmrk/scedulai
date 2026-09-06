@@ -3,7 +3,7 @@ import { generateText, Output, ModelMessage } from "ai";
 import { z } from "zod";
 
 if (!process.env.OPENROUTER_API_KEY) {
-  throw new Error("OPENROUTER_API_KEY ortam değişkeni tanımlanmamış!");
+  throw new Error("OPENROUTER_API_KEY environment variable is not defined!");
 }
 
 export const DEFAULT_MODEL = "google/gemini-2.5-flash";

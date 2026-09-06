@@ -15,8 +15,8 @@ export async function VideoPanel({ sectionId }: { sectionId: string }) {
     return (
       <EmptyState
         icon={VideoOff}
-        title="Bu section için video yok"
-        description="Bu section'a henüz bir video eklenmemiş."
+        title="No video for this section"
+        description="No video has been added to this section yet."
         className="min-h-[60vh]"
       />
     );

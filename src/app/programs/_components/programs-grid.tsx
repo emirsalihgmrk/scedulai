@@ -16,8 +16,8 @@ export async function ProgramsGrid() {
     return (
       <EmptyState
         icon={LibraryBig}
-        title="Henüz program yok"
-        description="Şu an listelenecek bir program bulunmuyor. Veritabanını seed'ledikten sonra programlar burada görünecek."
+        title="No programs yet"
+        description="There are no programs to list right now. Programs will appear here once you seed the database."
       />
     );
   }

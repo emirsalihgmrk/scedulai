@@ -17,7 +17,7 @@ export interface VideoMeta {
 
 function apiKey(): string {
   const key = process.env.YOUTUBE_API_KEY;
-  if (!key) throw new Error("YOUTUBE_API_KEY ortam değişkeni tanımlanmamış!");
+  if (!key) throw new Error("YOUTUBE_API_KEY environment variable is not defined!");
   return key;
 }
 
@@ -33,7 +33,7 @@ async function callApi<T>(
   if (!res.ok) {
     const body = await res.text();
     throw new Error(
-      `YouTube API ${resource} çağrısı başarısız (${res.status}): ${body}`,
+      `YouTube API ${resource} request failed (${res.status}): ${body}`,
     );
   }
   return res.json() as Promise<T>;
@@ -59,7 +59,7 @@ export async function getUploadsPlaylistId(channel: string): Promise<string> {
 
   const data = await callApi<ChannelsResponse>("channels", params);
   const uploads = data.items?.[0]?.contentDetails.relatedPlaylists.uploads;
-  if (!uploads) throw new Error(`Kanal bulunamadı: ${channel}`);
+  if (!uploads) throw new Error(`Channel not found: ${channel}`);
   return uploads;
 }
 

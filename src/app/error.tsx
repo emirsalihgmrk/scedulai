@@ -22,11 +22,11 @@ export default function GlobalError({
       <div className="flex w-full max-w-md flex-col items-center gap-5">
         <EmptyState
           icon={TriangleAlert}
-          title="Bir şeyler ters gitti"
-          description="Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
+          title="Something went wrong"
+          description="An unexpected error occurred. Please try again."
         />
         <Button type="button" onClick={reset}>
-          Tekrar dene
+          Try again
         </Button>
       </div>
     </div>

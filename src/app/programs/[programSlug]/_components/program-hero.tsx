@@ -40,7 +40,7 @@ export async function ProgramHero({ programSlug }: { programSlug: string }) {
         className="inline-flex w-fit items-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <ArrowLeft className="size-4" />
-        Tüm programlar
+        All programs
       </Link>
 
       <Card className="grid grid-cols-1 gap-6 p-(--card-spacing) [--card-spacing:--spacing(5)] md:grid-cols-[minmax(0,320px)_1fr] md:items-start">
@@ -110,18 +110,18 @@ async function ProgramSectionsInfo({
   const resumeSection =
     sections.find((section) => section.id === currentId) ?? sections[0];
   const resumeLabel =
-    completedCount > 0 ? "Kaldığın yerden devam et" : "Programa başla";
+    completedCount > 0 ? "Continue where you left off" : "Start the program";
 
   return (
     <>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <ListChecks className="size-4" />
-          {sections.length} bölüm
+          {sections.length} sections
         </span>
         <span className="inline-flex items-center gap-1.5">
           <Clock className="size-4" />
-          {formatDuration(totalSeconds)} toplam
+          {formatDuration(totalSeconds)} total
         </span>
         {channel && (
           <span className="inline-flex items-center gap-1.5">
@@ -140,9 +140,9 @@ async function ProgramSectionsInfo({
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between text-xs font-medium">
-          <span className="text-muted-foreground">İlerleme</span>
+          <span className="text-muted-foreground">Progress</span>
           <span className="text-foreground">
-            {completedCount}/{sections.length} tamamlandı
+            {completedCount}/{sections.length} completed
           </span>
         </div>
         <Progress value={progressPercent} />
@@ -166,9 +166,9 @@ async function ProgramSectionsInfo({
               href={referenceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`${title} referansını yeni sekmede aç`}
+              aria-label={`Open reference for ${title} in a new tab`}
             >
-              Referans
+              Reference
               <ExternalLink data-icon="inline-end" />
             </a>
           </Button>
