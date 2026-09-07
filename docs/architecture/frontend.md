@@ -37,7 +37,7 @@ schemas/ (DTO)  →  services/ (from RSC)  ·  actions/ (from Client)  →  UI c
 - **Component names:** PascalCase (`QuizPanel`, `ProgramCard`).
 - **`page.tsx`:** the exported function is **always `Page`** and a **default export** (Next.js requirement);
   it is a lean orchestrator — resolves params, composes child components under `<Suspense>`, and holds no
-  other logic. (Details: ui-design skill.)
+  other logic.
   - **`page.tsx` never contains an API call** — no service/DAL/`fetch` calls. Data fetching happens inside
     the child components it composes (any of them may query the database), so each can stream independently
     under its own `<Suspense>`.
