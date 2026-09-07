@@ -19,7 +19,6 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { ProgramDetail } from "@/schemas/program";
 import { currentSectionId, isSectionCompleted } from "./section-progress";
-import { getCurrentUser } from "@/services/auth";
 
 export async function ProgramHero({ programSlug }: { programSlug: string }) {
   const program = await getProgramService(programSlug);
@@ -93,8 +92,7 @@ async function ProgramSectionsInfo({
   referenceUrl: string | null;
   title: string;
 }) {
-  const user = await getCurrentUser();
-  const sections = await getSectionsService(programSlug, user?.id ?? null);
+  const sections = await getSectionsService(programSlug);
 
   const totalSeconds = sections.reduce(
     (sum, section) => sum + (section.video?.durationSeconds ?? 0),

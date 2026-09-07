@@ -68,5 +68,5 @@ export const updateAnswerRowSchema = createUpdateSchema(answersTable);
 export type SectionProgressRow = typeof sectionProgressTable.$inferSelect;
 export const createSectionProgressRowSchema =
   createInsertSchema(sectionProgressTable);
-export const updateSectionProgressRowsSchema =
+export const updateSectionProgressRowSchema =
   createUpdateSchema(sectionProgressTable);

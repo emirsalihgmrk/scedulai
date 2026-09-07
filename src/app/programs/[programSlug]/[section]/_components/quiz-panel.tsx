@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { getUserLanguageLabels } from "@/constants/language";
 import { AppError } from "@/lib/errors";
 import { getCurrentUser } from "@/services/auth";
-import { generateQuizByAi, getQuizService } from "@/services/quiz";
+import { generateQuizByAiService, getQuizService } from "@/services/quiz";
 import { QuizCard } from "./quiz-card";
 
 export async function QuizPanel({ sectionId }: { sectionId: string }) {
@@ -27,7 +27,7 @@ export async function QuizPanel({ sectionId }: { sectionId: string }) {
 
   if (!quiz) {
     try {
-      quiz = await generateQuizByAi(sectionId);
+      quiz = await generateQuizByAiService(sectionId);
     } catch (error) {
       if (error instanceof AppError) {
         return (

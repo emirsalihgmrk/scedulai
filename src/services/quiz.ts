@@ -2,6 +2,7 @@ import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getTranscriptService, getVideoService } from "@/services/video";
 import {
   CreateQuestionInput,
+  Question,
   QuestionWithAnswer,
   QuizWithQuestions,
 } from "@/schemas/quiz";
@@ -103,14 +104,14 @@ export async function createQuestionsService(
   quizId: string,
   input: CreateQuestionInput[],
   tx?: Transaction,
-) {
+): Promise<Question[]> {
   const user = await getCurrentUser();
   if (!user) return [];
   const result = await createQuestions(quizId, input, tx);
   return result ?? [];
 }
 
-export async function generateQuizByAi(
+export async function generateQuizByAiService(
   sectionId: string,
 ): Promise<QuizWithQuestions> {
   const user = await getCurrentUser();

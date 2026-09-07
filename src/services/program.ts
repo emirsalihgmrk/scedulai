@@ -30,11 +30,9 @@ export async function getProgramService(
 }
 
 export const getSectionsService = cache(
-  async (
-    programSlug: string,
-    userId: string | null,
-  ): Promise<SectionListItem[]> => {
-    return getSections(programSlug, userId);
+  async (programSlug: string): Promise<SectionListItem[]> => {
+    const user = await getCurrentUser();
+    return getSections(programSlug, user?.id ?? null);
   },
 );
 

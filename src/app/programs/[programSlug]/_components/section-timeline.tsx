@@ -4,7 +4,6 @@ import { ArrowRight, Check, CirclePlay, Clock, Play } from "lucide-react";
 import { cn, formatDuration } from "@/lib/utils";
 import type { SectionListItem } from "@/schemas/program";
 import { currentSectionId, isSectionCompleted } from "./section-progress";
-import { getCurrentUser } from "@/services/auth";
 import { getSectionsService } from "@/services/program";
 
 export async function SectionTimeline({
@@ -12,8 +11,7 @@ export async function SectionTimeline({
 }: {
   programSlug: string;
 }) {
-  const user = await getCurrentUser();
-  const sections = await getSectionsService(programSlug, user?.id ?? null);
+  const sections = await getSectionsService(programSlug);
   const currentId = currentSectionId(sections);
 
   return (

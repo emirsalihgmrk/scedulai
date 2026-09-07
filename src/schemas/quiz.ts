@@ -57,8 +57,3 @@ export const submitAnswerSchema = createAnswerRowSchema.pick({
   accuracy: true,
 });
 export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;
-
-export const createAnswerSchema = z.object({
-  ...submitAnswerSchema.shape,
-});
-export type CreateAnswerInput = z.infer<typeof createAnswerSchema>;

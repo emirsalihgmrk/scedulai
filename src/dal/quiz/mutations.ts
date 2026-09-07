@@ -2,10 +2,10 @@ import { db } from "@/db";
 import { answersTable, questionsTable, quizzesTable } from "@/db/schema";
 import type {
   Answer,
-  CreateAnswerInput,
   CreateQuestionInput,
   CreateQuizInput,
   Question,
+  SubmitAnswerInput,
 } from "@/schemas/quiz";
 
 import { Transaction } from "@/schemas/common";
@@ -23,7 +23,7 @@ export async function createQuiz(
   sectionId: string,
   input: CreateQuizInput,
   tx?: Transaction,
-): Promise<{ id: string } | null> {
+): Promise<{ id: string } | undefined> {
   const executor = tx ?? db;
 
   const [result] = await executor
@@ -50,7 +50,7 @@ export async function createQuestions(
 export async function upsertAnswer(
   userId: string,
   questionId: string,
-  input: CreateAnswerInput,
+  input: SubmitAnswerInput,
 ): Promise<Answer> {
   const [answer] = await db
     .insert(answersTable)
