@@ -30,9 +30,10 @@ Public DTO kontratıdır. Üst katmanlar (özellikle UI) `db/schema` veya `db/ty
 ### Sorgu Tipleri (Query Types)
 
 - `db/types.ts` içindeki ham `<Modül>Row` tiplerinden `Pick`/`Omit` ve ilişki bileşimiyle türetilir.
-- **İsimlendirme:**
-  - Tek tablo yansıması: `<Modül>` (Örn: `Question`).
-  - İlişki içeren bileşik tip: `<Modül>With<İlişki>` (Örn: `QuizWithQuestions`, `ProjectWithDocuments`).
+- **İsimlendirme:** Modül adını **ön ek** almak şartıyla isimlendirme serbesttir.
+  Göreve/görünüme özel DTO'lar `<Modül>ListItem` / `<Modül>Detail`, ilişki bileşimleri
+  `<Modül>With<İlişki>` biçiminde olabilir.
+  Örn: `Question`, `ProgramDetail`, `SectionListItem`, `QuizWithQuestions`.
 
 ### Mutasyon Şemaları ve Tipleri (Mutation Schemas & Types)
 
@@ -51,10 +52,10 @@ Public DTO kontratıdır. Üst katmanlar (özellikle UI) `db/schema` veya `db/ty
 
 ### İsimlendirme
 
-| Öğe   | Kural                        | Örnek                  |
-| ----- | ---------------------------- | ---------------------- |
-| Şema  | `<işlem><Modül>Schema` (camelCase) | `updateDocumentSchema` |
-| Tip   | `<İşlem><Modül>Input` (PascalCase) | `UpdateDocumentInput`  |
+Son ekler zorunludur; isim işlemi + modülü yansıtsın (parça sırası katı değildir).
+
+- **Şema:** `Schema` son eki, camelCase (Örn: `updateDocumentSchema`).
+- **Tip:** `Input` son eki, PascalCase; şemadan `z.infer` ile türetilir (Örn: `UpdateDocumentInput`).
 
 ---
 
@@ -99,8 +100,10 @@ Ham Drizzle sorguları. İş mantığı ve auth **içermez**.
 
 ### İsimlendirme
 
-- `<fiil><Modül>Service` (Örn: `getQuizService`, `submitAnswerService`).
-- DAL jenerik bir fiil kullandığında, Service bu işi semantik olarak somutlaştırabilir:
+- `<fiil><Modül>[<Nitelik>]Service` — isim yapılan işi **tam** yansıtmalıdır; gerektiğinde
+  işi somutlaştıran bir niteleyici eklenir.
+  Örn: `getQuizService`, `submitAnswerService`, `generateQuizByAiService`.
+- DAL jenerik bir fiil kullandığında, Service bu işi semantik olarak somutlaştırır:
   DAL `updateDocument` → Service `publishDocumentService` / `archiveDocumentService`.
 
 ### Dönüş Tipi (sorgu ve mutasyon ortak)
@@ -138,11 +141,22 @@ Ham Drizzle sorguları. İş mantığı ve auth **içermez**.
 ## 4. Server Actions (`src/actions/<modül>.ts`)
 
 - Dosya başında `"use server"`.
+- **İsimlendirme:** `Action` son eki; isim işlemi + modülü yansıtsın (Örn: `submitAnswerAction`).
 - **Amaç:** Client ↔ Service köprüsü. İş mantığı **içermez**.
 - **İşleyiş:** Servisi aynı parametrelerle `try/catch` içinde çağırır:
   - Başarı → `{ ok: true, data }`
   - Hata → `toActionFailure(error)` (`@/lib/action`)
   - Sonuç, standart `ActionResult<T>` nesnesidir.
+
+### İstisna: Auth (better-auth)
+
+better-auth ince bir sarmalayıcı olduğundan, kimlik işlemleri bu katman kurallarının **istisnasıdır**:
+
+- `signUpUser` / `signInUser` / `signOutUser` action'ları ayrı bir servis çağırmadan,
+  doğrulamayı (`schema.parse`) ve `auth.api.*` çağrısını doğrudan kendi içinde yapabilir;
+  auth için ayrı bir mutation servisi ve `Action` son eki zorunlu değildir.
+- `getCurrentUser` yine `services/auth.ts` içinde kalır ve diğer servisler tarafından
+  auth sınırı olarak kullanılır.
 
 ---
 

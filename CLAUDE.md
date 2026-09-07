@@ -43,6 +43,10 @@ src/
 
 ### Key conventions
 
+> When adding or changing backend code (`schemas/`, `dal/`, `services/`, `actions/`), consult
+> [`docs/backend-rules.md`](./docs/backend-rules.md) — the detailed conventions for each layer
+> (naming, narrowed mutation schemas, return-type contracts, the auth exception).
+
 - **Services call DAL, not the other way around.** Pages/actions call services.
 - **Auth boundary is in services** via `getCurrentUser()` from `src/services/auth.ts`. Server Actions throw `AppError("Unauthorized")`; `toActionFailure()` in `lib/action.ts` normalizes errors into `ActionResult<T>`.
 - **Schemas (`src/schemas/`) are the public DTO contract.** DAL query results are mapped to schema types before being returned upward. Never import raw Drizzle table types in UI components.
