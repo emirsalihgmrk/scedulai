@@ -43,9 +43,13 @@ src/
 
 ### Key conventions
 
-> When adding or changing backend code (`schemas/`, `dal/`, `services/`, `actions/`), consult
-> [`docs/backend-rules.md`](./docs/backend-rules.md) — the detailed conventions for each layer
-> (naming, narrowed mutation schemas, return-type contracts, the auth exception).
+> When working on the backend (`schemas/`, `dal/`, `services/`, `actions/`), consult
+> [`docs/architecture/backend.md`](./docs/architecture/backend.md) — layer conventions for naming,
+> narrowed mutation schemas, return-type contracts, and the auth exception.
+> When working on the frontend, consult
+> [`docs/architecture/frontend.md`](./docs/architecture/frontend.md) — RSC/Client boundary, data
+> fetching, Server Action consumption, forms, and error/empty states (the design system itself is
+> governed by the `ui-design` skill).
 
 - **Services call DAL, not the other way around.** Pages/actions call services.
 - **Auth boundary is in services** via `getCurrentUser()` from `src/services/auth.ts`. Server Actions throw `AppError("Unauthorized")`; `toActionFailure()` in `lib/action.ts` normalizes errors into `ActionResult<T>`.
