@@ -23,6 +23,7 @@ import {
 } from "@/constants/language";
 import { db } from "@/db";
 import { Transaction } from "@/schemas/common";
+import { cache } from "react";
 
 const QUESTION_COUNT = 5;
 
@@ -74,7 +75,7 @@ export async function submitAnswerService(
   return { ...question, answer };
 }
 
-export async function getQuizService(
+export const getQuizService = cache(async function getQuizService(
   sectionId: string,
 ): Promise<QuizWithQuestions | null> {
   const user = await getCurrentUser();
@@ -87,7 +88,7 @@ export async function getQuizService(
     user.id,
   );
   return quiz ?? null;
-}
+});
 
 export async function createQuizService(
   sectionId: string,

@@ -7,22 +7,42 @@ import {
   getSectionByOrderService,
   getSectionProgressService,
 } from "@/services/program";
-import { VideoPanel, VideoPanelFallback } from "./video-panel";
-import { QuizPanel, QuizPanelFallback } from "./quiz-panel";
+import { VideoSection, VideoSectionFallback } from "./video-section";
+import { TranscriptCard, TranscriptCardFallback } from "./transcript-card";
+import { QuizCard } from "./quiz-card";
+import { getQuizService } from "@/services/quiz";
+import { getTranscriptService, getVideoService } from "@/services/video";
+import QuizCardFallback from "./quiz-card/fallback";
+import { getCurrentUser } from "@/services/auth";
+
+function parseOrder(section: string): number | null {
+  const match = /^section-(\d+)$/.exec(section);
+  if (!match) return null;
+  return Number(match[1]);
+}
 
 export default async function PageView({
-  sectionOrder,
-  programSlug,
+  params,
 }: {
-  sectionOrder: number;
-  programSlug: string;
+  params: Promise<{ programSlug: string; section: string }>;
 }) {
+  const user = await getCurrentUser();
+  const { programSlug, section } = await params;
+
+  const sectionOrder = parseOrder(section);
+  if (sectionOrder === null) notFound();
+
   const currentSection = await getSectionByOrderService(
     programSlug,
     sectionOrder,
   );
 
   if (!currentSection) notFound();
+
+  const quizPromise = getQuizService(currentSection.id);
+  const transcriptPromise = getVideoService(currentSection.id).then((video) =>
+    video ? getTranscriptService(video.id) : [],
+  );
 
   const progress = await getSectionProgressService(currentSection.id);
   if (!progress) {
@@ -31,14 +51,24 @@ export default async function PageView({
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_minmax(0,1fr)] xl:gap-8">
-      <section aria-label="Video and transcript" className="min-w-0">
-        <Suspense fallback={<VideoPanelFallback />}>
-          <VideoPanel sectionId={currentSection.id} />
+      <section
+        aria-label="Video and transcript"
+        className="flex min-w-0 flex-col gap-5"
+      >
+        <Suspense fallback={<VideoSectionFallback />}>
+          <VideoSection sectionId={currentSection.id} />
+        </Suspense>
+        <Suspense fallback={<TranscriptCardFallback />}>
+          <TranscriptCard transcriptPromise={transcriptPromise} />
         </Suspense>
       </section>
       <section aria-label="AI interactive quiz" className="min-w-0">
-        <Suspense fallback={<QuizPanelFallback />}>
-          <QuizPanel sectionId={currentSection.id} />
+        <Suspense fallback={<QuizCardFallback />}>
+          <QuizCard
+            user={user}
+            sectionId={currentSection.id}
+            quizPromise={quizPromise}
+          />
         </Suspense>
       </section>
     </div>
@@ -48,11 +78,15 @@ export default async function PageView({
 export function PageViewFallback() {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_minmax(0,1fr)] xl:gap-8">
-      <section aria-label="Video and transcript" className="min-w-0">
-        <VideoPanelFallback />
+      <section
+        aria-label="Video and transcript"
+        className="flex min-w-0 flex-col gap-5"
+      >
+        <VideoSectionFallback />
+        <TranscriptCardFallback />
       </section>
       <section aria-label="AI interactive quiz" className="min-w-0">
-        <QuizPanelFallback />
+        <QuizCardFallback />
       </section>
     </div>
   );

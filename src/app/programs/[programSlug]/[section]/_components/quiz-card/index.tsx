@@ -1,26 +1,83 @@
 "use client";
 
-import { useState } from "react";
+import { use, useEffect, useRef, useState, useTransition } from "react";
 import { Card } from "@/components/ui/card";
 import { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
 import { OverviewStep } from "./overview-step";
 import { QuestionStep } from "./question-step";
+import { QuizGenerating } from "./fallback";
+import { getUserLanguageLabels } from "@/constants/language";
+import { FileQuestion, LogIn } from "lucide-react";
+import { EmptyState } from "@/components/shared/empty-state";
+import { generateQuizByAiAction } from "@/actions/quiz";
+import { User } from "@/schemas/auth";
 
 export function QuizCard({
-  quiz,
-  nativeLangLabel,
-  targetLangLabel,
+  user,
+  sectionId,
+  quizPromise,
 }: {
-  quiz: QuizWithQuestions;
-  nativeLangLabel: string;
-  targetLangLabel: string;
+  user: User | null;
+  sectionId: string;
+  quizPromise: Promise<QuizWithQuestions | null>;
 }) {
-  const total = quiz.questions.length;
+  const initialQuiz = use(quizPromise);
 
+  const [quiz, setQuiz] = useState(initialQuiz);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [graded, setGraded] = useState<Record<string, QuestionWithAnswer>>({});
 
+  const hasRequestedRef = useRef(false);
+  useEffect(() => {
+    if (!user || quiz || hasRequestedRef.current) return;
+    hasRequestedRef.current = true;
+    startTransition(async () => {
+      try {
+        const result = await generateQuizByAiAction(sectionId);
+        if (result.ok) setQuiz(result.data);
+        else {
+          setError(result.error);
+          hasRequestedRef.current = false;
+        }
+      } catch {
+        setError("An unexpected error occurred while generating the quiz.");
+        hasRequestedRef.current = false;
+      }
+    });
+  }, [user, quiz, sectionId]);
+
+  if (error) {
+    return (
+      <div className="sticky top-20">
+        <EmptyState
+          icon={FileQuestion}
+          title="Quiz could not be prepared"
+          description={error}
+          className="h-[80vh]"
+        />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="sticky top-20">
+        <EmptyState
+          icon={LogIn}
+          title="Sign in for the quiz"
+          description="You need to sign in to your account to take this section's quiz."
+          className="h-[80vh]"
+        />
+      </div>
+    );
+  }
+
+  if (isPending || !quiz) return <QuizGenerating />;
+
+  const total = quiz.questions.length;
   const questions = quiz.questions.map((q) => graded[q.id] ?? q);
   const answered = questions.filter((q) => q.answer !== null).length;
   const unanswered = total - answered;
@@ -29,6 +86,7 @@ export function QuizCard({
   const isOverview = step === 0;
   const question = isOverview ? undefined : questions[step - 1];
 
+  const { nativeLangLabel, targetLangLabel } = getUserLanguageLabels(user);
   return (
     <div className="sticky top-20">
       <Card

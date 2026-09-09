@@ -1,10 +1,10 @@
 "use server";
 
 import { AnswerResponse } from "@/schemas/quiz";
-import { submitAnswerService } from "@/services/quiz";
+import { generateQuizByAiService, submitAnswerService } from "@/services/quiz";
 import { toActionFailure } from "@/lib/action";
 import type { ActionResult } from "@/schemas/common";
-import type { QuestionWithAnswer } from "@/schemas/quiz";
+import type { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
 
 export async function submitAnswerAction(
   questionId: string,
@@ -13,6 +13,17 @@ export async function submitAnswerAction(
   try {
     const data = await submitAnswerService(questionId, input);
 
+    return { ok: true, data };
+  } catch (error) {
+    return toActionFailure(error);
+  }
+}
+
+export async function generateQuizByAiAction(
+  sectionId: string,
+): Promise<ActionResult<QuizWithQuestions>> {
+  try {
+    const data = await generateQuizByAiService(sectionId);
     return { ok: true, data };
   } catch (error) {
     return toActionFailure(error);
