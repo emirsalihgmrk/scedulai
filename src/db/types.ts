@@ -1,4 +1,8 @@
-import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
 import {
   accountTable,
   answersTable,
@@ -16,6 +20,7 @@ import {
 } from "./schema";
 
 export type UserRow = typeof userTable.$inferSelect;
+export const userRowSchema = createSelectSchema(userTable);
 export const createUserRowSchema = createInsertSchema(userTable);
 export const updateUserRowSchema = createUpdateSchema(userTable);
 

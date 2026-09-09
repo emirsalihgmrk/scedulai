@@ -1,5 +1,15 @@
 import { z } from "zod";
-import { createUserRowSchema } from "@/db/types";
+import { createUserRowSchema, userRowSchema } from "@/db/types";
+
+export const userSchema = userRowSchema.pick({
+  id: true,
+  name: true,
+  email: true,
+  nativeLanguage: true,
+  targetLanguage: true,
+  plan: true,
+});
+export type User = z.infer<typeof userSchema>;
 
 export const signUpSchema = z.object({
   name: z.string().min(1),
