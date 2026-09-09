@@ -7,10 +7,11 @@ import { currentSectionId, isSectionCompleted } from "./section-progress";
 import { getSectionsService } from "@/services/program";
 
 export async function SectionTimeline({
-  programSlug,
+  params,
 }: {
-  programSlug: string;
+  params: Promise<{ programSlug: string }>;
 }) {
+  const { programSlug } = await params;
   const sections = await getSectionsService(programSlug);
   const currentId = currentSectionId(sections);
 

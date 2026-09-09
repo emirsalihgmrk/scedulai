@@ -20,17 +20,15 @@ import { Progress } from "@/components/ui/progress";
 import type { ProgramDetail } from "@/schemas/program";
 import { currentSectionId, isSectionCompleted } from "./section-progress";
 
-export async function ProgramHero({ programSlug }: { programSlug: string }) {
+export async function ProgramHero({
+  params,
+}: {
+  params: Promise<{ programSlug: string }>;
+}) {
+  const { programSlug } = await params;
   const program = await getProgramService(programSlug);
   if (!program) notFound();
-  const {
-    title,
-    description,
-    thumbnailUrl,
-    difficulty,
-    referenceUrl,
-    channel,
-  } = program;
+  const { title, description, thumbnailUrl, difficulty } = program;
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,12 +66,7 @@ export async function ProgramHero({ programSlug }: { programSlug: string }) {
           </div>
 
           <Suspense fallback={<ProgramSectionsInfoFallback />}>
-            <ProgramSectionsInfo
-              programSlug={programSlug}
-              channel={channel}
-              referenceUrl={referenceUrl}
-              title={title}
-            />
+            <ProgramSectionsInfo program={program} />
           </Suspense>
         </div>
       </Card>
@@ -81,18 +74,9 @@ export async function ProgramHero({ programSlug }: { programSlug: string }) {
   );
 }
 
-async function ProgramSectionsInfo({
-  programSlug,
-  channel,
-  referenceUrl,
-  title,
-}: {
-  programSlug: string;
-  channel: ProgramDetail["channel"];
-  referenceUrl: string | null;
-  title: string;
-}) {
-  const sections = await getSectionsService(programSlug);
+async function ProgramSectionsInfo({ program }: { program: ProgramDetail }) {
+  const { slug, title, referenceUrl, channel } = program;
+  const sections = await getSectionsService(slug);
 
   const totalSeconds = sections.reduce(
     (sum, section) => sum + (section.video?.durationSeconds ?? 0),
@@ -149,9 +133,7 @@ async function ProgramSectionsInfo({
       <div className="mt-1 flex flex-wrap items-center gap-2">
         {resumeSection && (
           <Button asChild>
-            <Link
-              href={`/programs/${programSlug}/section-${resumeSection.order}`}
-            >
+            <Link href={`/programs/${slug}/section-${resumeSection.order}`}>
               <PlayCircle data-icon="inline-start" />
               {resumeLabel}
               <ArrowRight data-icon="inline-end" />
