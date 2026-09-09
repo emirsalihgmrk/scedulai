@@ -36,11 +36,29 @@ schemas/ (DTO)  →  services/ (from RSC)  ·  actions/ (from Client)  →  UI c
 - **File names:** kebab-case (`quiz-panel.tsx`, `program-hero.tsx`, `section-progress.ts`).
 - **Component names:** PascalCase (`QuizPanel`, `ProgramCard`).
 - **`page.tsx`:** the exported function is **always `Page`** and a **default export** (Next.js requirement);
-  it is a lean orchestrator — resolves params, composes child components under `<Suspense>`, and holds no
-  other logic.
+  it is a lean orchestrator — composes child components under `<Suspense>` and holds no other logic. It
+  stays **synchronous**: it does not `await` its `params` / `searchParams` (see below).
   - **`page.tsx` never contains an API call** — no service/DAL/`fetch` calls. Data fetching happens inside
     the child components it composes (any of them may query the database), so each can stream independently
     under its own `<Suspense>`.
+  - **`page.tsx` never resolves its `params`.** `params` (and `searchParams`) arrive as a Promise; pass that
+    promise **straight down** to the child components and let each resolve it itself (`await params` in an RSC
+    child, `use(params)` in a client child). Awaiting `params` in the page makes `Page` `async` and blocks the
+    whole `<Suspense>` shell — including every fallback — until it resolves; passing the promise keeps the
+    shell instant and lets each subtree stream on its own.
+    ```tsx
+    export default function Page({
+      params,
+    }: {
+      params: Promise<{ programSlug: string }>;
+    }) {
+      return (
+        <Suspense fallback={<ProgramHeroFallback />}>
+          <ProgramHero params={params} /> {/* the child awaits params itself */}
+        </Suspense>
+      );
+    }
+    ```
 - **Export style:** Next.js special files (`page`/`layout`/`error`/`loading`/`not-found`) use default
   exports; other components use **named exports**. A file's single primary component may be default-exported,
   with its paired fallback as a **named** `XFallback` export.
@@ -63,6 +81,39 @@ schemas/ (DTO)  →  services/ (from RSC)  ·  actions/ (from Client)  →  UI c
 - Use `after(() => …Service())` (`next/server`) for fire-and-forget writes — e.g.
   `createSectionProgressService` runs without blocking render.
 - Services read by multiple RSC subtrees in the same request are wrapped in `cache()` (see backend.md §3).
+
+### Preloading child subtrees behind a sequential parent await
+
+When a parent RSC has its **own** sequential `await` chain before it can render its children, the
+children's independent fetches would otherwise not start until the parent finishes *every* await and
+React renders down to them — serializing round-trips that could run in parallel. **Kick off each
+child's fetch the moment its dependency is known, before the parent's remaining `await`s.**
+
+- Each preloadable child exports a **`preloadX(deps)`** helper colocated with the component. It is a
+  plain (non-`async`) function that calls the child's `cache()`-wrapped service with **`void`** —
+  fire-and-forget, never awaited:
+  ```tsx
+  export const preloadQuizPanel = (sectionId: string) => {
+    void getQuizService(sectionId);
+  };
+  ```
+- The parent calls every `preloadX(...)` **synchronously, right after the shared dependency resolves
+  and before any further `await`**, so the child fetches run concurrently with the parent's remaining
+  work:
+  ```tsx
+  const currentSection = await getSectionByOrderService(programSlug, sectionOrder);
+  if (!currentSection) notFound();
+
+  preloadVideoSection(currentSection.id); // fire child fetches now…
+  preloadQuizPanel(currentSection.id);
+
+  const progress = await getSectionProgressService(currentSection.id); // …while this await runs
+  ```
+- **Requires `cache()` on the child service** (backend.md §3): the fire-and-forget `void` call and the
+  child RSC's later `await` must dedupe to one in-flight request — otherwise `preloadX` just doubles the
+  work. Don't preload a service that isn't `cache()`-wrapped.
+- Preloading is an optimization only: never `await` a `preloadX`, and never rely on its result — the
+  child still fetches (and handles missing/`AppError` data) exactly as if it ran alone.
 
 ---
 
@@ -130,7 +181,9 @@ schemas/ (DTO)  →  services/ (from RSC)  ·  actions/ (from Client)  →  UI c
 | `"use client"` | Only on the **leaf** with state/effects/events/browser APIs |
 | Data source | RSC → `…Service`; Client → `…Action` |
 | Type source | `@/schemas/*` (never `db/schema` · `db/types`) |
+| `page.tsx` params | Pass the `params`/`searchParams` promise to children; never `await` it in the page |
 | Loading | `<Suspense fallback={<XFallback />}>` + colocated `XFallback` export |
+| Preload | `preloadX(deps)` → `void cachedService(deps)`, called before the parent's next `await` |
 | Missing data | `notFound()` |
 | Action result | `ActionResult<T>` → `result.ok ? data : error` |
 | Form | `react-hook-form` + `zodResolver(shared schema)` |
