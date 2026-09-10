@@ -7,65 +7,74 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev          # start dev server (Next.js)
 npm run build        # production build
+npm run start        # serve the production build
 npm run lint         # ESLint
 npm run typecheck    # tsc --noEmit
 
 npm run db:push      # push schema changes to DB (no migration file)
 npm run db:generate  # generate migration SQL files
 npm run db:migrate   # run migrations
-npm run db:seed      # seed DB with programs/videos/transcripts
-npm run db:reset     # wipe and recreate all tables
+npm run db:seed      # seed DB (tsx src/db/seed.ts)
+npm run db:reset     # wipe and recreate all tables (tsx src/db/reset.ts)
 ```
+
+## Stack
+
+Next.js 16 (App Router, React 19, React Compiler) · Drizzle ORM · PostgreSQL · better-auth
+(+ Resend for email) · Vercel AI SDK via OpenRouter · Zod v4 · react-hook-form · Tailwind CSS v4
+with shadcn / Radix / Base UI.
 
 ## Architecture
 
-**Stack:** Next.js 16 (App Router) · Drizzle ORM · PostgreSQL · better-auth · Vercel AI SDK via OpenRouter · Tailwind CSS v4 · Zod v4
+Layered, one-directional data flow. See the per-side convention docs before writing code:
 
-### Layer model
+- **Backend** (`schemas/`, `dal/`, `services/`, `actions/`, `db/`) →
+  [`docs/architecture/backend.md`](./docs/architecture/backend.md) — layer boundaries, naming,
+  narrowed mutation schemas, return-type contracts (`undefined` vs `null`), and the better-auth
+  exception.
+- **Frontend** (`app/`, `components/`) →
+  [`docs/architecture/frontend.md`](./docs/architecture/frontend.md) — `page.tsx`/`page-view`
+  split, RSC/Client boundary, the preload pattern, `Suspense` rules, and custom-component /
+  accessibility conventions. The design system itself is governed by the `ui-design` skill.
 
 ```
 src/
-  app/          # Next.js pages and API routes (App Router)
-  actions/      # Server Actions — thin: validate input, call service, return ActionResult
-  services/     # Business logic — orchestrate DAL + AI calls, enforce auth
-  dal/          # Data Access Layer — raw DB queries via Drizzle, no business logic
-  ai/
-    index.ts    # getAIObjectResponse() — single LLM call wrapper (OpenRouter, structured output)
-    outputs/    # Zod schemas for AI structured outputs
-    tasks/      # AI task functions (generate-sentences, analyze-sentence)
-  schemas/      # Zod DTOs shared between layers (never import from db/schema directly in UI)
-  constants/    # Enums used in both DB enums and application logic
-  lib/          # Utilities: auth.ts, action.ts (toActionFailure), errors.ts (AppError), utils.ts
-  db/
-    schema.ts   # Single Drizzle schema file — all tables and relations
-    seed.ts     # Seed script (run with tsx)
+  app/          # Next.js pages and routes (App Router)
+  actions/      # Server Actions — Client ↔ Service bridge
+  services/     # Business logic + auth enforcement
+  dal/          # Data Access Layer — raw Drizzle queries/mutations, per module: {queries,mutations}.ts
+  schemas/      # Zod DTOs — the public contract shared across layers
+  constants/    # Value arrays + literal types; source of the DB enums
+  ai/           # LLM layer (see below)
+  lib/          # auth.ts, auth-client.ts, action.ts, errors.ts (AppError), utils.ts, youtube.ts
+  db/           # schema.ts (tables/relations/enums), types.ts (raw $inferSelect + drizzle-zod), seed/reset
+  components/   # Shared UI (components/ui/* = shadcn)
 ```
 
-### Key conventions
+### AI layer (`src/ai/`)
 
-> When working on the backend (`schemas/`, `dal/`, `services/`, `actions/`), consult
-> [`docs/architecture/backend.md`](./docs/architecture/backend.md) — layer conventions for naming,
-> narrowed mutation schemas, return-type contracts, and the auth exception.
-> When working on the frontend, consult
-> [`docs/architecture/frontend.md`](./docs/architecture/frontend.md) — RSC/Client boundary, data
-> fetching, Server Action consumption, forms, and error/empty states (the design system itself is
-> governed by the `ui-design` skill).
+Not covered by the architecture docs — the conventions live here.
 
-- **Services call DAL, not the other way around.** Pages/actions call services.
-- **Auth boundary is in services** via `getCurrentUser()` from `src/services/auth.ts`. Server Actions throw `AppError("Unauthorized")`; `toActionFailure()` in `lib/action.ts` normalizes errors into `ActionResult<T>`.
-- **Schemas (`src/schemas/`) are the public DTO contract.** DAL query results are mapped to schema types before being returned upward. Never import raw Drizzle table types in UI components.
-- **AI tasks use structured output** (`Output.object()` from Vercel AI SDK) via `getAIObjectResponse()` — no tool-calling loops. Default model is `google/gemini-2.5-flash` via OpenRouter.
-- **`src/constants/` drives DB enums.** Enum values in `schema.ts` are sourced from constants arrays (`DIFFICULTIES`, `PLANS`, etc.) so TypeScript and the DB stay in sync.
-- **React `cache()`** wraps service functions that are called from multiple RSC subtrees in the same request (e.g. `getSectionByOrderService`).
+- `index.ts` — `getAIObjectResponse()`, a single structured-output LLM call (no tool-calling loop)
+  over OpenRouter with retry/backoff. `DEFAULT_MODEL` is `google/gemini-2.5-flash`.
+- `outputs/` — Zod schemas describing each task's structured output.
+- `tasks/` — one function per AI task (e.g. `generate-sentences`, `analyze-sentence`).
+- AI calls are orchestrated from the **service** layer, never from the DAL or actions.
 
-### Data model highlights
+### Enums
 
-Core tables: `programs` → `sections` → `quizzes` → `questions` → `answers`. Each `section` has one optional `video`; a `quiz` is keyed by `(sectionId, nativeLanguage, targetLanguage)` so it's user-language-specific. `section_progress` tracks per-user video position and quiz completion status. Auth tables (`user`, `session`, `account`, `verification`) are managed by better-auth.
+DB enum values in `db/schema.ts` are sourced from the arrays in `src/constants/` (e.g.
+`constants/language.ts`, `constants/question.ts`) so TypeScript literals and the database stay in
+sync. Add or change enum values in `constants/`, not inline in the schema.
 
-### Section page structure
+### Data model
 
-`/programs/[programSlug]/[section]` (e.g. `section-1`) renders a two-column layout: `VideoPanel` (left) + `QuizPanel` (right). Both are async RSCs wrapped in `<Suspense>`. `QuizPanel` calls `getOrCreateQuizService` which lazily generates questions via AI if no quiz exists yet for the user's language pair.
+Auth tables (`user`, `session`, `account`, `verification`) are owned by better-auth. Domain tables:
+`programs` → `sections`, with `channels` → `videos` → `transcripts` on the content side, and
+`quizzes` → `questions` → `answers` on the exercise side. `section_progress` tracks per-user
+progress. Quizzes are keyed per user language pair, so questions can be generated on demand.
 
-### Environment variables required
+## Environment variables
 
-`DATABASE_URL`, `OPENROUTER_API_KEY`, `BETTER_AUTH_SECRET`, `NEXT_PUBLIC_APP_URL`
+`DATABASE_URL`, `DIRECT_URL`, `BETTER_AUTH_SECRET`, `NEXT_PUBLIC_APP_URL`, `OPENROUTER_API_KEY`,
+`RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `YOUTUBE_API_KEY`.
