@@ -1,9 +1,11 @@
+import { z } from "zod";
 import {
   ProgramRow,
   SectionRow,
   ChannelRow,
   VideoRow,
   SectionProgressRow,
+  updateSectionProgressRowSchema,
 } from "@/db/types";
 
 // query types
@@ -44,3 +46,9 @@ export type SectionListItem = Pick<SectionRow, "id" | "title" | "order"> & {
   video: Pick<VideoRow, "title" | "durationSeconds" | "thumbnailUrl"> | null;
   progress: SectionProgress | null;
 };
+
+// mutation schemas
+export const updateVideoPositionSchema = updateSectionProgressRowSchema
+  .pick({ videoPositionSeconds: true })
+  .required();
+export type UpdateVideoPositionInput = z.infer<typeof updateVideoPositionSchema>;

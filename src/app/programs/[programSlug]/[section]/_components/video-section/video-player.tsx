@@ -1,54 +1,117 @@
 "use client";
 
-import { useState } from "react";
-import { Play } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
+import { Play } from "lucide-react";
 import { Video } from "@/schemas/video";
+import { cn } from "@/lib/utils";
+import { useYouTubePlayer } from "./use-youtube-player";
+import { PlayerControls } from "./player-controls";
 
-export function VideoPlayer({ video }: { video: Video }) {
-  const [playing, setPlaying] = useState(false);
+interface VideoPlayerProps {
+  video: Video;
+  sectionId: string;
+  initialPositionSeconds: number;
+}
+
+export function VideoPlayer({
+  video,
+  sectionId,
+  initialPositionSeconds,
+}: VideoPlayerProps) {
+  // With saved progress we mount straight away (resume frame); a fresh video
+  // stays on the thumbnail until the user presses play.
+  const [started, setStarted] = useState(initialPositionSeconds > 0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+
+  const {
+    containerRef,
+    isReady,
+    isPlaying,
+    currentTime,
+    duration,
+    togglePlay,
+    seekTo,
+    skip,
+  } = useYouTubePlayer({
+    videoId: video.youtubeId,
+    sectionId,
+    startSeconds: initialPositionSeconds,
+    enabled: started,
+  });
+
+  useEffect(() => {
+    const onChange = () =>
+      setIsFullscreen(document.fullscreenElement === surfaceRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void surfaceRef.current?.requestFullscreen();
+    }
+  }, []);
 
   return (
     <figure className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
       {/* 16:9 video surface */}
-      <div className="group relative aspect-video w-full overflow-hidden bg-primary/10">
-        {playing ? (
-          <iframe
-            src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1`}
-            title={video.title}
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-            className="absolute inset-0 h-full w-full"
+      <div
+        ref={surfaceRef}
+        className={cn(
+          "group relative w-full overflow-hidden bg-primary/10",
+          isFullscreen ? "h-full bg-black" : "aspect-video",
+        )}
+      >
+        {/* Poster shown before the player exists / until it's ready */}
+        {!isReady && (
+          <Image
+            src={video.thumbnailUrl}
+            alt=""
+            fill
+            sizes="(max-width: 1024px) 100vw, 66vw"
+            className="object-cover"
           />
+        )}
+
+        {started ? (
+          <>
+            {/* YT replaces the inner div with the player iframe */}
+            <div
+              ref={containerRef}
+              className="absolute inset-0 h-full w-full [&>iframe]:size-full"
+            />
+            {isReady && (
+              <div className="absolute inset-x-0 bottom-0 z-10">
+                <PlayerControls
+                  isPlaying={isPlaying}
+                  isFullscreen={isFullscreen}
+                  currentTime={currentTime}
+                  duration={duration}
+                  onTogglePlay={togglePlay}
+                  onSkip={skip}
+                  onSeek={seekTo}
+                  onToggleFullscreen={toggleFullscreen}
+                />
+              </div>
+            )}
+          </>
         ) : (
           <>
-            <Image
-              src={video.thumbnailUrl}
-              alt={`${video.channel.title} presenting "${video.title}"`}
-              fill
-              sizes="(max-width: 1024px) 100vw, 66vw"
-              className="object-cover"
-            />
             <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/5 to-black/20" />
-
-            {/* Center play button */}
             <button
               type="button"
-              onClick={() => setPlaying(true)}
+              onClick={() => setStarted(true)}
               aria-label="Play video"
-              className="absolute inset-0 flex items-center justify-center cursor-pointer"
+              className="absolute inset-0 flex cursor-pointer items-center justify-center"
             >
               <span className="flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-white/20 transition-transform duration-200 group-hover:scale-105">
                 <Play className="size-7 translate-x-0.5" />
               </span>
             </button>
-
-            {/* Live caption chip */}
-            <Badge className="absolute left-4 top-4 gap-1.5 bg-black/45 text-white backdrop-blur-sm">
-              <span className="size-2 animate-pulse rounded-full bg-warning" />
-              Auto captions on
-            </Badge>
           </>
         )}
       </div>

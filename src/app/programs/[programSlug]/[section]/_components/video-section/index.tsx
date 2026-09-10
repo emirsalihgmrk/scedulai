@@ -3,10 +3,14 @@ import { Separator } from "@/components/ui/separator";
 import { VideoPlayer } from "./video-player";
 import { EmptyState } from "@/components/shared/empty-state";
 import { getVideoService } from "@/services/video";
+import { getSectionProgressService } from "@/services/program";
 import VideoMetadata from "./video-metadata";
 
 export async function VideoSection({ sectionId }: { sectionId: string }) {
-  const video = await getVideoService(sectionId);
+  const [video, progress] = await Promise.all([
+    getVideoService(sectionId),
+    getSectionProgressService(sectionId),
+  ]);
 
   if (!video) {
     return (
@@ -21,7 +25,11 @@ export async function VideoSection({ sectionId }: { sectionId: string }) {
 
   return (
     <div className="flex min-h-0 flex-col gap-5">
-      <VideoPlayer video={video} />
+      <VideoPlayer
+        video={video}
+        sectionId={sectionId}
+        initialPositionSeconds={progress?.videoPositionSeconds ?? 0}
+      />
       <VideoMetadata video={video} />
     </div>
   );

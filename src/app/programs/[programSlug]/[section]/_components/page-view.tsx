@@ -1,12 +1,7 @@
 import { Suspense } from "react";
-import { after } from "next/server";
 import { notFound } from "next/navigation";
 
-import {
-  createSectionProgressService,
-  getSectionByOrderService,
-  getSectionProgressService,
-} from "@/services/program";
+import { getSectionByOrderService } from "@/services/program";
 import { VideoSection, VideoSectionFallback } from "./video-section";
 import { TranscriptCard, TranscriptCardFallback } from "./transcript-card";
 import { QuizCard } from "./quiz-card";
@@ -43,11 +38,6 @@ export default async function PageView({
   const transcriptPromise = getVideoService(currentSection.id).then((video) =>
     video ? getTranscriptService(video.id) : [],
   );
-
-  const progress = await getSectionProgressService(currentSection.id);
-  if (!progress) {
-    after(() => createSectionProgressService(currentSection.id));
-  }
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_minmax(0,1fr)] xl:gap-8">

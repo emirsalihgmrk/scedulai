@@ -8,14 +8,17 @@ import {
   getSectionProgress,
   getSections,
 } from "@/dal/program/queries";
-import { createSectionProgress } from "@/dal/program/mutations";
+import { upsertVideoPosition } from "@/dal/program/mutations";
 import { getCurrentUser } from "@/services/auth";
+import { AppError } from "@/lib/errors";
 import {
   ProgramDetail,
   ProgramListItem,
   Section,
   SectionListItem,
   SectionProgress,
+  UpdateVideoPositionInput,
+  updateVideoPositionSchema,
 } from "@/schemas/program";
 
 export async function getProgramsService(): Promise<ProgramListItem[]> {
@@ -60,11 +63,15 @@ export const getSectionProgressService = cache(
   },
 );
 
-export async function createSectionProgressService(
+export async function saveVideoPositionService(
   sectionId: string,
+  input: UpdateVideoPositionInput,
 ): Promise<void> {
   const user = await getCurrentUser();
   if (!user) return; // anonim → no-op
 
-  await createSectionProgress(user.id, sectionId);
+  const parsedResult = updateVideoPositionSchema.safeParse(input);
+  if (!parsedResult.success) throw new AppError("Invalid data");
+
+  await upsertVideoPosition(user.id, sectionId, parsedResult.data);
 }
