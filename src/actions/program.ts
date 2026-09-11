@@ -3,11 +3,11 @@
 import { saveVideoPositionService } from "@/services/program";
 import { toActionFailure } from "@/lib/action";
 import type { ActionResult } from "@/schemas/common";
-import type { UpdateVideoPositionInput } from "@/schemas/program";
+import type { SaveVideoPositionInput } from "@/schemas/program";
 
 export async function saveVideoPositionAction(
   sectionId: string,
-  input: UpdateVideoPositionInput,
+  input: SaveVideoPositionInput,
 ): Promise<ActionResult> {
   try {
     await saveVideoPositionService(sectionId, input);

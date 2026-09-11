@@ -48,7 +48,18 @@ export type SectionListItem = Pick<SectionRow, "id" | "title" | "order"> & {
 };
 
 // mutation schemas
-export const updateVideoPositionSchema = updateSectionProgressRowSchema
+export const saveVideoPositionSchema = updateSectionProgressRowSchema
   .pick({ videoPositionSeconds: true })
   .required();
-export type UpdateVideoPositionInput = z.infer<typeof updateVideoPositionSchema>;
+export type SaveVideoPositionInput = z.infer<typeof saveVideoPositionSchema>;
+
+// `quizStatus` is derived server-side, so it is not exposed as a user-input schema.
+export const upsertSectionProgressSchema = z
+  .object({
+    ...saveVideoPositionSchema.shape,
+    quizStatus: updateSectionProgressRowSchema.shape.quizStatus,
+  })
+  .partial();
+export type UpsertSectionProgressInput = z.infer<
+  typeof upsertSectionProgressSchema
+>;

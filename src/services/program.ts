@@ -8,7 +8,7 @@ import {
   getSectionProgress,
   getSections,
 } from "@/dal/program/queries";
-import { upsertVideoPosition } from "@/dal/program/mutations";
+import { upsertSectionProgress } from "@/dal/program/mutations";
 import { getCurrentUser } from "@/services/auth";
 import { AppError } from "@/lib/errors";
 import {
@@ -17,8 +17,8 @@ import {
   Section,
   SectionListItem,
   SectionProgress,
-  UpdateVideoPositionInput,
-  updateVideoPositionSchema,
+  SaveVideoPositionInput,
+  saveVideoPositionSchema,
 } from "@/schemas/program";
 
 export async function getProgramsService(): Promise<ProgramListItem[]> {
@@ -65,13 +65,13 @@ export const getSectionProgressService = cache(
 
 export async function saveVideoPositionService(
   sectionId: string,
-  input: UpdateVideoPositionInput,
+  input: SaveVideoPositionInput,
 ): Promise<void> {
   const user = await getCurrentUser();
   if (!user) return; // anonim → no-op
 
-  const parsedResult = updateVideoPositionSchema.safeParse(input);
+  const parsedResult = saveVideoPositionSchema.safeParse(input);
   if (!parsedResult.success) throw new AppError("Invalid data");
 
-  await upsertVideoPosition(user.id, sectionId, parsedResult.data);
+  await upsertSectionProgress(user.id, sectionId, parsedResult.data);
 }

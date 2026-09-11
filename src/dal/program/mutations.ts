@@ -1,17 +1,17 @@
 import { db } from "@/db";
 import { sectionProgressTable } from "@/db/schema";
-import type { UpdateVideoPositionInput } from "@/schemas/program";
+import type { UpsertSectionProgressInput } from "@/schemas/program";
 
-export async function upsertVideoPosition(
+export async function upsertSectionProgress(
   userId: string,
   sectionId: string,
-  input: UpdateVideoPositionInput,
+  input: UpsertSectionProgressInput,
 ): Promise<void> {
   await db
     .insert(sectionProgressTable)
     .values({ userId, sectionId, ...input })
     .onConflictDoUpdate({
       target: [sectionProgressTable.userId, sectionProgressTable.sectionId],
-      set: { videoPositionSeconds: input.videoPositionSeconds },
+      set: input,
     });
 }
