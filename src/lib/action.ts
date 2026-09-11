@@ -16,5 +16,6 @@ export function toActionFailure(
   if (error instanceof APIError || error instanceof AppError) {
     return { ok: false, error: error.message };
   }
+  console.error(error);
   return { ok: false, error: "Something went wrong" };
 }
