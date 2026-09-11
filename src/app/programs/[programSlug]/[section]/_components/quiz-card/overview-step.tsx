@@ -1,8 +1,10 @@
 import {
   CircleCheck,
+  CircleX,
   Clock,
   Gauge,
   ChevronRight,
+  Trophy,
 } from "lucide-react";
 import {
   CardHeader,
@@ -12,6 +14,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
+import { QuizStatus } from "@/constants/progress";
 import { accuracyClasses } from "./utils";
 
 export function OverviewStep({
@@ -20,6 +23,7 @@ export function OverviewStep({
   answered,
   unanswered,
   progress,
+  status,
   onStart,
   onGoTo,
 }: {
@@ -28,10 +32,13 @@ export function OverviewStep({
   answered: number;
   unanswered: number;
   progress: number;
+  status: QuizStatus | null;
   onStart: () => void;
   onGoTo: (index: number) => void;
 }) {
   const total = quiz.questions.length;
+  const passed = status === "passed";
+  const failed = status === "failed";
 
   const gradedQuestions = questions.filter((q) => q.answer !== null);
   const avgAccuracy =
@@ -57,6 +64,32 @@ export function OverviewStep({
       </CardHeader>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pt-2">
+        {(passed || failed) && (
+          <div
+            className={`flex items-center gap-3 rounded-xl px-4 py-3 ${
+              passed
+                ? "bg-success/12 text-success"
+                : "bg-warning/12 text-warning-foreground"
+            }`}
+          >
+            {passed ? (
+              <Trophy className="size-5 shrink-0" />
+            ) : (
+              <CircleX className="size-5 shrink-0" />
+            )}
+            <div className="leading-tight">
+              <p className="text-sm font-bold">
+                {passed ? "Quiz passed" : "Not passed yet"}
+              </p>
+              <p className="text-xs opacity-80">
+                {passed
+                  ? "Great work — you cleared this section's quiz."
+                  : "Your average is below the pass mark. Revise your answers to improve."}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center gap-2.5 rounded-xl bg-success/10 px-3 py-2.5">
             <CircleCheck className="size-4 text-success" />

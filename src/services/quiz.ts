@@ -14,6 +14,7 @@ import {
 import { AnswerResponse, submitAnswerSchema } from "@/schemas/quiz";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
+import { upsertSectionProgress } from "@/dal/program/mutations";
 import { getCurrentUser } from "@/services/auth";
 import { AppError } from "@/lib/errors";
 import {
@@ -21,6 +22,7 @@ import {
   type SupportedNativeLanguageCode,
   type SupportedTargetLanguageCode,
 } from "@/constants/language";
+import { QUIZ_PASS_ACCURACY, type QuizStatus } from "@/constants/progress";
 import { db } from "@/db";
 import { Transaction } from "@/schemas/common";
 import { cache } from "react";
@@ -73,6 +75,30 @@ export async function submitAnswerService(
   const answer = await upsertAnswer(user.id, questionId, parsedResult.data);
 
   return { ...question, answer };
+}
+
+export async function evaluateQuizService(
+  sectionId: string,
+): Promise<QuizStatus | null> {
+  const user = await getCurrentUser();
+  if (!user) throw new AppError("Unauthorized");
+
+  const quiz = await getQuizService(sectionId);
+  if (!quiz) throw new AppError("Not found");
+
+  const graded = quiz.questions.filter((q) => q.answer !== null);
+  if (quiz.questions.length === 0 || graded.length < quiz.questions.length) {
+    return null;
+  }
+
+  const avgAccuracy = Math.round(
+    graded.reduce((sum, q) => sum + q.answer!.accuracy, 0) / graded.length,
+  );
+  const quizStatus: QuizStatus =
+    avgAccuracy >= QUIZ_PASS_ACCURACY ? "passed" : "failed";
+
+  await upsertSectionProgress(user.id, sectionId, { quizStatus });
+  return quizStatus;
 }
 
 export const getQuizService = cache(async function getQuizService(

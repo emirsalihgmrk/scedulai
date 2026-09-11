@@ -9,8 +9,9 @@ import { QuizGenerating } from "./fallback";
 import { getUserLanguageLabels } from "@/constants/language";
 import { FileQuestion, LogIn } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
-import { generateQuizByAiAction } from "@/actions/quiz";
+import { evaluateQuizAction, generateQuizByAiAction } from "@/actions/quiz";
 import { User } from "@/schemas/auth";
+import { QuizStatus } from "@/constants/progress";
 
 export function QuizCard({
   user,
@@ -29,6 +30,7 @@ export function QuizCard({
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [graded, setGraded] = useState<Record<string, QuestionWithAnswer>>({});
+  const [quizStatus, setQuizStatus] = useState<QuizStatus | null>(null);
 
   const hasRequestedRef = useRef(false);
   useEffect(() => {
@@ -48,6 +50,24 @@ export function QuizCard({
       }
     });
   }, [user, quiz, sectionId]);
+
+  // Once every question is answered, ask the server to (re)evaluate the quiz.
+  // Pass/fail is computed server-side from persisted answers, never sent from here.
+  const lastEvaluatedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!user || !quiz || quiz.questions.length === 0) return;
+
+    const merged = quiz.questions.map((q) => graded[q.id] ?? q);
+    if (merged.some((q) => q.answer === null)) return;
+
+    const signature = merged.map((q) => q.answer!.accuracy).join(",");
+    if (lastEvaluatedRef.current === signature) return;
+    lastEvaluatedRef.current = signature;
+
+    void evaluateQuizAction(sectionId).then((result) => {
+      if (result.ok) setQuizStatus(result.data);
+    });
+  }, [user, quiz, graded, sectionId]);
 
   if (error) {
     return (
@@ -105,6 +125,7 @@ export function QuizCard({
             answered={answered}
             unanswered={unanswered}
             progress={progress}
+            status={quizStatus}
             onStart={() => setStep(1)}
             onGoTo={setStep}
           />
