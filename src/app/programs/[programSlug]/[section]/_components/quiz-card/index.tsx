@@ -9,7 +9,11 @@ import { QuizGenerating } from "./fallback";
 import { getUserLanguageLabels } from "@/constants/language";
 import { FileQuestion, LogIn } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
-import { evaluateQuizAction, generateQuizByAiAction } from "@/actions/quiz";
+import {
+  evaluateQuizAction,
+  generateQuizByAiAction,
+  retryQuizAction,
+} from "@/actions/quiz";
 import { User } from "@/schemas/auth";
 import { QuizStatus } from "@/constants/progress";
 
@@ -69,6 +73,27 @@ export function QuizCard({
     });
   }, [user, quiz, graded, sectionId]);
 
+  // Clear every answer (local + persisted) so the same quiz can be retaken.
+  const handleRetry = () => {
+    setGraded({});
+    setAnswers({});
+    setQuizStatus(null);
+    lastEvaluatedRef.current = null;
+    setStep(0);
+    setQuiz((prev) =>
+      prev
+        ? {
+            ...prev,
+            questions: prev.questions.map((q) => ({ ...q, answer: null })),
+          }
+        : prev,
+    );
+
+    void retryQuizAction(sectionId).then((result) => {
+      if (!result.ok) setError(result.error);
+    });
+  };
+
   if (error) {
     return (
       <div className="sticky top-20">
@@ -127,6 +152,7 @@ export function QuizCard({
             progress={progress}
             status={quizStatus}
             onStart={() => setStep(1)}
+            onRetry={handleRetry}
             onGoTo={setStep}
           />
         ) : (

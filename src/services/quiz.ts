@@ -9,6 +9,7 @@ import {
 import {
   createQuestions,
   createQuiz,
+  deleteAnswers,
   upsertAnswer,
 } from "@/dal/quiz/mutations";
 import { AnswerResponse, submitAnswerSchema } from "@/schemas/quiz";
@@ -99,6 +100,24 @@ export async function evaluateQuizService(
 
   await upsertSectionProgress(user.id, sectionId, { quizStatus });
   return quizStatus;
+}
+
+export async function retryQuizService(sectionId: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) throw new AppError("Unauthorized");
+
+  const quiz = await getQuizService(sectionId);
+  if (!quiz) throw new AppError("Not found");
+
+  await db.transaction(async (tx) => {
+    await deleteAnswers(user.id, quiz.id, tx);
+    await upsertSectionProgress(
+      user.id,
+      sectionId,
+      { quizStatus: "in_progress" },
+      tx,
+    );
+  });
 }
 
 export const getQuizService = cache(async function getQuizService(

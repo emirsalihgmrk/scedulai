@@ -4,6 +4,7 @@ import { AnswerResponse } from "@/schemas/quiz";
 import {
   evaluateQuizService,
   generateQuizByAiService,
+  retryQuizService,
   submitAnswerService,
 } from "@/services/quiz";
 import { toActionFailure } from "@/lib/action";
@@ -41,6 +42,17 @@ export async function evaluateQuizAction(
   try {
     const data = await evaluateQuizService(sectionId);
     return { ok: true, data };
+  } catch (error) {
+    return toActionFailure(error);
+  }
+}
+
+export async function retryQuizAction(
+  sectionId: string,
+): Promise<ActionResult> {
+  try {
+    await retryQuizService(sectionId);
+    return { ok: true, data: undefined };
   } catch (error) {
     return toActionFailure(error);
   }

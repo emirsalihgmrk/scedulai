@@ -1,10 +1,9 @@
 import {
   CircleCheck,
-  CircleX,
   Clock,
   Gauge,
   ChevronRight,
-  Trophy,
+  RotateCcw,
 } from "lucide-react";
 import {
   CardHeader,
@@ -14,7 +13,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
-import { QuizStatus } from "@/constants/progress";
+import { QUIZ_PASS_ACCURACY, QuizStatus } from "@/constants/progress";
 import { accuracyClasses } from "./utils";
 
 export function OverviewStep({
@@ -25,6 +24,7 @@ export function OverviewStep({
   progress,
   status,
   onStart,
+  onRetry,
   onGoTo,
 }: {
   quiz: QuizWithQuestions;
@@ -34,6 +34,7 @@ export function OverviewStep({
   progress: number;
   status: QuizStatus | null;
   onStart: () => void;
+  onRetry: () => void;
   onGoTo: (index: number) => void;
 }) {
   const total = quiz.questions.length;
@@ -61,35 +62,25 @@ export function OverviewStep({
             Generated from this talk
           </CardDescription>
         </div>
+        <div className="flex flex-col items-end gap-1 text-right">
+          {(passed || failed) && (
+            <span
+              className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                passed
+                  ? "bg-success/12 text-success"
+                  : "bg-warning/12 text-warning-foreground"
+              }`}
+            >
+              {passed ? "Passed" : "Failed"}
+            </span>
+          )}
+          <span className="text-[11px] font-medium text-muted-foreground">
+            Pass mark {QUIZ_PASS_ACCURACY}%
+          </span>
+        </div>
       </CardHeader>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pt-2">
-        {(passed || failed) && (
-          <div
-            className={`flex items-center gap-3 rounded-xl px-4 py-3 ${
-              passed
-                ? "bg-success/12 text-success"
-                : "bg-warning/12 text-warning-foreground"
-            }`}
-          >
-            {passed ? (
-              <Trophy className="size-5 shrink-0" />
-            ) : (
-              <CircleX className="size-5 shrink-0" />
-            )}
-            <div className="leading-tight">
-              <p className="text-sm font-bold">
-                {passed ? "Quiz passed" : "Not passed yet"}
-              </p>
-              <p className="text-xs opacity-80">
-                {passed
-                  ? "Great work — you cleared this section's quiz."
-                  : "Your average is below the pass mark. Revise your answers to improve."}
-              </p>
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center gap-2.5 rounded-xl bg-success/10 px-3 py-2.5">
             <CircleCheck className="size-4 text-success" />
@@ -172,12 +163,19 @@ export function OverviewStep({
         <Button
           type="button"
           size="lg"
+          variant={failed ? "secondary" : "default"}
           disabled={total === 0}
-          onClick={onStart}
+          onClick={failed ? onRetry : onStart}
           className="h-12 w-full text-sm"
         >
-          Start practice
-          <ChevronRight data-icon="inline-end" />
+          {passed ? "Completed" : failed ? "Retry quiz" : "Start practice"}
+          {passed ? (
+            <CircleCheck data-icon="inline-end" />
+          ) : failed ? (
+            <RotateCcw data-icon="inline-end" />
+          ) : (
+            <ChevronRight data-icon="inline-end" />
+          )}
         </Button>
       </div>
     </>

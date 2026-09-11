@@ -1,3 +1,4 @@
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { answersTable, questionsTable, quizzesTable } from "@/db/schema";
 import type {
@@ -70,4 +71,24 @@ export async function upsertAnswer(
     });
 
   return answer;
+}
+
+export async function deleteAnswers(
+  userId: string,
+  quizId: string,
+  tx?: Transaction,
+): Promise<void> {
+  const executor = tx ?? db;
+  await executor.delete(answersTable).where(
+    and(
+      eq(answersTable.userId, userId),
+      inArray(
+        answersTable.questionId,
+        executor
+          .select({ id: questionsTable.id })
+          .from(questionsTable)
+          .where(eq(questionsTable.quizId, quizId)),
+      ),
+    ),
+  );
 }
