@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { ProgramDetail } from "@/schemas/program";
-import { currentSectionId, isSectionCompleted } from "./section-progress";
+import { currentSectionId } from "./section-progress";
 
 export async function ProgramHero({
   params,
@@ -82,7 +82,9 @@ async function ProgramSectionsInfo({ program }: { program: ProgramDetail }) {
     (sum, section) => sum + (section.video?.durationSeconds ?? 0),
     0,
   );
-  const completedCount = sections.filter(isSectionCompleted).length;
+  const completedCount = sections.filter(
+    (section) => section.progress?.quizStatus === "passed",
+  ).length;
   const progressPercent =
     sections.length > 0
       ? Math.round((completedCount / sections.length) * 100)
