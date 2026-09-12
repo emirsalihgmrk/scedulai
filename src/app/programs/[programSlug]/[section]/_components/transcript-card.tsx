@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use, useEffect, useMemo, useRef } from "react";
 import { Captions } from "lucide-react";
 import {
   Card,
@@ -16,9 +16,27 @@ import { TranscriptLine } from "@/schemas/video";
 import { cn } from "@/lib/utils";
 import { usePlaybackTime, usePlayerControls } from "./player-context";
 
+const RESUME_FOLLOW_DELAY_MS = 4000;
+
 // Transcript timestamps are "MM:SS" (or "HH:MM:SS" for long videos).
 function parseTimeToSeconds(time: string): number {
   return time.split(":").reduce((acc, part) => acc * 60 + Number(part), 0);
+}
+
+// Keep the active line parked ~35% down the viewport as playback advances,
+// nudging only the viewport's scrollTop (never scrollIntoView, which could
+// scroll the whole page). A small dead zone avoids jitter on tiny deltas.
+function scrollLineToComfortablePosition(
+  viewport: HTMLElement,
+  line: HTMLElement,
+) {
+  const viewportRect = viewport.getBoundingClientRect();
+  const lineRect = line.getBoundingClientRect();
+  const currentOffset = lineRect.top - viewportRect.top;
+  const desiredOffset = viewportRect.height * 0.35;
+  const delta = currentOffset - desiredOffset;
+  if (Math.abs(delta) < 8) return;
+  viewport.scrollTo({ top: viewport.scrollTop + delta, behavior: "smooth" });
 }
 
 export function TranscriptCard({
@@ -45,10 +63,52 @@ export function TranscriptCard({
     return index;
   }, [startSeconds, currentTimeSeconds]);
 
+  const listRef = useRef<HTMLOListElement>(null);
+  const activeLineRef = useRef<HTMLButtonElement>(null);
+  // While true, playback advancing won't auto-scroll (the user is browsing).
+  const isFollowPausedRef = useRef(false);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const getViewport = () =>
+    listRef.current?.closest<HTMLElement>(
+      "[data-radix-scroll-area-viewport]",
+    ) ?? null;
+
+  // Pause following on genuine scroll gestures (wheel / touch drag). Tapping a
+  // line fires pointer events, not these, so seeking never counts as browsing.
+  useEffect(() => {
+    const viewport = getViewport();
+    if (!viewport) return;
+
+    const pauseFollow = () => {
+      isFollowPausedRef.current = true;
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = setTimeout(() => {
+        isFollowPausedRef.current = false;
+      }, RESUME_FOLLOW_DELAY_MS);
+    };
+
+    viewport.addEventListener("wheel", pauseFollow, { passive: true });
+    viewport.addEventListener("touchmove", pauseFollow, { passive: true });
+    return () => {
+      viewport.removeEventListener("wheel", pauseFollow);
+      viewport.removeEventListener("touchmove", pauseFollow);
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isFollowPausedRef.current) return;
+    const viewport = getViewport();
+    if (viewport && activeLineRef.current) {
+      scrollLineToComfortablePosition(viewport, activeLineRef.current);
+    }
+  }, [activeIndex]);
+
   return (
     <TranscriptCardShell>
       <ScrollArea className="h-full max-h-105 px-2 py-2">
-        <ol className="flex flex-col gap-0.5">
+        <ol ref={listRef} className="flex flex-col gap-0.5">
           {lines.map((line, index) => {
             const isActive = index === activeIndex;
             const isPast = index < activeIndex;
@@ -56,7 +116,22 @@ export function TranscriptCard({
               <li key={index}>
                 <button
                   type="button"
-                  onClick={() => seek(startSeconds[index])}
+                  ref={isActive ? activeLineRef : undefined}
+                  onClick={(event) => {
+                    // An explicit tap resumes following, centered on the pick.
+                    isFollowPausedRef.current = false;
+                    if (resumeTimerRef.current) {
+                      clearTimeout(resumeTimerRef.current);
+                    }
+                    const viewport = getViewport();
+                    if (viewport) {
+                      scrollLineToComfortablePosition(
+                        viewport,
+                        event.currentTarget,
+                      );
+                    }
+                    seek(startSeconds[index]);
+                  }}
                   className={cn(
                     "group flex w-full gap-3 rounded-xl px-3 py-3 text-left transition-colors",
                     isActive ? "bg-primary/10" : "hover:bg-muted",
