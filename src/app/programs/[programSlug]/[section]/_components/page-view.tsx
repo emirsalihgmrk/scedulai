@@ -9,6 +9,7 @@ import { getQuizService } from "@/services/quiz";
 import { getTranscriptService, getVideoService } from "@/services/video";
 import QuizCardFallback from "./quiz-card/fallback";
 import { getCurrentUser } from "@/services/auth";
+import { PlayerProvider } from "./player-context";
 
 function parseOrder(section: string): number | null {
   const match = /^section-(\d+)$/.exec(section);
@@ -41,17 +42,19 @@ export default async function PageView({
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_minmax(0,1fr)] xl:gap-8">
-      <section
-        aria-label="Video and transcript"
-        className="flex min-w-0 flex-col gap-5"
-      >
-        <Suspense fallback={<VideoSectionFallback />}>
-          <VideoSection sectionId={currentSection.id} />
-        </Suspense>
-        <Suspense fallback={<TranscriptCardFallback />}>
-          <TranscriptCard transcriptPromise={transcriptPromise} />
-        </Suspense>
-      </section>
+      <PlayerProvider>
+        <section
+          aria-label="Video and transcript"
+          className="flex min-w-0 flex-col gap-5"
+        >
+          <Suspense fallback={<VideoSectionFallback />}>
+            <VideoSection sectionId={currentSection.id} />
+          </Suspense>
+          <Suspense fallback={<TranscriptCardFallback />}>
+            <TranscriptCard transcriptPromise={transcriptPromise} />
+          </Suspense>
+        </section>
+      </PlayerProvider>
       <section aria-label="AI interactive quiz" className="min-w-0">
         <Suspense fallback={<QuizCardFallback />}>
           <QuizCard

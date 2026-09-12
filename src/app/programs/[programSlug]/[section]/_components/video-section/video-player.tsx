@@ -7,6 +7,7 @@ import { Video } from "@/schemas/video";
 import { cn } from "@/lib/utils";
 import { useYouTubePlayer } from "./use-youtube-player";
 import { PlayerControls } from "./player-controls";
+import { usePlayerControls } from "../player-context";
 
 interface VideoPlayerProps {
   video: Video;
@@ -23,6 +24,9 @@ export function VideoPlayer({
   // stays on the thumbnail until the user presses play.
   const [started, setStarted] = useState(initialPositionSeconds > 0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // A seek requested before the player is ready (e.g. from the transcript
+  // while still on the thumbnail); applied once the player reports ready.
+  const pendingSeekRef = useRef<number | null>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -32,6 +36,7 @@ export function VideoPlayer({
     currentTime,
     duration,
     togglePlay,
+    play,
     seekTo,
     skip,
   } = useYouTubePlayer({
@@ -40,6 +45,46 @@ export function VideoPlayer({
     startSeconds: initialPositionSeconds,
     enabled: started,
   });
+
+  const { registerSeek, reportTime } = usePlayerControls();
+
+  // Bridge external seek requests (from the transcript) to the player, mounting
+  // it from the thumbnail or queuing until ready as needed.
+  const requestSeek = useCallback(
+    (seconds: number) => {
+      if (!started) {
+        pendingSeekRef.current = seconds;
+        setStarted(true);
+        return;
+      }
+      if (!isReady) {
+        pendingSeekRef.current = seconds;
+        return;
+      }
+      seekTo(seconds);
+      play();
+    },
+    [started, isReady, seekTo, play],
+  );
+
+  useEffect(() => {
+    registerSeek(requestSeek);
+    return () => registerSeek(null);
+  }, [registerSeek, requestSeek]);
+
+  // Flush a queued seek once the freshly-mounted player is ready.
+  useEffect(() => {
+    if (isReady && pendingSeekRef.current !== null) {
+      seekTo(pendingSeekRef.current);
+      play();
+      pendingSeekRef.current = null;
+    }
+  }, [isReady, seekTo, play]);
+
+  // Keep the transcript's active line in sync with playback.
+  useEffect(() => {
+    reportTime(currentTime);
+  }, [currentTime, reportTime]);
 
   useEffect(() => {
     const onChange = () =>

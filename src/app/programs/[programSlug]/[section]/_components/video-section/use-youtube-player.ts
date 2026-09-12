@@ -202,6 +202,8 @@ export function useYouTubePlayer({
     else player.playVideo();
   }, [isPlaying]);
 
+  const play = useCallback(() => playerRef.current?.playVideo(), []);
+
   const seekTo = useCallback((seconds: number) => {
     const player = playerRef.current;
     if (!player) return;
@@ -228,6 +230,7 @@ export function useYouTubePlayer({
     currentTime,
     duration,
     togglePlay,
+    play,
     seekTo,
     skip,
   };

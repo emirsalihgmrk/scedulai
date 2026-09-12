@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useMemo } from "react";
 import { Captions } from "lucide-react";
 import {
   Card,
@@ -14,6 +14,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TranscriptLine } from "@/schemas/video";
 import { cn } from "@/lib/utils";
+import { usePlaybackTime, usePlayerControls } from "./player-context";
+
+// Transcript timestamps are "MM:SS" (or "HH:MM:SS" for long videos).
+function parseTimeToSeconds(time: string): number {
+  return time.split(":").reduce((acc, part) => acc * 60 + Number(part), 0);
+}
 
 export function TranscriptCard({
   transcriptPromise,
@@ -21,7 +27,23 @@ export function TranscriptCard({
   transcriptPromise: Promise<TranscriptLine[]>;
 }) {
   const lines = use(transcriptPromise);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const { seek } = usePlayerControls();
+  const currentTimeSeconds = usePlaybackTime();
+
+  const startSeconds = useMemo(
+    () => lines.map((line) => parseTimeToSeconds(line.time)),
+    [lines],
+  );
+
+  // The active line is the last one whose timestamp has been reached.
+  const activeIndex = useMemo(() => {
+    let index = 0;
+    for (let i = 0; i < startSeconds.length; i++) {
+      if (startSeconds[i] > currentTimeSeconds) break;
+      index = i;
+    }
+    return index;
+  }, [startSeconds, currentTimeSeconds]);
 
   return (
     <TranscriptCardShell>
@@ -34,7 +56,7 @@ export function TranscriptCard({
               <li key={index}>
                 <button
                   type="button"
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => seek(startSeconds[index])}
                   className={cn(
                     "group flex w-full gap-3 rounded-xl px-3 py-3 text-left transition-colors",
                     isActive ? "bg-primary/10" : "hover:bg-muted",
