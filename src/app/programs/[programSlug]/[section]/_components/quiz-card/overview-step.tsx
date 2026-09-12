@@ -1,15 +1,11 @@
 import {
   CircleCheck,
-  Clock,
   Gauge,
   ChevronRight,
   RotateCcw,
+  Loader2,
 } from "lucide-react";
-import {
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
@@ -20,9 +16,9 @@ export function OverviewStep({
   quiz,
   questions,
   answered,
-  unanswered,
   progress,
   status,
+  isResetting,
   onStart,
   onRetry,
   onGoTo,
@@ -30,9 +26,9 @@ export function OverviewStep({
   quiz: QuizWithQuestions;
   questions: QuestionWithAnswer[];
   answered: number;
-  unanswered: number;
   progress: number;
   status: QuizStatus | null;
+  isResetting: boolean;
   onStart: () => void;
   onRetry: () => void;
   onGoTo: (index: number) => void;
@@ -40,6 +36,7 @@ export function OverviewStep({
   const total = quiz.questions.length;
   const passed = status === "passed";
   const failed = status === "failed";
+  const inProgress = !passed && !failed && answered > 0;
 
   const gradedQuestions = questions.filter((q) => q.answer !== null);
   const avgAccuracy =
@@ -81,23 +78,6 @@ export function OverviewStep({
       </CardHeader>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pt-2">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-2.5 rounded-xl bg-success/10 px-3 py-2.5">
-            <CircleCheck className="size-4 text-success" />
-            <span className="text-sm font-medium text-foreground">
-              Answered:{" "}
-              <span className="font-bold tabular-nums">{answered}</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2.5 rounded-xl bg-muted px-3 py-2.5">
-            <Clock className="size-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">
-              Unanswered:{" "}
-              <span className="font-bold tabular-nums">{unanswered}</span>
-            </span>
-          </div>
-        </div>
-
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
             <span>Progress</span>
@@ -164,12 +144,22 @@ export function OverviewStep({
           type="button"
           size="lg"
           variant={failed ? "secondary" : "default"}
-          disabled={total === 0}
+          disabled={total === 0 || isResetting}
           onClick={failed ? onRetry : onStart}
           className="h-12 w-full text-sm"
         >
-          {passed ? "Completed" : failed ? "Retry quiz" : "Start practice"}
-          {passed ? (
+          {isResetting
+            ? "Resetting…"
+            : passed
+              ? "Completed"
+              : failed
+                ? "Retry quiz"
+                : inProgress
+                  ? "Continue"
+                  : "Start practice"}
+          {isResetting ? (
+            <Loader2 data-icon="inline-end" className="animate-spin" />
+          ) : passed ? (
             <CircleCheck data-icon="inline-end" />
           ) : failed ? (
             <RotateCcw data-icon="inline-end" />

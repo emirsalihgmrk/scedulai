@@ -15,7 +15,7 @@ import {
   retryQuizAction,
 } from "@/actions/quiz";
 import { User } from "@/schemas/auth";
-import { QuizStatus } from "@/constants/progress";
+import { QUIZ_PASS_ACCURACY, QuizStatus } from "@/constants/progress";
 
 export function QuizCard({
   user,
@@ -30,11 +30,11 @@ export function QuizCard({
 
   const [quiz, setQuiz] = useState(initialQuiz);
   const [isPending, startTransition] = useTransition();
+  const [isResetting, setIsResetting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [graded, setGraded] = useState<Record<string, QuestionWithAnswer>>({});
-  const [quizStatus, setQuizStatus] = useState<QuizStatus | null>(null);
 
   const hasRequestedRef = useRef(false);
   useEffect(() => {
@@ -55,8 +55,6 @@ export function QuizCard({
     });
   }, [user, quiz, sectionId]);
 
-  // Once every question is answered, ask the server to (re)evaluate the quiz.
-  // Pass/fail is computed server-side from persisted answers, never sent from here.
   const lastEvaluatedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!user || !quiz || quiz.questions.length === 0) return;
@@ -68,16 +66,12 @@ export function QuizCard({
     if (lastEvaluatedRef.current === signature) return;
     lastEvaluatedRef.current = signature;
 
-    void evaluateQuizAction(sectionId).then((result) => {
-      if (result.ok) setQuizStatus(result.data);
-    });
+    void evaluateQuizAction(sectionId);
   }, [user, quiz, graded, sectionId]);
 
-  // Clear every answer (local + persisted) so the same quiz can be retaken.
   const handleRetry = () => {
     setGraded({});
     setAnswers({});
-    setQuizStatus(null);
     lastEvaluatedRef.current = null;
     setStep(0);
     setQuiz((prev) =>
@@ -89,9 +83,12 @@ export function QuizCard({
         : prev,
     );
 
-    void retryQuizAction(sectionId).then((result) => {
-      if (!result.ok) setError(result.error);
-    });
+    setIsResetting(true);
+    retryQuizAction(sectionId)
+      .then((result) => {
+        if (!result.ok) setError(result.error);
+      })
+      .finally(() => setIsResetting(false));
   };
 
   if (error) {
@@ -125,8 +122,20 @@ export function QuizCard({
   const total = quiz.questions.length;
   const questions = quiz.questions.map((q) => graded[q.id] ?? q);
   const answered = questions.filter((q) => q.answer !== null).length;
-  const unanswered = total - answered;
   const progress = total === 0 ? 0 : Math.round((answered / total) * 100);
+
+  const allGraded = total > 0 && answered === total;
+  const quizStatus: QuizStatus | null = allGraded
+    ? Math.round(
+        questions.reduce((sum, q) => sum + q.answer!.accuracy, 0) / total,
+      ) >= QUIZ_PASS_ACCURACY
+      ? "passed"
+      : "failed"
+    : null;
+
+  // Resume at the first unanswered question when the quiz is mid-progress.
+  const firstUnansweredIndex = questions.findIndex((q) => q.answer === null);
+  const resumeStep = firstUnansweredIndex === -1 ? 1 : firstUnansweredIndex + 1;
 
   const isOverview = step === 0;
   const question = isOverview ? undefined : questions[step - 1];
@@ -148,10 +157,10 @@ export function QuizCard({
             quiz={quiz}
             questions={questions}
             answered={answered}
-            unanswered={unanswered}
             progress={progress}
             status={quizStatus}
-            onStart={() => setStep(1)}
+            isResetting={isResetting}
+            onStart={() => setStep(resumeStep)}
             onRetry={handleRetry}
             onGoTo={setStep}
           />
