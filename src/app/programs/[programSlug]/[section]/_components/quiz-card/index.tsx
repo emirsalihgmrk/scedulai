@@ -1,11 +1,12 @@
 "use client";
 
-import { use, useEffect, useRef, useState, useTransition } from "react";
+import { use, useEffect, useReducer, useRef, useTransition } from "react";
 import { Card } from "@/components/ui/card";
-import { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
+import { QuizWithQuestions } from "@/schemas/quiz";
 import { OverviewStep } from "./overview-step";
 import { QuestionStep } from "./question-step";
 import { QuizGenerating } from "./fallback";
+import { createInitialState, quizReducer } from "./reducer";
 import { getUserLanguageLabels } from "@/constants/language";
 import { FileQuestion, LogIn } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -26,15 +27,13 @@ export function QuizCard({
   sectionId: string;
   quizPromise: Promise<QuizWithQuestions | null>;
 }) {
-  const initialQuiz = use(quizPromise);
-
-  const [quiz, setQuiz] = useState(initialQuiz);
+  const [state, dispatch] = useReducer(
+    quizReducer,
+    use(quizPromise),
+    createInitialState,
+  );
+  const { quiz, step, answers, error, isResetting } = state;
   const [isPending, startTransition] = useTransition();
-  const [isResetting, setIsResetting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [graded, setGraded] = useState<Record<string, QuestionWithAnswer>>({});
 
   const hasRequestedRef = useRef(false);
   useEffect(() => {
@@ -43,13 +42,16 @@ export function QuizCard({
     startTransition(async () => {
       try {
         const result = await generateQuizByAiAction(sectionId);
-        if (result.ok) setQuiz(result.data);
+        if (result.ok) dispatch({ type: "generated", quiz: result.data });
         else {
-          setError(result.error);
+          dispatch({ type: "failed", error: result.error });
           hasRequestedRef.current = false;
         }
       } catch {
-        setError("An unexpected error occurred while generating the quiz.");
+        dispatch({
+          type: "failed",
+          error: "An unexpected error occurred while generating the quiz.",
+        });
         hasRequestedRef.current = false;
       }
     });
@@ -58,37 +60,26 @@ export function QuizCard({
   const lastEvaluatedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!user || !quiz || quiz.questions.length === 0) return;
+    if (quiz.questions.some((q) => q.answer === null)) return;
 
-    const merged = quiz.questions.map((q) => graded[q.id] ?? q);
-    if (merged.some((q) => q.answer === null)) return;
-
-    const signature = merged.map((q) => q.answer!.accuracy).join(",");
+    const signature = quiz.questions.map((q) => q.answer!.accuracy).join(",");
     if (lastEvaluatedRef.current === signature) return;
     lastEvaluatedRef.current = signature;
 
     void evaluateQuizAction(sectionId);
-  }, [user, quiz, graded, sectionId]);
+  }, [user, quiz, sectionId]);
 
   const handleRetry = () => {
-    setGraded({});
-    setAnswers({});
     lastEvaluatedRef.current = null;
-    setStep(0);
-    setQuiz((prev) =>
-      prev
-        ? {
-            ...prev,
-            questions: prev.questions.map((q) => ({ ...q, answer: null })),
-          }
-        : prev,
-    );
-
-    setIsResetting(true);
+    dispatch({ type: "retryStarted" });
     retryQuizAction(sectionId)
       .then((result) => {
-        if (!result.ok) setError(result.error);
+        dispatch({
+          type: "retrySettled",
+          error: result.ok ? undefined : result.error,
+        });
       })
-      .finally(() => setIsResetting(false));
+      .catch(() => dispatch({ type: "retrySettled" }));
   };
 
   if (error) {
@@ -120,7 +111,7 @@ export function QuizCard({
   if (isPending || !quiz) return <QuizGenerating />;
 
   const total = quiz.questions.length;
-  const questions = quiz.questions.map((q) => graded[q.id] ?? q);
+  const questions = quiz.questions;
   const answered = questions.filter((q) => q.answer !== null).length;
   const progress = total === 0 ? 0 : Math.round((answered / total) * 100);
 
@@ -160,9 +151,9 @@ export function QuizCard({
             progress={progress}
             status={quizStatus}
             isResetting={isResetting}
-            onStart={() => setStep(resumeStep)}
+            onStart={() => dispatch({ type: "navigate", step: resumeStep })}
             onRetry={handleRetry}
-            onGoTo={setStep}
+            onGoTo={(index) => dispatch({ type: "navigate", step: index })}
           />
         ) : (
           <QuestionStep
@@ -174,12 +165,18 @@ export function QuizCard({
             targetLangLabel={targetLangLabel}
             value={answers[question.id] ?? ""}
             onChange={(value) =>
-              setAnswers((prev) => ({ ...prev, [question.id]: value }))
+              dispatch({
+                type: "answerChanged",
+                questionId: question.id,
+                value,
+              })
             }
-            onOverview={() => setStep(0)}
-            onPrev={() => setStep((s) => s - 1)}
-            onNext={() => setStep((s) => Math.min(s + 1, total))}
-            onGraded={(q) => setGraded((prev) => ({ ...prev, [q.id]: q }))}
+            onOverview={() => dispatch({ type: "navigate", step: 0 })}
+            onPrev={() => dispatch({ type: "navigate", step: step - 1 })}
+            onNext={() =>
+              dispatch({ type: "navigate", step: Math.min(step + 1, total) })
+            }
+            onGraded={(q) => dispatch({ type: "graded", question: q })}
           />
         )}
       </Card>
