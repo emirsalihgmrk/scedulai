@@ -6,7 +6,7 @@ if (!process.env.OPENROUTER_API_KEY) {
   throw new Error("OPENROUTER_API_KEY environment variable is not defined!");
 }
 
-export const DEFAULT_MODEL = "google/gemini-2.5-flash";
+export const DEFAULT_MODEL = "google/gemini-2.5-flash-lite";
 
 export const aiProvider = createOpenRouter({
   baseURL: "https://openrouter.ai/api/v1",
@@ -30,6 +30,16 @@ interface ObjectAgentArgs<T> {
   };
 }
 
+export interface AIObjectResult<T> {
+  output: T;
+  model: string;
+  latencyMs: number;
+  usage: {
+    inputTokens?: number;
+    outputTokens?: number;
+  };
+}
+
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
@@ -38,8 +48,9 @@ export async function getAIObjectResponse<T>({
   system = SYSTEM_PROMPT,
   messages,
   output,
-}: ObjectAgentArgs<T>): Promise<T> {
+}: ObjectAgentArgs<T>): Promise<AIObjectResult<T>> {
   let lastError: unknown;
+  const start = Date.now();
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -52,7 +63,15 @@ export async function getAIObjectResponse<T>({
           description: output.description,
         }),
       });
-      return result.output as T;
+      return {
+        output: result.output as T,
+        model,
+        latencyMs: Date.now() - start,
+        usage: {
+          inputTokens: result.usage?.inputTokens,
+          outputTokens: result.usage?.outputTokens,
+        },
+      };
     } catch (err) {
       lastError = err;
       if (attempt < MAX_RETRIES) {

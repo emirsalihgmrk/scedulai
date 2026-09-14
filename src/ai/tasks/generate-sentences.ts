@@ -12,7 +12,7 @@ interface GenerateSentencesArgs {
   count: number;
 }
 
-export function generateSentences({
+export async function generateSentences({
   transcript,
   nativeLanguage,
   count,
@@ -31,7 +31,8 @@ export function generateSentences({
   - Write the sentence in ${nativeLanguage}.
   - Provide its correct English translation.`;
 
-  return getAIObjectResponse<GenerateSentencesOutput>({
+  const { output } = await getAIObjectResponse<GenerateSentencesOutput>({
+    model: "google/gemini-2.5-flash",
     system,
     messages: [
       {
@@ -43,4 +44,5 @@ export function generateSentences({
       schema: outputSchema,
     },
   });
+  return output;
 }

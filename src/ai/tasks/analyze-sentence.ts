@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import { z } from "zod";
-import { getAIObjectResponse } from "..";
+import { getAIObjectResponse, type AIObjectResult } from "..";
 import { analyzeSentenceOutputSchema } from "@/ai/outputs/analyze-sentence";
 
 export type AnalyzeSentenceOutput = z.infer<typeof analyzeSentenceOutputSchema>;
@@ -11,13 +12,12 @@ interface AnalyzeSentenceArgs {
   nativeLanguage: string;
 }
 
-export function analyzeSentence({
-  sentence,
-  originalSentence,
-  userTranslation,
-  nativeLanguage,
-}: AnalyzeSentenceArgs): Promise<AnalyzeSentenceOutput> {
-  const system = `You are an expert language teacher evaluating a learner's English translation on the ScedulAI platform. The learner's native language is ${nativeLanguage}.
+export type AnalyzeSentenceResult = AIObjectResult<AnalyzeSentenceOutput> & {
+  promptVersion: string;
+};
+
+function buildSystemPrompt(nativeLanguage: string): string {
+  return `You are an expert language teacher evaluating a learner's English translation on the ScedulAI platform. The learner's native language is ${nativeLanguage}.
 
   Your tasks:
   - Write a brief analysis of the learner's translation in ${nativeLanguage}: highlight what they got right, explain the key differences from the expected translation, and note any important nuances. Do not list specific mistakes here.
@@ -37,10 +37,22 @@ export function analyzeSentence({
   - Person: nominalized clauses are ambiguous between 2nd and 3rd person singular (e.g. "sevdiğini" means both "that you love" and "that he/she loves") — accept both readings.
   - Number/formality: "siz" can be singular-formal or plural — "you" is valid either way.
   - Acknowledge these ambiguities in your ${nativeLanguage} analysis instead of calling a valid alternative reading a mistake.`;
+}
 
-  return getAIObjectResponse<AnalyzeSentenceOutput>({
+export const ANALYZE_SENTENCE_PROMPT_VERSION = createHash("sha256")
+  .update(buildSystemPrompt("{{nativeLanguage}}"))
+  .digest("hex")
+  .slice(0, 12);
+
+export async function analyzeSentence({
+  sentence,
+  originalSentence,
+  userTranslation,
+  nativeLanguage,
+}: AnalyzeSentenceArgs): Promise<AnalyzeSentenceResult> {
+  const result = await getAIObjectResponse<AnalyzeSentenceOutput>({
     model: "google/gemini-2.5-flash-lite",
-    system,
+    system: buildSystemPrompt(nativeLanguage),
     messages: [
       {
         role: "user",
@@ -53,4 +65,6 @@ export function analyzeSentence({
       schema: analyzeSentenceOutputSchema,
     },
   });
+
+  return { ...result, promptVersion: ANALYZE_SENTENCE_PROMPT_VERSION };
 }

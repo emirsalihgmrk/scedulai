@@ -12,6 +12,8 @@ import {
   deleteAnswers,
   upsertAnswer,
 } from "@/dal/quiz/mutations";
+import { createAiTrace } from "@/dal/ai/mutations";
+import { after } from "next/server";
 import { AnswerResponse, submitAnswerSchema } from "@/schemas/quiz";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
@@ -51,29 +53,57 @@ export async function submitAnswerService(
   const user = await getCurrentUser();
   if (!user) throw new AppError("Unauthorized");
 
+  const parsedInput = submitAnswerSchema.safeParse(input);
+  if (!parsedInput.success) throw new AppError("Invalid data");
+  const response = parsedInput.data;
+
   const question = await getQuestion(questionId);
   if (!question) throw new AppError("Not found");
 
   const { nativeLanguage } = userLanguages(user);
 
-  const aiResult = await analyzeSentence({
+  const analyzeInput = {
     sentence: question.payload.sourceSentence,
     originalSentence: question.payload.expectedTranslation ?? "",
-    userTranslation: input.userTranslation,
+    userTranslation: response.userTranslation,
     nativeLanguage: getNativeLanguageEnglishName(nativeLanguage),
-  });
+  };
+
+  const {
+    output: aiResult,
+    model,
+    promptVersion,
+    latencyMs,
+    usage,
+  } = await analyzeSentence(analyzeInput);
 
   const { accuracy, ...analysis } = aiResult;
   const analyzedInput = {
-    response: input,
-    analysis: analysis,
+    response,
+    analysis,
     accuracy: Math.round(accuracy),
   };
 
-  const parsedResult = submitAnswerSchema.safeParse(analyzedInput);
-  if (!parsedResult.success) throw new AppError("Invalid data");
+  const answer = await upsertAnswer(user.id, questionId, analyzedInput);
 
-  const answer = await upsertAnswer(user.id, questionId, parsedResult.data);
+  after(async () => {
+    try {
+      await createAiTrace({
+        task: "analyze-sentence",
+        model,
+        promptVersion,
+        userId: user.id,
+        input: analyzeInput,
+        output: aiResult,
+        metadata: { questionId },
+        latencyMs,
+        inputTokens: usage.inputTokens ?? null,
+        outputTokens: usage.outputTokens ?? null,
+      });
+    } catch (err) {
+      console.error("Failed to write AI trace", err);
+    }
+  });
 
   return { ...question, answer };
 }

@@ -1,3 +1,4 @@
+import { AI_TASKS } from "@/constants/ai";
 import { DIFFICULTIES } from "@/constants/difficulty";
 import {
   SUPPORTED_NATIVE_LANGUAGE_CODES,
@@ -47,6 +48,7 @@ export const targetLanguageEnum = pgEnum(
   "target_language",
   SUPPORTED_TARGET_LANGUAGE_CODES,
 );
+export const aiTaskEnum = pgEnum("ai_task", AI_TASKS);
 
 // jsonb column types
 export interface TranscriptLine {
@@ -67,6 +69,12 @@ export type AnswerResponse = {
 };
 
 export type AnswerAnalysis = z.infer<typeof aiAnalysisSchema>;
+
+export type AiTraceInput = Record<string, unknown>;
+export type AiTraceOutput = Record<string, unknown>;
+// Task-specific references live here so the table stays generic
+// (e.g. analyze-sentence: { questionId }, generate-sentences: { sectionId }).
+export type AiTraceMetadata = Record<string, unknown>;
 
 // better-auth managed tables
 export const userTable = pgTable("user", {
@@ -276,6 +284,30 @@ export const answersTable = pgTable(
   ],
 );
 
+export const aiTracesTable = pgTable(
+  "ai_traces",
+  {
+    ...commonFields,
+    task: aiTaskEnum("task").notNull(),
+    model: text("model").notNull(),
+    promptVersion: text("prompt_version").notNull(),
+    userId: text("user_id").references(() => userTable.id, {
+      onDelete: "set null",
+    }),
+    input: jsonb("input").$type<AiTraceInput>().notNull(),
+    output: jsonb("output").$type<AiTraceOutput>().notNull(),
+    metadata: jsonb("metadata").$type<AiTraceMetadata>(),
+    latencyMs: integer("latency_ms").notNull(),
+    inputTokens: integer("input_tokens"),
+    outputTokens: integer("output_tokens"),
+  },
+  (table) => [
+    index("ai_traces_task_idx").on(table.task),
+    index("ai_traces_created_at_idx").on(table.createdAt),
+    index("ai_traces_user_id_idx").on(table.userId),
+  ],
+);
+
 export const sectionProgressTable = pgTable(
   "section_progress",
   {
@@ -364,13 +396,16 @@ export const quizzesRelations = relations(quizzesTable, ({ one, many }) => ({
   questions: many(questionsTable),
 }));
 
-export const questionsRelations = relations(questionsTable, ({ one, many }) => ({
-  quiz: one(quizzesTable, {
-    fields: [questionsTable.quizId],
-    references: [quizzesTable.id],
+export const questionsRelations = relations(
+  questionsTable,
+  ({ one, many }) => ({
+    quiz: one(quizzesTable, {
+      fields: [questionsTable.quizId],
+      references: [quizzesTable.id],
+    }),
+    answers: many(answersTable),
   }),
-  answers: many(answersTable),
-}));
+);
 
 export const answersRelations = relations(answersTable, ({ one }) => ({
   user: one(userTable, {

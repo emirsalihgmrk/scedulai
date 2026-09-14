@@ -3,10 +3,10 @@ import { db } from "@/db";
 import { answersTable, questionsTable, quizzesTable } from "@/db/schema";
 import type {
   Answer,
+  CreateAnswerInput,
   CreateQuestionInput,
   CreateQuizInput,
   Question,
-  SubmitAnswerInput,
 } from "@/schemas/quiz";
 
 import { Transaction } from "@/schemas/common";
@@ -51,7 +51,7 @@ export async function createQuestions(
 export async function upsertAnswer(
   userId: string,
   questionId: string,
-  input: SubmitAnswerInput,
+  input: CreateAnswerInput,
 ): Promise<Answer> {
   const [answer] = await db
     .insert(answersTable)
@@ -79,16 +79,18 @@ export async function deleteAnswers(
   tx?: Transaction,
 ): Promise<void> {
   const executor = tx ?? db;
-  await executor.delete(answersTable).where(
-    and(
-      eq(answersTable.userId, userId),
-      inArray(
-        answersTable.questionId,
-        executor
-          .select({ id: questionsTable.id })
-          .from(questionsTable)
-          .where(eq(questionsTable.quizId, quizId)),
+  await executor
+    .delete(answersTable)
+    .where(
+      and(
+        eq(answersTable.userId, userId),
+        inArray(
+          answersTable.questionId,
+          executor
+            .select({ id: questionsTable.id })
+            .from(questionsTable)
+            .where(eq(questionsTable.quizId, quizId)),
+        ),
       ),
-    ),
-  );
+    );
 }

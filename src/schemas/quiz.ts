@@ -3,9 +3,9 @@ import {
   QuizRow,
   QuestionRow,
   AnswerRow,
-  createAnswerRowSchema,
   createQuizRowSchema,
   createQuestionRowSchema,
+  createAnswerRowSchema,
 } from "@/db/types";
 
 export type {
@@ -51,9 +51,19 @@ export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 
 //// answer
 
-export const submitAnswerSchema = createAnswerRowSchema.pick({
+export const submitAnswerSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("translation"),
+    userTranslation: z.string().trim().min(1).max(1000),
+  }),
+]);
+
+export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;
+
+export const createAnswerSchema = createAnswerRowSchema.pick({
   response: true,
   analysis: true,
   accuracy: true,
 });
-export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;
+
+export type CreateAnswerInput = z.infer<typeof createAnswerSchema>;
