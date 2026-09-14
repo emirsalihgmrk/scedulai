@@ -13,12 +13,6 @@ export const analyzeSentenceOutputSchema = z.object({
       "A list of specific mistakes found in the learner's translation, each as a concise description in the user's native language. Empty if the translation is correct.",
     ),
 
-  expressions: z
-    .array(z.string())
-    .describe(
-      "A list of idiomatic English expressions or phrases relevant to the correct translation.",
-    ),
-
   accuracy: z
     .number()
     .min(0)

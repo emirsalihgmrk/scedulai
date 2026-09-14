@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   Sparkles,
   Lightbulb,
-  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuestionWithAnswer } from "@/schemas/quiz";
@@ -136,25 +135,6 @@ export function GradedQuestion({
                     className="text-[13px] leading-relaxed text-foreground/90 before:mr-1.5 before:text-muted-foreground before:content-['·']"
                   >
                     {alt}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {analysis.expressions && analysis.expressions.length > 0 && (
-            <div className="border-t border-border pt-3">
-              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <BookOpen className="size-3.5" />
-                Key expressions
-              </div>
-              <ul className="space-y-1">
-                {analysis.expressions.map((expr, i) => (
-                  <li
-                    key={i}
-                    className="text-[13px] leading-relaxed text-foreground/90"
-                  >
-                    {expr}
                   </li>
                 ))}
               </ul>

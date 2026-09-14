@@ -22,7 +22,6 @@ export function analyzeSentence({
   Your tasks:
   - Write a brief analysis of the learner's translation in ${nativeLanguage}: highlight what they got right, explain the key differences from the expected translation, and note any important nuances. Do not list specific mistakes here.
   - List each specific mistake in the learner's translation as a separate item, written in ${nativeLanguage}. If there are no mistakes, return an empty list.
-  - Identify key English vocabulary words and idiomatic expressions from the correct translation.
   - Evaluate how accurately the learner's translation conveys the meaning and give a percentage score.
   - Provide a few alternative correct ways the sentence could be translated into English.
 
