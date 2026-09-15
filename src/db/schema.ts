@@ -21,7 +21,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { z } from "zod";
-import { aiAnalysisSchema } from "@/ai/outputs/analyze-sentence";
+import { analyzeSentenceOutputSchema } from "@/ai/outputs/analyze-sentence";
 
 const commonFields = {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -68,7 +68,7 @@ export type AnswerResponse = {
   userTranslation: string;
 };
 
-export type AnswerAnalysis = z.infer<typeof aiAnalysisSchema>;
+export type AnswerAnalysis = z.infer<typeof analyzeSentenceOutputSchema>;
 
 export type AiTraceInput = Record<string, unknown>;
 export type AiTraceOutput = Record<string, unknown>;

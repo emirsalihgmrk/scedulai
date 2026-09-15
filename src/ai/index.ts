@@ -24,6 +24,7 @@ interface ObjectAgentArgs<T> {
   model?: string;
   system?: string;
   messages: ModelMessage[];
+  temperature?: number;
   output: {
     schema: z.Schema<T>;
     description?: string;
@@ -47,6 +48,7 @@ export async function getAIObjectResponse<T>({
   model = DEFAULT_MODEL,
   system = SYSTEM_PROMPT,
   messages,
+  temperature,
   output,
 }: ObjectAgentArgs<T>): Promise<AIObjectResult<T>> {
   let lastError: unknown;
@@ -58,6 +60,7 @@ export async function getAIObjectResponse<T>({
         model: aiProvider(model),
         system,
         messages,
+        temperature,
         output: Output.object({
           schema: output.schema,
           description: output.description,

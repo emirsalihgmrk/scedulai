@@ -70,14 +70,14 @@ export async function submitAnswerService(
   };
 
   const {
-    output: aiResult,
+    output: analysis,
+    accuracy,
     model,
     promptVersion,
     latencyMs,
     usage,
   } = await analyzeSentence(analyzeInput);
 
-  const { accuracy, ...analysis } = aiResult;
   const analyzedInput = {
     response,
     analysis,
@@ -94,8 +94,8 @@ export async function submitAnswerService(
         promptVersion,
         userId: user.id,
         input: analyzeInput,
-        output: aiResult,
-        metadata: { questionId },
+        output: analysis,
+        metadata: { questionId, accuracy: Math.round(accuracy) },
         latencyMs,
         inputTokens: usage.inputTokens ?? null,
         outputTokens: usage.outputTokens ?? null,
