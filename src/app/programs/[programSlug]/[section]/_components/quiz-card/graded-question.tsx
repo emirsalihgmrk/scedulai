@@ -99,9 +99,11 @@ export function GradedQuestion({
             </span>
           </div>
 
-          <p className="text-[13px] leading-relaxed text-foreground/90">
-            {analysis.analysis}
-          </p>
+          {analysis.analysis && (
+            <p className="text-[13px] leading-relaxed text-foreground/90">
+              {analysis.analysis}
+            </p>
+          )}
 
           {analysis.mistakes.length > 0 && (
             <div className="border-t border-border pt-3">
