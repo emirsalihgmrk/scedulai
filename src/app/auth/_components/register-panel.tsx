@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import { signUpSchema, type SignUpInput } from "@/schemas/auth";
 import { signUpUser } from "@/actions/auth";
 import { SUPPORTED_NATIVE_LANGUAGES } from "@/constants/language";
-import { PLAN_OPTIONS } from "@/constants/plan";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -70,12 +69,10 @@ export function RegisterPanel() {
       email: "",
       password: "",
       nativeLanguage: "tr",
-      plan: "premium",
+      plan: "free",
       rememberMe: false,
     },
   });
-
-  const selectedPlan = useWatch({ control, name: "plan" });
 
   const onSubmit = async (values: SignUpInput) => {
     setFormError(null);
@@ -238,49 +235,6 @@ export function RegisterPanel() {
                     Explanations and corrections use this language.
                   </FieldDescription>
                 </Field>
-
-                <Field>
-                  <FieldLabel>Plan</FieldLabel>
-                  <div className="grid grid-cols-2 gap-3" role="radiogroup">
-                    {PLAN_OPTIONS.map((option) => {
-                      const isSelected = selectedPlan === option.value;
-                      return (
-                        <label
-                          key={option.value}
-                          className={cn(
-                            "relative flex cursor-pointer flex-col gap-0.5 rounded-lg border p-3 transition-colors outline-none",
-                            "has-focus-visible:border-ring has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
-                            isSelected
-                              ? "border-primary bg-primary/3"
-                              : "border-input bg-card hover:bg-muted",
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            value={option.value}
-                            className="sr-only"
-                            {...register("plan")}
-                          />
-                          {isSelected && (
-                            <span className="absolute top-3 right-3 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                              <Check className="size-2.5" />
-                            </span>
-                          )}
-                          <span className="text-sm font-semibold text-foreground">
-                            {option.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {option.description} · {option.price}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                  <FieldError
-                    errors={errors.plan ? [errors.plan] : undefined}
-                  />
-                </Field>
-
                 <Controller
                   control={control}
                   name="rememberMe"
