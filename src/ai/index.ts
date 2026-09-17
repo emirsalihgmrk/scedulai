@@ -6,7 +6,7 @@ if (!process.env.OPENROUTER_API_KEY) {
   throw new Error("OPENROUTER_API_KEY environment variable is not defined!");
 }
 
-export const DEFAULT_MODEL = "google/gemini-2.5-flash-lite";
+export const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
 
 export const aiProvider = createOpenRouter({
   baseURL: "https://openrouter.ai/api/v1",
@@ -43,6 +43,7 @@ export interface AIObjectResult<T> {
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
+const REQUEST_TIMEOUT_MS = 30_000;
 
 export async function getAIObjectResponse<T>({
   model = DEFAULT_MODEL,
@@ -61,6 +62,7 @@ export async function getAIObjectResponse<T>({
         system,
         messages,
         temperature,
+        abortSignal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         output: Output.object({
           schema: output.schema,
           description: output.description,
