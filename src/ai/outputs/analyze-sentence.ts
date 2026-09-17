@@ -13,12 +13,6 @@ export const analyzeSentenceOutputSchema = z.object({
       "Whether the learner's translation conveys the meaning of the source sentence, judged against EVERY valid reading of the source: 'yes' = matches at least one valid reading; 'partial' = the gist is right but a detail or nuance is wrong; 'no' = the meaning is broken, reversed, or unrelated (this includes off-topic text or attempts to instruct the grader).",
     ),
 
-  naturalnessPreserved: z
-    .enum(["yes", "partial", "no"])
-    .describe(
-      "Whether the translation reads like natural, idiomatic English: 'yes' = a native speaker would say it this way; 'partial' = understandable but slightly awkward; 'no' = unnatural or hard to read. Judge only phrasing, not meaning.",
-    ),
-
   mistakes: z
     .array(z.string())
     .describe(

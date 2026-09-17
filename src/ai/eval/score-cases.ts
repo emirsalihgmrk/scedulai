@@ -19,16 +19,13 @@ function check(output: AnalyzeSentenceOutput, expected: Expectation): string[] {
   if (output.meaningPreserved !== expected.meaning) {
     reasons.push(`meaning ${output.meaningPreserved} !== ${expected.meaning}`);
   }
-  if (
-    expected.naturalness != null &&
-    output.naturalnessPreserved !== expected.naturalness
-  ) {
-    reasons.push(
-      `naturalness ${output.naturalnessPreserved} !== ${expected.naturalness}`,
-    );
-  }
-  if (mistakes !== expected.mistakes) {
-    reasons.push(`mistakes ${mistakes} !== ${expected.mistakes}`);
+
+  const [min, max] = Array.isArray(expected.mistakes)
+    ? expected.mistakes
+    : [expected.mistakes, expected.mistakes];
+  if (mistakes < min || mistakes > max) {
+    const want = min === max ? `${min}` : `${min}-${max}`;
+    reasons.push(`mistakes ${mistakes} !== ${want}`);
   }
   return reasons;
 }
@@ -61,7 +58,7 @@ async function main() {
 
     const tag = ok ? "PASS" : "FAIL";
     const detail = ok ? "" : `  <- ${reasons.join("; ")}`;
-    const rubric = `meaning=${output.meaningPreserved} nat=${output.naturalnessPreserved} m=${output.mistakes.length} acc=${accuracy}`;
+    const rubric = `meaning=${output.meaningPreserved} m=${output.mistakes.length} acc=${accuracy}`;
     console.log(
       `[${String(i + 1).padStart(2)}/${cases.length}] ${tag}  ${c.category} — ${c.note} (${rubric})${detail}`,
     );
