@@ -15,9 +15,9 @@ export function Logo() {
           d="M4 0 V70 M20 70 L50 0 L80 70 M96 0 V70"
           fill="none"
           stroke="#5f6b3a"
-          stroke-width="8"
-          stroke-linejoin="miter"
-          stroke-miterlimit="6"
+          strokeWidth="8"
+          strokeLinejoin="miter"
+          strokeMiterlimit="6"
         />
       </svg>
     </div>
