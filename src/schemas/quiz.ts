@@ -54,7 +54,7 @@ export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 export const submitAnswerSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("translation"),
-    userTranslation: z.string().trim().min(1).max(1000),
+    userTranslation: z.string().trim().min(1).max(200),
   }),
 ]);
 
