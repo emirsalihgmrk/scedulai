@@ -1,10 +1,9 @@
 export const SUPPORTED_NATIVE_LANGUAGES = [
-  { code: "tr", nativeName: "Türkçe", englishName: "Turkish", countryCode: "tr" },
   {
-    code: "en",
-    nativeName: "English",
-    englishName: "English",
-    countryCode: "gb",
+    code: "tr",
+    nativeName: "Türkçe",
+    englishName: "Turkish",
+    countryCode: "tr",
   },
   {
     code: "de",
@@ -24,68 +23,6 @@ export const SUPPORTED_NATIVE_LANGUAGES = [
     englishName: "French",
     countryCode: "fr",
   },
-  {
-    code: "it",
-    nativeName: "Italiano",
-    englishName: "Italian",
-    countryCode: "it",
-  },
-
-  {
-    code: "ja",
-    nativeName: "日本語",
-    englishName: "Japanese",
-    countryCode: "jp",
-  },
-  { code: "ko", nativeName: "한국어", englishName: "Korean", countryCode: "kr" },
-  {
-    code: "zh",
-    nativeName: "中文 (简体)",
-    englishName: "Chinese (Simplified)",
-    countryCode: "cn",
-  },
-
-  {
-    code: "ru",
-    nativeName: "Русский",
-    englishName: "Russian",
-    countryCode: "ru",
-  },
-  {
-    code: "pt",
-    nativeName: "Português",
-    englishName: "Portuguese",
-    countryCode: "pt",
-  },
-  {
-    code: "nl",
-    nativeName: "Nederlands",
-    englishName: "Dutch",
-    countryCode: "nl",
-  },
-  { code: "pl", nativeName: "Polski", englishName: "Polish", countryCode: "pl" },
-  {
-    code: "el",
-    nativeName: "Ελληνικά",
-    englishName: "Greek",
-    countryCode: "gr",
-  },
-
-  {
-    code: "sv",
-    nativeName: "Svenska",
-    englishName: "Swedish",
-    countryCode: "se",
-  },
-  {
-    code: "no",
-    nativeName: "Norsk",
-    englishName: "Norwegian",
-    countryCode: "no",
-  },
-  { code: "da", nativeName: "Dansk", englishName: "Danish", countryCode: "dk" },
-  { code: "fi", nativeName: "Suomi", englishName: "Finnish", countryCode: "fi" },
-
   {
     code: "ar",
     nativeName: "العربية",
