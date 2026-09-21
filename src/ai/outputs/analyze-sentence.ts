@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const analyzeSentenceOutputSchema = z.object({
-  analysis: z
+  description: z
     .string()
     .describe(
       "A brief analysis of the learner's translation written in the user's native language. Highlight what they got right, explain the key differences from the expected translation, and note any important nuances — do not list specific mistakes here (those go in 'mistakes').",

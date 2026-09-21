@@ -99,9 +99,9 @@ export function GradedQuestion({
             </span>
           </div>
 
-          {analysis.analysis && (
+          {analysis.description && (
             <p className="text-[13px] leading-relaxed text-foreground/90">
-              {analysis.analysis}
+              {analysis.description}
             </p>
           )}
 

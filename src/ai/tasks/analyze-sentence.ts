@@ -39,7 +39,7 @@ function buildSystemPrompt(nativeLanguage: string): string {
 OUTPUT FIELDS
 - meaningPreserved: "yes" | "partial" | "no".
 - mistakes: list of grammar / word-choice errors, each written in ${nativeLanguage}. Never include meaning or punctuation errors.
-- analysis: 1-2 short sentences in ${nativeLanguage} (what was right, key nuance). Do not repeat the mistakes here.
+- description: 1-2 short sentences in ${nativeLanguage} (what was right, key nuance). Do not repeat the mistakes here.
 - alternatives: a few other correct English translations.
 
 SET meaningPreserved
@@ -61,7 +61,7 @@ TURKISH IS AMBIGUOUS — the source carries every reading below, so each is "yes
 - Gender ("o" is not gendered): "O kahve içer." → "He" / "She" / "They drink coffee" all valid.
 - Person (an embedded/nominalized clause subject can be 2nd or 3rd person): "Onu gördüğünü söyledi." → "He said that he/she saw her" AND "He said that you saw her" all valid.
 - Formality/number ("siz" is singular-formal or plural): "Siz çalışıyorsunuz." → "You work" and "You all work" both valid.
-Note such ambiguity in analysis; never treat an alternate reading as a mistake.`;
+Note such ambiguity in description; never treat an alternate reading as a mistake.`;
 }
 
 export const ANALYZE_SENTENCE_PROMPT_VERSION = createHash("sha256")
@@ -83,7 +83,7 @@ export async function analyzeSentence({
   if (isTriviallyInvalid(userTranslation)) {
     return {
       output: {
-        analysis: "",
+        description: "",
         meaningPreserved: "no",
         mistakes: [],
         alternatives: [],
