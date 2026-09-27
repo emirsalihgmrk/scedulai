@@ -19,7 +19,6 @@ import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
 import { upsertSectionProgress } from "@/dal/program/mutations";
 import { getCurrentUser } from "@/services/auth";
-import { assertDemoRateLimit } from "@/lib/demo"; //DEMO
 import { AppError } from "@/lib/errors";
 import {
   getNativeLanguageEnglishName,
@@ -53,8 +52,6 @@ export async function submitAnswerService(
 ): Promise<QuestionWithAnswer> {
   const user = await getCurrentUser();
   if (!user) throw new AppError("Unauthorized");
-
-  await assertDemoRateLimit(user.id); //DEMO: herkese açık demo LLM maliyet koruması
 
   const parsedInput = submitAnswerSchema.safeParse(input);
   if (!parsedInput.success) throw new AppError("Invalid data");

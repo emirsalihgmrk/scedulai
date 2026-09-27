@@ -13,7 +13,6 @@
     "db:migrate": "drizzle-kit migrate",
     "db:reset": "tsx --env-file=.env ./src/db/reset.ts",
     "db:seed": "tsx --env-file=.env ./src/db/seed.ts",
-    "db:warm-quizzes": "tsx --env-file=.env ./src/db/warm-quizzes.ts",
     "ai:eval:score": "tsx --env-file=.env ./src/ai/eval/score-cases.ts"
   },
   "dependencies": {
