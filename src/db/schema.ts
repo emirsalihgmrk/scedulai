@@ -5,6 +5,7 @@ import {
   SUPPORTED_TARGET_LANGUAGE_CODES,
 } from "@/constants/language";
 import { PLANS } from "@/constants/plan";
+import { ROLES } from "@/constants/role";
 import { QUIZ_STATUSES } from "@/constants/progress";
 import { QUESTION_DIRECTIONS, QUESTION_TYPES } from "@/constants/question";
 import { relations } from "drizzle-orm";
@@ -33,6 +34,7 @@ const commonFields = {
 };
 
 export const planEnum = pgEnum("plan", PLANS);
+export const roleEnum = pgEnum("role", ROLES);
 export const difficultyEnum = pgEnum("difficulty", DIFFICULTIES);
 export const questionTypeEnum = pgEnum("question_type", QUESTION_TYPES);
 export const questionDirectionEnum = pgEnum(
@@ -86,6 +88,7 @@ export const userTable = pgTable("user", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   plan: planEnum("plan").default("free").notNull(),
+  role: roleEnum("role").default("user").notNull(),
   nativeLanguage: nativeLanguageEnum("native_language").default("tr").notNull(),
   targetLanguage: targetLanguageEnum("target_language").default("en").notNull(),
 });

@@ -15,7 +15,13 @@ export const getCurrentUser = cache(async () => {
       nativeLanguage: session.user.nativeLanguage,
       targetLanguage: session.user.targetLanguage,
       plan: session.user.plan,
+      role: session.user.role,
     });
   }
   return null;
+});
+
+export const isUserAdmin = cache(async () => {
+  const user = await getCurrentUser();
+  return user?.role === "admin";
 });

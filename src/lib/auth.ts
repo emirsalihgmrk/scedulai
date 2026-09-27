@@ -59,6 +59,13 @@ export const auth = betterAuth({
         input: true,
         returned: true,
       },
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+        input: false,
+        returned: true,
+      },
     },
   },
   // Must be the last plugin so it can set cookies from server actions

@@ -8,6 +8,7 @@ export const userSchema = userRowSchema.pick({
   nativeLanguage: true,
   targetLanguage: true,
   plan: true,
+  role: true,
 });
 export type User = z.infer<typeof userSchema>;
 
