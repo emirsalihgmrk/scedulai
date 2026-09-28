@@ -14,7 +14,7 @@ import {
 } from "@/dal/quiz/mutations";
 import { createAiTrace } from "@/dal/ai/mutations";
 import { after } from "next/server";
-import { AnswerResponse, submitAnswerSchema } from "@/schemas/quiz";
+import { AnswerResponse, submitTranslationAnswerSchema } from "@/schemas/quiz";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
 import { upsertSectionProgress } from "@/dal/program/mutations";
@@ -46,19 +46,20 @@ function userLanguages(user: {
   };
 }
 
-export async function submitAnswerService(
+export async function submitTranslationAnswerService(
   questionId: string,
   input: AnswerResponse,
 ): Promise<QuestionWithAnswer> {
   const user = await getCurrentUser();
   if (!user) throw new AppError("Unauthorized");
 
-  const parsedInput = submitAnswerSchema.safeParse(input);
+  const parsedInput = submitTranslationAnswerSchema.safeParse(input);
   if (!parsedInput.success) throw new AppError("Invalid data");
   const response = parsedInput.data;
 
   const question = await getQuestion(questionId);
   if (!question) throw new AppError("Not found");
+  if (question.payload.type !== "translation") throw new AppError("Invalid question type");
 
   const { nativeLanguage } = userLanguages(user);
 
@@ -79,8 +80,11 @@ export async function submitAnswerService(
   } = await analyzeSentence(analyzeInput);
 
   const analyzedInput = {
-    response,
-    analysis,
+    result: {
+      type: "translation" as const,
+      response: { userTranslation: response.userTranslation },
+      analysis,
+    },
     accuracy: Math.round(accuracy),
   };
 

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
 import { QUIZ_PASS_ACCURACY, QuizStatus } from "@/constants/progress";
 import { accuracyClasses } from "./utils";
+import { questionPreview } from "./question-types";
 
 export function OverviewStep({
   quiz,
@@ -121,7 +122,7 @@ export function OverviewStep({
                         {i + 1}
                       </span>
                       <span className="min-w-0 flex-1 text-[13px] leading-snug text-foreground/80">
-                        {q.payload.sourceSentence}
+                        {questionPreview(q.payload)}
                       </span>
                       {isGraded && (
                         <span

@@ -28,8 +28,7 @@ export async function getQuiz(
           answers: {
             where: (answers, { eq }) => eq(answers.userId, userId),
             columns: {
-              response: true,
-              analysis: true,
+              result: true,
               accuracy: true,
             },
           },

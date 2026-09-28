@@ -59,14 +59,12 @@ export async function upsertAnswer(
     .onConflictDoUpdate({
       target: [answersTable.userId, answersTable.questionId],
       set: {
-        response: input.response,
-        analysis: input.analysis,
+        result: input.result,
         accuracy: input.accuracy,
       },
     })
     .returning({
-      response: answersTable.response,
-      analysis: answersTable.analysis,
+      result: answersTable.result,
       accuracy: answersTable.accuracy,
     });
 

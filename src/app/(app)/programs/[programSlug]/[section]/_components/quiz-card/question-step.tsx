@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import {
   Gauge,
   Languages,
@@ -11,9 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QuestionWithAnswer } from "@/schemas/quiz";
-import { submitAnswerAction } from "@/actions/quiz";
-import { AnswerInput } from "./answer-input";
-import { GradedQuestion } from "./graded-question";
+import { AnswerInput, GradedQuestion } from "./question-types";
 
 export function QuestionStep({
   question,
@@ -45,30 +42,8 @@ export function QuestionStep({
       ? [nativeLangLabel, targetLangLabel]
       : [targetLangLabel, nativeLangLabel];
   const isLast = index === total;
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [flipped, setFlipped] = useState(false);
 
   const isGraded = question.answer !== null;
-
-  function handleSubmit() {
-    setError(null);
-    startTransition(async () => {
-      try {
-        const result = await submitAnswerAction(question.id, {
-          type: "translation",
-          userTranslation: value,
-        });
-        if (result.ok) {
-          onGraded(result.data);
-        } else {
-          setError(result.error);
-        }
-      } catch {
-        setError("Evaluation failed, please try again.");
-      }
-    });
-  }
 
   return (
     <>
@@ -88,19 +63,13 @@ export function QuestionStep({
       </div>
 
       {isGraded ? (
-        <GradedQuestion
-          question={question}
-          flipped={flipped}
-          onFlip={setFlipped}
-        />
+        <GradedQuestion question={question} />
       ) : (
         <AnswerInput
           question={question}
           value={value}
           onChange={onChange}
-          onSubmit={handleSubmit}
-          isPending={isPending}
-          error={error}
+          onGraded={onGraded}
         />
       )}
 

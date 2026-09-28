@@ -5,19 +5,19 @@ import {
   evaluateQuizService,
   generateQuizByAiService,
   retryQuizService,
-  submitAnswerService,
+  submitTranslationAnswerService,
 } from "@/services/quiz";
 import { toActionFailure } from "@/lib/action";
 import type { ActionResult } from "@/schemas/common";
 import type { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
 import type { QuizStatus } from "@/constants/progress";
 
-export async function submitAnswerAction(
+export async function submitTranslationAnswerAction(
   questionId: string,
   input: AnswerResponse,
 ): Promise<ActionResult<QuestionWithAnswer>> {
   try {
-    const data = await submitAnswerService(questionId, input);
+    const data = await submitTranslationAnswerService(questionId, input);
 
     return { ok: true, data };
   } catch (error) {

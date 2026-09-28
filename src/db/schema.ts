@@ -58,19 +58,44 @@ export interface TranscriptLine {
   text: string;
 }
 
-export type QuestionPayload = {
-  type: "translation";
-  sourceSentence: string;
-  expectedTranslation: string;
-  hint?: string;
+export type QuestionTypeMap = {
+  translation: {
+    payload: {
+      sourceSentence: string;
+      expectedTranslation: string;
+      hint?: string;
+    };
+    response: { userTranslation: string };
+    analysis: z.infer<typeof analyzeSentenceOutputSchema>;
+  };
+  "fill-in-the-blank": {
+    payload: {
+      segments: Array<
+        | { kind: "text"; value: string }
+        | { kind: "blank"; answer: string }
+      >;
+      wordPool: string[];
+    };
+    response: { answers: string[] };
+    analysis: { blankResults: boolean[] };
+  };
 };
+
+export type QuestionPayload = {
+  [K in keyof QuestionTypeMap]: { type: K } & QuestionTypeMap[K]["payload"];
+}[keyof QuestionTypeMap];
 
 export type AnswerResponse = {
-  type: "translation";
-  userTranslation: string;
-};
+  [K in keyof QuestionTypeMap]: { type: K } & QuestionTypeMap[K]["response"];
+}[keyof QuestionTypeMap];
 
-export type AnswerAnalysis = z.infer<typeof analyzeSentenceOutputSchema>;
+export type AnswerResult = {
+  [K in keyof QuestionTypeMap]: {
+    type: K;
+    response: QuestionTypeMap[K]["response"];
+    analysis: QuestionTypeMap[K]["analysis"];
+  };
+}[keyof QuestionTypeMap];
 
 export type AiTraceInput = Record<string, unknown>;
 export type AiTraceOutput = Record<string, unknown>;
@@ -276,8 +301,7 @@ export const answersTable = pgTable(
     questionId: uuid("question_id")
       .references(() => questionsTable.id, { onDelete: "cascade" })
       .notNull(),
-    response: jsonb("response").$type<AnswerResponse>().notNull(),
-    analysis: jsonb("analysis").$type<AnswerAnalysis>().notNull(),
+    result: jsonb("result").$type<AnswerResult>().notNull(),
     accuracy: integer("accuracy").notNull(),
   },
   (table) => [

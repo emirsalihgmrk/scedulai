@@ -10,15 +10,16 @@ import {
 
 export type {
   QuestionPayload,
-  AnswerAnalysis,
+  QuestionTypeMap,
   AnswerResponse,
+  AnswerResult,
 } from "@/db/schema";
 
 // query
 
 export type Question = Omit<QuestionRow, "createdAt" | "updatedAt">;
 
-export type Answer = Pick<AnswerRow, "response" | "analysis" | "accuracy">;
+export type Answer = Pick<AnswerRow, "result" | "accuracy">;
 
 export type QuestionWithAnswer = Question & {
   answer: Answer | null;
@@ -51,18 +52,15 @@ export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 
 //// answer
 
-export const submitAnswerSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("translation"),
-    userTranslation: z.string().trim().min(1).max(200),
-  }),
-]);
+export const submitTranslationAnswerSchema = z.object({
+  type: z.literal("translation"),
+  userTranslation: z.string().trim().min(1).max(200),
+});
 
-export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;
+export type SubmitTranslationAnswerInput = z.infer<typeof submitTranslationAnswerSchema>;
 
 export const createAnswerSchema = createAnswerRowSchema.pick({
-  response: true,
-  analysis: true,
+  result: true,
   accuracy: true,
 });
 
