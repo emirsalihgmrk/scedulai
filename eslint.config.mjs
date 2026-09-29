@@ -49,6 +49,48 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    // schemas/column-types.ts is internal to db/ + schemas/; everyone else
+    // takes those types from the owning module (@/schemas/quiz, @/schemas/video).
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@/schemas/column-types",
+              message:
+                "Import from the owning module instead (@/schemas/quiz, @/schemas/video).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/db/**/*.ts", "src/schemas/**/*.ts"],
+    rules: { "no-restricted-imports": "off" },
+  },
+  {
+    // JSONB column shapes sit *below* db/schema.ts in the dependency graph
+    // (db/schema.ts imports them), so they may depend only on zod + constants.
+    files: ["src/schemas/column-types.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/db", "@/db/*", "@/ai", "@/ai/*", "@/schemas/*"],
+              message:
+                "JSONB shape files are leaves: import only zod and @/constants/*.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["src/**/*.md"],
     plugins: {
       "check-file": checkFile,

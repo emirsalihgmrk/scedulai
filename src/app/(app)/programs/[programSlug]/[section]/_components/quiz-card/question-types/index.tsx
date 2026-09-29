@@ -1,4 +1,4 @@
-import { QuestionPayload, QuestionWithAnswer } from "@/schemas/quiz";
+import type { QuestionPayload, QuestionWithAnswer } from "@/schemas/quiz";
 import {
   TranslationPrompt,
   TranslationInput,
@@ -10,16 +10,6 @@ import {
   GradedFillInTheBlankQuestion,
 } from "./fill-in-the-blank";
 
-// ---------------------------------------------------------------------------
-// Dispatch layer.
-//
-// `payload.type`, `answer.result.type` and `question.type` are always in sync
-// (see QuestionTypeMap in db/schema.ts). This is the single place where that
-// discriminant is switched on; every type-specific component below receives an
-// already-narrowed payload / result and never re-checks the type itself.
-// ---------------------------------------------------------------------------
-
-// The prompt box shown above both the input and graded views.
 export function QuestionPrompt({ question }: { question: QuestionWithAnswer }) {
   const { payload } = question;
   switch (payload.type) {
@@ -30,7 +20,6 @@ export function QuestionPrompt({ question }: { question: QuestionWithAnswer }) {
   }
 }
 
-// Ungraded question input.
 export function AnswerInput({
   question,
   value,
@@ -64,7 +53,6 @@ export function AnswerInput({
   }
 }
 
-// Graded question result.
 export function GradedQuestion({ question }: { question: QuestionWithAnswer }) {
   const { answer, payload } = question;
   if (!answer) return null;
@@ -72,9 +60,6 @@ export function GradedQuestion({ question }: { question: QuestionWithAnswer }) {
   const { result, accuracy } = answer;
   switch (result.type) {
     case "translation":
-      // The only payload/result correlation guard in the whole card — payload
-      // is always translation when result is, but TS can't infer that across
-      // separate fields.
       if (payload.type !== "translation") return null;
       return (
         <GradedTranslationQuestion
@@ -97,7 +82,6 @@ export function GradedQuestion({ question }: { question: QuestionWithAnswer }) {
   }
 }
 
-// Short preview text for the overview question list.
 export function questionPreview(payload: QuestionPayload): string {
   switch (payload.type) {
     case "translation":

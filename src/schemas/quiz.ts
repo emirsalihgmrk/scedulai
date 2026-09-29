@@ -6,14 +6,33 @@ import {
   createQuizRowSchema,
   createQuestionRowSchema,
   createAnswerRowSchema,
-} from "@/db/types";
+} from "@/db/rows";
+import { translationResponseSchema } from "@/schemas/column-types";
 
+export {
+  translationPayloadSchema,
+  translationResponseSchema,
+  translationAnalysisSchema,
+  translationResultSchema,
+  fillInTheBlankPayloadSchema,
+  fillInTheBlankResponseSchema,
+  fillInTheBlankAnalysisSchema,
+  fillInTheBlankResultSchema,
+  questionPayloadSchema,
+  answerResultSchema,
+} from "@/schemas/column-types";
 export type {
+  TranslationPayload,
+  TranslationResponse,
+  TranslationAnalysis,
+  TranslationResult,
+  FillInTheBlankPayload,
+  FillInTheBlankResponse,
+  FillInTheBlankAnalysis,
+  FillInTheBlankResult,
   QuestionPayload,
-  QuestionTypeMap,
-  AnswerResponse,
   AnswerResult,
-} from "@/db/schema";
+} from "@/schemas/column-types";
 
 // query
 
@@ -52,12 +71,11 @@ export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 
 //// answer
 
-export const submitTranslationAnswerSchema = z.object({
-  type: z.literal("translation"),
-  userTranslation: z.string().trim().min(1).max(200),
-});
+export const submitTranslationAnswerSchema = translationResponseSchema;
 
-export type SubmitTranslationAnswerInput = z.infer<typeof submitTranslationAnswerSchema>;
+export type SubmitTranslationAnswerInput = z.infer<
+  typeof submitTranslationAnswerSchema
+>;
 
 export const createAnswerSchema = createAnswerRowSchema.pick({
   result: true,

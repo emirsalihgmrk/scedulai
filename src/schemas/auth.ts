@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createUserRowSchema, userRowSchema } from "@/db/types";
+import { createUserRowSchema, userRowSchema } from "@/db/rows";
 
 export const userSchema = userRowSchema.pick({
   id: true,

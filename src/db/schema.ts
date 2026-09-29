@@ -21,8 +21,11 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import { z } from "zod";
-import { analyzeSentenceOutputSchema } from "@/ai/outputs/analyze-sentence";
+import type {
+  AnswerResult,
+  QuestionPayload,
+  TranscriptLine,
+} from "@/schemas/column-types";
 
 const commonFields = {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -51,57 +54,6 @@ export const targetLanguageEnum = pgEnum(
   SUPPORTED_TARGET_LANGUAGE_CODES,
 );
 export const aiTaskEnum = pgEnum("ai_task", AI_TASKS);
-
-// jsonb column types
-export interface TranscriptLine {
-  time: string;
-  text: string;
-}
-
-export type QuestionTypeMap = {
-  translation: {
-    payload: {
-      sourceSentence: string;
-      expectedTranslation: string;
-      hint?: string;
-    };
-    response: { userTranslation: string };
-    analysis: z.infer<typeof analyzeSentenceOutputSchema>;
-  };
-  "fill-in-the-blank": {
-    payload: {
-      segments: Array<
-        | { kind: "text"; value: string }
-        | { kind: "blank"; answer: string }
-      >;
-      wordPool: string[];
-    };
-    response: { answers: string[] };
-    analysis: { blankResults: boolean[] };
-  };
-};
-
-export type QuestionPayload = {
-  [K in keyof QuestionTypeMap]: { type: K } & QuestionTypeMap[K]["payload"];
-}[keyof QuestionTypeMap];
-
-export type AnswerResponse = {
-  [K in keyof QuestionTypeMap]: { type: K } & QuestionTypeMap[K]["response"];
-}[keyof QuestionTypeMap];
-
-export type AnswerResult = {
-  [K in keyof QuestionTypeMap]: {
-    type: K;
-    response: QuestionTypeMap[K]["response"];
-    analysis: QuestionTypeMap[K]["analysis"];
-  };
-}[keyof QuestionTypeMap];
-
-export type AiTraceInput = Record<string, unknown>;
-export type AiTraceOutput = Record<string, unknown>;
-// Task-specific references live here so the table stays generic
-// (e.g. analyze-sentence: { questionId }, generate-sentences: { sectionId }).
-export type AiTraceMetadata = Record<string, unknown>;
 
 // better-auth managed tables
 export const userTable = pgTable("user", {
@@ -321,9 +273,11 @@ export const aiTracesTable = pgTable(
     userId: text("user_id").references(() => userTable.id, {
       onDelete: "set null",
     }),
-    input: jsonb("input").$type<AiTraceInput>().notNull(),
-    output: jsonb("output").$type<AiTraceOutput>().notNull(),
-    metadata: jsonb("metadata").$type<AiTraceMetadata>(),
+    input: jsonb("input").$type<Record<string, unknown>>().notNull(),
+    output: jsonb("output").$type<Record<string, unknown>>().notNull(),
+    // Task-specific references live here so the table stays generic
+    // (e.g. analyze-sentence: { questionId }, generate-sentences: { sectionId }).
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     latencyMs: integer("latency_ms").notNull(),
     inputTokens: integer("input_tokens"),
     outputTokens: integer("output_tokens"),

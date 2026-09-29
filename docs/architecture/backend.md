@@ -6,7 +6,7 @@
 Data flows in one direction:
 
 ```
-db/schema.ts · db/types.ts  →  schemas/  →  dal/  →  services/  →  actions/  →  client
+constants/ · schemas/column-types.ts  →  db/schema.ts · db/rows.ts  →  schemas/<module>  →  dal/  →  services/  →  actions/  →  client
 ```
 
 - **DAL never calls a Service.** The direction is Pages/Actions → Services → DAL.
@@ -16,21 +16,46 @@ db/schema.ts · db/types.ts  →  schemas/  →  dal/  →  services/  →  acti
 
 ## Core Database Files
 
-- **`db/schema.ts`** — Drizzle ORM tables and relations.
-- **`db/types.ts`** — Generated **raw** types and schemas only; no narrowing or business logic:
+- **`db/schema.ts`** — Drizzle ORM tables and relations. Defines **no** domain types itself: enum
+  values come from `constants/`, JSONB column shapes from `schemas/column-types.ts` (see below).
+- **`db/rows.ts`** — Generated **raw** types and schemas only; no narrowing or business logic:
   - Raw row types via `$inferSelect`: `<Module>Row` (e.g. `QuizRow`).
   - Raw insert/update schemas via `drizzle-zod`: `create<Module>RowSchema` / `update<Module>RowSchema`.
+  - ⚠️ drizzle-zod only *types* `$type<>()` jsonb columns; at runtime it emits a generic JSON
+    validator. Every typed jsonb column **must** be refined with its real schema
+    (`createInsertSchema(questionsTable, { payload: questionPayloadSchema })`).
+
+### JSONB Column Shapes (`schemas/column-types.ts`)
+
+Every JSONB shape is defined **once**, as a Zod schema, in `schemas/column-types.ts` — the single
+exception to the one-file-per-module layout, because these shapes must sit *below* `db/schema.ts`.
+Everything else derives from them: `db/schema.ts` via `import type` + `$type<>()`, `db/rows.ts` via
+drizzle-zod refinement, and mutation schemas by aliasing/narrowing.
+
+- **Leaf rule:** `column-types.ts` imports only `zod` and `@/constants/*` — never `@/db`, `@/ai` or
+  other `schemas/` files. This keeps it below `db/schema.ts`, so there is no cycle.
+- **Internal file:** only `db/` and `schemas/` import it. Each module file re-exports its own shapes
+  (`schemas/quiz.ts` → question/answer shapes, `schemas/video.ts` → `TranscriptLine`), and every
+  other layer imports from the module. Both rules are enforced by ESLint (`no-restricted-imports`).
+- **Discriminant rule:** only the object stored at a column's root carries the `type` discriminant
+  (`questions.payload`, `answers.result`); nested parts (`response`, `analysis`) do not.
+- **Per question type**, four named schemas: `<type>PayloadSchema`, `<type>ResponseSchema`,
+  `<type>AnalysisSchema`, `<type>ResultSchema`; the column unions are `questionPayloadSchema` /
+  `answerResultSchema`. A new type in `constants/question.ts` fails to compile until it is added here.
+- **AI outputs extend, never own:** when an AI task produces a persisted shape, the domain schema is
+  the source of truth and `ai/outputs/<task>.ts` only `.extend()`s it with `.describe()` metadata
+  (e.g. `analyzeSentenceOutputSchema` ← `translationAnalysisSchema`).
 
 ---
 
 ## 1. Schemas (`src/schemas/<module>.ts`)
 
 This is the public DTO contract. Upper layers (especially the UI) **never import** `db/schema` or
-`db/types` directly; they take their types from here.
+`db/rows` directly; they take their types from here.
 
 ### Query Types
 
-- Derived from the raw `<Module>Row` types in `db/types.ts` via `Pick`/`Omit` and relation composition.
+- Derived from the raw `<Module>Row` types in `db/rows.ts` via `Pick`/`Omit` and relation composition.
 - **Naming:** Free-form, as long as it is **prefixed** with the module name.
   View/purpose-specific DTOs may be `<Module>ListItem` / `<Module>Detail`, relation composites
   `<Module>With<Relation>`.
@@ -50,6 +75,8 @@ This is the public DTO contract. Upper layers (especially the UI) **never import
   });
   ```
 - Every schema yields a TypeScript type via `z.infer`.
+- A mutation schema over a JSONB shape is an **alias** of the leaf schema, never a re-declaration
+  (e.g. `submitTranslationAnswerSchema = translationResponseSchema`).
 
 ### Naming
 
@@ -169,7 +196,7 @@ Because better-auth is a thin wrapper, identity operations are an **exception** 
 
 | Layer             | Query                         | Mutation                                    |
 | ----------------- | ----------------------------- | ------------------------------------------- |
-| `db/types.ts`     | `QuizRow`                     | `createQuizRowSchema` / `updateQuizRowSchema` |
+| `db/rows.ts`      | `QuizRow`                     | `createQuizRowSchema` / `updateQuizRowSchema` |
 | `schemas/`        | `QuizWithQuestions`           | `updateDocumentSchema` / `UpdateDocumentInput` |
 | `dal/`            | `getQuiz` → `… \| undefined`   | `createQuiz` → `… \| undefined`              |
 | `services/`       | `getQuizService` → `… \| null` | `publishDocumentService` → `… \| null`       |

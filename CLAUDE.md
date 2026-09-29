@@ -44,10 +44,11 @@ src/
   services/     # Business logic + auth enforcement
   dal/          # Data Access Layer — raw Drizzle queries/mutations, per module: {queries,mutations}.ts
   schemas/      # Zod DTOs — the public contract shared across layers
+                #   column-types.ts = JSONB shapes, sits below db/ (see backend.md)
   constants/    # Value arrays + literal types; source of the DB enums
   ai/           # LLM layer (see below)
   lib/          # auth.ts, auth-client.ts, action.ts, errors.ts (AppError), utils.ts, youtube.ts
-  db/           # schema.ts (tables/relations/enums), types.ts (raw $inferSelect + drizzle-zod), seed/reset
+  db/           # schema.ts (tables/relations/enums), rows.ts (raw $inferSelect + drizzle-zod), seed/reset
   components/   # Shared UI (components/ui/* = shadcn)
 ```
 
@@ -57,7 +58,10 @@ Not covered by the architecture docs — the conventions live here.
 
 - `index.ts` — `getAIObjectResponse()`, a single structured-output LLM call (no tool-calling loop)
   over OpenRouter with retry/backoff. `DEFAULT_MODEL` is `google/gemini-2.5-flash`.
-- `outputs/` — Zod schemas describing each task's structured output.
+- `outputs/` — Zod schemas describing each task's structured output. When the output is persisted,
+  the domain schema in `schemas/` owns the shape and the output only `.extend()`s it with
+  `.describe()` metadata; the task is typed with the domain type (e.g. `TranslationAnalysis`), with
+  no separate `<Task>Output` alias. `ai/` is never imported by `db/` or `schemas/`.
 - `tasks/` — one function per AI task (e.g. `generate-sentences`, `analyze-sentence`).
 - AI calls are orchestrated from the **service** layer, never from the DAL or actions.
 

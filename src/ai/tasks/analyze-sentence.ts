@@ -1,9 +1,7 @@
 import { createHash } from "node:crypto";
-import { z } from "zod";
 import { getAIObjectResponse, type AIObjectResult } from "..";
 import { analyzeSentenceOutputSchema } from "@/ai/outputs/analyze-sentence";
-
-export type AnalyzeSentenceOutput = z.infer<typeof analyzeSentenceOutputSchema>;
+import type { TranslationAnalysis } from "@/schemas/quiz";
 
 export const ANALYZE_SENTENCE_MODEL = "google/gemini-2.5-flash-lite";
 
@@ -14,20 +12,19 @@ export interface AnalyzeSentenceArgs {
   nativeLanguage: string;
 }
 
-export type AnalyzeSentenceResult = AIObjectResult<AnalyzeSentenceOutput> & {
+export type AnalyzeSentenceResult = AIObjectResult<TranslationAnalysis> & {
   promptVersion: string;
   accuracy: number;
 };
 
-const MEANING_BASE: Record<AnalyzeSentenceOutput["meaningPreserved"], number> =
-  {
-    yes: 100,
-    partial: 55,
-    no: 10,
-  };
+const MEANING_BASE: Record<TranslationAnalysis["meaningPreserved"], number> = {
+  yes: 100,
+  partial: 55,
+  no: 10,
+};
 const GRAMMAR_PENALTY = 6;
 
-export function computeAccuracy(o: AnalyzeSentenceOutput): number {
+export function computeAccuracy(o: TranslationAnalysis): number {
   const score =
     MEANING_BASE[o.meaningPreserved] - GRAMMAR_PENALTY * o.mistakes.length;
   return Math.max(0, Math.min(100, Math.round(score)));
@@ -96,7 +93,7 @@ export async function analyzeSentence({
     };
   }
 
-  const result = await getAIObjectResponse<AnalyzeSentenceOutput>({
+  const result = await getAIObjectResponse<TranslationAnalysis>({
     model: ANALYZE_SENTENCE_MODEL,
     temperature: 0,
     system: buildSystemPrompt(nativeLanguage),

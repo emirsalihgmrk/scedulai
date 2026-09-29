@@ -3,16 +3,14 @@ import {
   ANALYZE_SENTENCE_MODEL,
   ANALYZE_SENTENCE_PROMPT_VERSION,
 } from "@/ai/tasks/analyze-sentence";
-import { cases, type EvalCase, type Expectation } from "./analyze-sentence-cases";
-import type { AnalyzeSentenceOutput } from "@/ai/tasks/analyze-sentence";
+import {
+  cases,
+  type EvalCase,
+  type Expectation,
+} from "./analyze-sentence-cases";
+import type { TranslationAnalysis } from "@/schemas/quiz";
 
-/**
- * Evaluates the grader against the curated golden dataset and prints a
- * pass/fail scorecard. Pure measurement: it never writes to `ai_traces`.
- *
- * Run:  npm run ai:eval:score
- */
-function check(output: AnalyzeSentenceOutput, expected: Expectation): string[] {
+function check(output: TranslationAnalysis, expected: Expectation): string[] {
   const reasons: string[] = [];
   const mistakes = output.mistakes.length;
 

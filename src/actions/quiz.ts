@@ -1,6 +1,5 @@
 "use server";
 
-import { AnswerResponse } from "@/schemas/quiz";
 import {
   evaluateQuizService,
   generateQuizByAiService,
@@ -9,12 +8,16 @@ import {
 } from "@/services/quiz";
 import { toActionFailure } from "@/lib/action";
 import type { ActionResult } from "@/schemas/common";
-import type { QuestionWithAnswer, QuizWithQuestions } from "@/schemas/quiz";
+import type {
+  QuestionWithAnswer,
+  QuizWithQuestions,
+  SubmitTranslationAnswerInput,
+} from "@/schemas/quiz";
 import type { QuizStatus } from "@/constants/progress";
 
 export async function submitTranslationAnswerAction(
   questionId: string,
-  input: AnswerResponse,
+  input: SubmitTranslationAnswerInput,
 ): Promise<ActionResult<QuestionWithAnswer>> {
   try {
     const data = await submitTranslationAnswerService(questionId, input);

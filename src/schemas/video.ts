@@ -1,6 +1,7 @@
-import { ChannelRow, TranscriptRow, VideoRow } from "@/db/types";
+import { ChannelRow, TranscriptRow, VideoRow } from "@/db/rows";
 
-export type { TranscriptLine } from "@/db/schema";
+export { transcriptLineSchema } from "@/schemas/column-types";
+export type { TranscriptLine } from "@/schemas/column-types";
 
 // query types
 export type Video = Pick<

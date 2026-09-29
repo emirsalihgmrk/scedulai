@@ -6,7 +6,7 @@ import {
   VideoRow,
   SectionProgressRow,
   updateSectionProgressRowSchema,
-} from "@/db/types";
+} from "@/db/rows";
 
 // query types
 export type Program = Omit<ProgramRow, "createdAt" | "updatedAt">;

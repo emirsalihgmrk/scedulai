@@ -1,10 +1,13 @@
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getTranscriptService, getVideoService } from "@/services/video";
 import {
+  CreateAnswerInput,
   CreateQuestionInput,
   Question,
   QuestionWithAnswer,
   QuizWithQuestions,
+  SubmitTranslationAnswerInput,
+  submitTranslationAnswerSchema,
 } from "@/schemas/quiz";
 import {
   createQuestions,
@@ -14,7 +17,6 @@ import {
 } from "@/dal/quiz/mutations";
 import { createAiTrace } from "@/dal/ai/mutations";
 import { after } from "next/server";
-import { AnswerResponse, submitTranslationAnswerSchema } from "@/schemas/quiz";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
 import { upsertSectionProgress } from "@/dal/program/mutations";
@@ -32,8 +34,6 @@ import { cache } from "react";
 
 const QUESTION_COUNT = 5;
 
-// The DB enum only ever stores supported codes, but better-auth types these
-// additional fields as nullable strings — narrow (and default) them here.
 function userLanguages(user: {
   nativeLanguage?: string | null;
   targetLanguage?: string | null;
@@ -48,7 +48,7 @@ function userLanguages(user: {
 
 export async function submitTranslationAnswerService(
   questionId: string,
-  input: AnswerResponse,
+  input: SubmitTranslationAnswerInput,
 ): Promise<QuestionWithAnswer> {
   const user = await getCurrentUser();
   if (!user) throw new AppError("Unauthorized");
@@ -59,7 +59,8 @@ export async function submitTranslationAnswerService(
 
   const question = await getQuestion(questionId);
   if (!question) throw new AppError("Not found");
-  if (question.payload.type !== "translation") throw new AppError("Invalid question type");
+  if (question.payload.type !== "translation")
+    throw new AppError("Invalid question type");
 
   const { nativeLanguage } = userLanguages(user);
 
@@ -79,16 +80,12 @@ export async function submitTranslationAnswerService(
     usage,
   } = await analyzeSentence(analyzeInput);
 
-  const analyzedInput = {
-    result: {
-      type: "translation" as const,
-      response: { userTranslation: response.userTranslation },
-      analysis,
-    },
+  const answerInput: CreateAnswerInput = {
+    result: { type: "translation", response, analysis },
     accuracy: Math.round(accuracy),
   };
 
-  const answer = await upsertAnswer(user.id, questionId, analyzedInput);
+  const answer = await upsertAnswer(user.id, questionId, answerInput);
 
   after(async () => {
     try {
@@ -214,16 +211,18 @@ export async function generateQuizByAiService(
   return db.transaction(async (tx) => {
     const createdQuizId = await createQuizService(sectionId, tx);
     if (!createdQuizId) throw new AppError("Quiz could not be created");
-    const questionInput = sentences.map((sentence, index) => ({
-      quizId: createdQuizId,
-      order: index,
-      type: "translation" as const,
-      payload: {
-        type: "translation" as const,
-        sourceSentence: sentence.native,
-        expectedTranslation: sentence.english,
-      },
-    }));
+    const questionInput: CreateQuestionInput[] = sentences.map(
+      (sentence, index) => ({
+        quizId: createdQuizId,
+        order: index,
+        type: "translation",
+        payload: {
+          type: "translation",
+          sourceSentence: sentence.native,
+          expectedTranslation: sentence.english,
+        },
+      }),
+    );
     const createdQuestions = await createQuestionsService(
       createdQuizId,
       questionInput,

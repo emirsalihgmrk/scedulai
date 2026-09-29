@@ -2,27 +2,11 @@
 // unused until the real UI lands (see TODO below).
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Construction } from "lucide-react";
-import { QuestionTypeMap, QuestionWithAnswer } from "@/schemas/quiz";
-
-// ---------------------------------------------------------------------------
-// TODO(fill-in-the-blank): implement UI.
-//
-// The type exists in QuestionTypeMap (db/schema.ts) but is not generated or
-// rendered yet. These stubs keep the dispatch switches in ./index.tsx
-// exhaustive; the real prompt / input / result UI drops in here without
-// touching the dispatch layer.
-//
-// Note: the shared draft state is translation-shaped — the reducer stores
-// `answers: Record<string, string>` and the question-step header shows a
-// source→target language direction. Both need revisiting when the real
-// fill-in-the-blank input (word pool → string[]) lands.
-// ---------------------------------------------------------------------------
-
-type FillInTheBlankPayload = QuestionTypeMap["fill-in-the-blank"]["payload"];
-type FillInTheBlankResult = {
-  response: QuestionTypeMap["fill-in-the-blank"]["response"];
-  analysis: QuestionTypeMap["fill-in-the-blank"]["analysis"];
-};
+import type {
+  FillInTheBlankPayload,
+  FillInTheBlankResult,
+  QuestionWithAnswer,
+} from "@/schemas/quiz";
 
 function ComingSoon() {
   return (

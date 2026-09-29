@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createAiTraceRowSchema } from "@/db/types";
+import { createAiTraceRowSchema } from "@/db/rows";
 
 export const createAiTraceSchema = createAiTraceRowSchema.pick({
   task: true,

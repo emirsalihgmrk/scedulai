@@ -13,20 +13,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { QuestionTypeMap, QuestionWithAnswer } from "@/schemas/quiz";
+import type {
+  QuestionWithAnswer,
+  TranslationPayload,
+  TranslationResult,
+} from "@/schemas/quiz";
 import { submitTranslationAnswerAction } from "@/actions/quiz";
 import { accuracyClasses } from "../utils";
 import { QuestionPrompt } from ".";
 
-type TranslationPayload = QuestionTypeMap["translation"]["payload"];
-type TranslationResult = {
-  response: QuestionTypeMap["translation"]["response"];
-  analysis: QuestionTypeMap["translation"]["analysis"];
-};
-
-// The "AI-generated from transcript" prompt box shown above both the input and
-// the graded views.
-export function TranslationPrompt({ payload }: { payload: TranslationPayload }) {
+export function TranslationPrompt({
+  payload,
+}: {
+  payload: TranslationPayload;
+}) {
   return (
     <div className="rounded-xl bg-secondary/70 p-4">
       <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
@@ -61,7 +61,6 @@ export function TranslationInput({
     startTransition(async () => {
       try {
         const result = await submitTranslationAnswerAction(question.id, {
-          type: "translation",
           userTranslation: value,
         });
         if (result.ok) {
@@ -119,8 +118,6 @@ export function TranslationInput({
   );
 }
 
-// Graded translation question: kept translation + accuracy on the front, full AI
-// analysis on the flip side. Receives already-narrowed payload / result.
 export function GradedTranslationQuestion({
   question,
   payload,

@@ -19,6 +19,14 @@ import {
   verificationTable,
   videosTable,
 } from "./schema";
+import {
+  answerResultSchema,
+  questionPayloadSchema,
+} from "@/schemas/column-types";
+
+// drizzle-zod only *types* `$type<>()` jsonb columns — at runtime it emits a
+// generic JSON validator. Every typed jsonb column must be refined with its
+// real schema below so the row schema actually validates it.
 
 export type UserRow = typeof userTable.$inferSelect;
 export const userRowSchema = createSelectSchema(userTable);
@@ -44,10 +52,14 @@ export type QuizRow = typeof quizzesTable.$inferSelect;
 export const createQuizRowSchema = createInsertSchema(quizzesTable);
 
 export type QuestionRow = typeof questionsTable.$inferSelect;
-export const createQuestionRowSchema = createInsertSchema(questionsTable);
+export const createQuestionRowSchema = createInsertSchema(questionsTable, {
+  payload: questionPayloadSchema,
+});
 
 export type AnswerRow = typeof answersTable.$inferSelect;
-export const createAnswerRowSchema = createInsertSchema(answersTable);
+export const createAnswerRowSchema = createInsertSchema(answersTable, {
+  result: answerResultSchema,
+});
 
 export type SectionProgressRow = typeof sectionProgressTable.$inferSelect;
 export const updateSectionProgressRowSchema =

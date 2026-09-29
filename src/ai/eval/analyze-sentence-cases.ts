@@ -1,6 +1,7 @@
 import type { AnalyzeSentenceArgs } from "@/ai/tasks/analyze-sentence";
+import type { TranslationAnalysis } from "@/schemas/quiz";
 
-export type Verdict = "yes" | "partial" | "no";
+export type Verdict = TranslationAnalysis["meaningPreserved"];
 
 export type MistakeCount = number | [min: number, max: number];
 
