@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { z } from "zod";
 import { getAIObjectResponse, type AIObjectResult } from "..";
 import { analyzeSentenceOutputSchema } from "@/ai/outputs/analyze-sentence";
 import type { TranslationAnalysis } from "@/schemas/quiz";
@@ -63,6 +64,7 @@ Note such ambiguity in description; never treat an alternate reading as a mistak
 
 export const ANALYZE_SENTENCE_PROMPT_VERSION = createHash("sha256")
   .update(buildSystemPrompt("{{nativeLanguage}}"))
+  .update(JSON.stringify(z.toJSONSchema(analyzeSentenceOutputSchema)))
   .digest("hex")
   .slice(0, 12);
 
