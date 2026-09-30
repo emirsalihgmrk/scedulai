@@ -1,177 +1,83 @@
-# Frontend Architecture & Component Conventions
+# Frontend Conventions
 
-This document defines the component conventions used to standardize data flow, clarify the
-server/client boundary, and prevent waterfall (sequentially blocking) API calls.
+Covers `app/` and `components/`. Cross-cutting naming and import rules are in
+[`code-style.md`](./code-style.md). The design system (tokens, shadcn usage, mock data) is governed
+by the `ui-design` skill. **(lint)** marks rules `npm run lint` enforces and **(build)** marks rules
+`npm run build` enforces.
+
+The app runs with **`cacheComponents`** (Partial Prerendering). Every route prerenders a static shell,
+and request data streams into it through `Suspense`. Every rule below exists to keep that shell
+static.
 
 ---
 
-## 1. `page.tsx` (Route Entry Point)
+## 1. Route anatomy
 
-`page.tsx` files are used solely for route definition and parameter forwarding. The page shell is
-kept as lean as possible.
+Every route has exactly three tiers:
 
-- **No data fetching:** Contains no direct API calls, database queries, or data-fetching logic.
-- **Synchronous:** The component must **not** be `async`.
-- **Parameter forwarding:** `params` and `searchParams` are not resolved here; they are passed as
-  **Promises** to the child components that need them.
-- **Single responsibility:** Renders only the `PageView` (or main page container) that orchestrates
-  the page.
+```
+page.tsx            routing      sync, no data, renders <PageView/>
+└ page-view.tsx     layout       sync, owns <main> and every Suspense boundary
+  └ <section>       data         async server component or client component with use()
+```
+
+### `page.tsx`
+
+- **Synchronous**, with no data access and no markup of its own.
+- Renders only `<PageView />`. It passes `params` / `searchParams` down **as promises**; only the ones
+  the page uses.
+- Typed with Next's generated route helper:
 
 ```tsx
-// app/courses/[id]/page.tsx
-import CoursePageView from "./_components/course-page-view";
+// app/(app)/programs/[programSlug]/page.tsx
+import PageView from "./_components/page-view";
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-export default function CoursePage({ params, searchParams }: PageProps) {
-  return <CoursePageView params={params} searchParams={searchParams} />;
+export default function Page({ params }: PageProps<"/programs/[programSlug]">) {
+  return <PageView params={params} />;
 }
 ```
 
----
+### `layout.tsx`
 
-## 2. `page-view.tsx` (Page Orchestration)
-
-The orchestration layer that manages the page's actual layout, data coordination, and lifecycle.
-
-- **Purpose:** The page-wide data coordination, preload triggers, and child-component initialization
-  that are forbidden in `page.tsx` are carried out here.
-- **Lifecycle & side effects:** Side effects that must run on mount/unmount, or page-level layout
-  logic, are set up in this layer.
-- **Suspense management:** The `Suspense` boundaries for independently data-fetching children are
-  defined inside `page-view`.
-
----
-
-## 3. Subcomponents & Modular Structure
-
-- **Visual sectioning scope:** Each subcomponent represents an independent, visually distinct
-  section/area of the page layout (e.g. `video-section`, `transcript-card`, `quiz-card`).
-- **File standards:** Each component file must have a single `default export`. Its internal parts
-  and its `fallback` (loading skeleton), if any, are defined in the same scope.
-- **When to switch to a folder:** Components are kept as a single `.tsx` file by default. Switch to
-  a folder structure in either of these two cases:
-  1. **Mixed structure:** The component contains both Server and Client subparts.
-  2. **Complexity:** The file exceeds **250 lines**.
-
-### Example folder model:
-
-```text
-video-section/
-├── index.tsx          # Component entry point
-├── video-player.tsx   # Client component ("use client")
-├── video-metadata.tsx # Server component
-└── fallback.tsx       # Loading / Skeleton UI
-```
-
-> **Note:** If `index.tsx` is a Client Component that resolves a Promise via `React.use()`, create a
-> separate `fallback.tsx` component.
-
----
-
-## 4. Data Flow & Async Management Rules
-
-### A. Consuming Data Inside a Client Component (`React.use`)
-
-- If a Client Component needs async data, it does not run the data-fetching method directly.
-- It receives an unresolved **Promise** as a prop from a parent Server Component and consumes it with
-  `React.use()`.
+- **Synchronous**, with no data access. It is typed with `LayoutProps<"/route">`.
+- A per-request guard (e.g. "signed in but not onboarded → `/onboarding`") is a small async
+  component rendered inside `<Suspense fallback={null}>`, so the layout's shell stays static:
 
 ```tsx
-"use client";
-
-import { use } from "react";
-
-interface Transcript {
-  id: string;
-  text: string;
-}
-
-interface TranscriptCardProps {
-  transcriptPromise: Promise<Transcript[]>;
-}
-
-export default function TranscriptCard({
-  transcriptPromise,
-}: TranscriptCardProps) {
-  const transcript = use(transcriptPromise);
-
+// app/(app)/layout.tsx
+export default function Layout({ children }: LayoutProps<"/">) {
   return (
-    <div>
-      {transcript.map((item) => (
-        <p key={item.id}>{item.text}</p>
-      ))}
+    <div className="min-h-screen bg-background">
+      <Suspense fallback={null}>
+        <OnboardingRedirect />
+      </Suspense>
+      <Header />
+      {children}
     </div>
   );
 }
 ```
 
----
+### Redirects
 
-### B. Preventing Waterfalls with the Preload Pattern (Server Components)
+Unconditional redirects (`/` → `/programs`) live in `next.config.ts` → `redirects()`, never in a page.
+Conditional redirects are guards (above) or live in the section that owns the check.
 
-If a parent component has a blocking operation (e.g. layout validation, `notFound()`, authorization
-check), apply the **Preload Pattern** so the child's data fetch is not delayed.
+### `_components/page-view.tsx`
 
-- **React Cache:** The data-fetching service function must be wrapped with `React.cache`, so
-  duplicate calls within the same render pass are served from the cache.
-- **Preload function:** The request is kicked off in parallel (`void getService()`), so the parent's
-  `await` does not block the child.
-
-```tsx
-// lib/services/video.ts
-import { cache } from "react";
-
-export const getVideoService = cache(async (sectionId: string) => {
-  // Data-fetching logic
-  return await db.query.videos.findFirst({
-    where: eq(videos.sectionId, sectionId),
-  });
-});
-```
+- Every route has one. It is a **synchronous Server Component that never awaits**.
+- It owns the page's `<main>`, its layout grid, and the `Suspense` boundary around every async
+  section:
 
 ```tsx
-// components/video-section/video-section.tsx
-import { getVideoService } from "@/lib/services/video";
-
-export const preloadVideoSection = (sectionId: string) => {
-  void getVideoService(sectionId);
-};
-
-export default async function VideoSection({
-  sectionId,
-}: {
-  sectionId: string;
-}) {
-  const video = await getVideoService(sectionId);
-  return <div>{video.title}</div>;
-}
-```
-
-```tsx
-// components/section/section-view.tsx
-import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import VideoSection, { preloadVideoSection } from "../video-section/video-section";
-import VideoSectionFallback from "../video-section/fallback";
-
-export default async function SectionView({ params }: { params: Promise<{ sectionId: string }> }) {
-  const { sectionId } = await params;
-
-  // 1. Trigger the child's data early so it doesn't get stuck in a waterfall:
-  preloadVideoSection(sectionId);
-
-  // 2. This component's own blocking check:
-  const section = await getSection(sectionId);
-  if (!section) notFound();
-
+export default function PageView({ params }: PageViewProps) {
   return (
-    <main>
-      <Suspense fallback={<VideoSectionFallback />}>
-        <VideoSection sectionId={sectionId} />
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8">
+      <Suspense fallback={<ProgramHeroFallback />}>
+        <ProgramHero params={params} />
+      </Suspense>
+      <Suspense fallback={<SectionTimelineFallback />}>
+        <SectionTimeline params={params} />
       </Suspense>
     </main>
   );
@@ -180,29 +86,136 @@ export default async function SectionView({ params }: { params: Promise<{ sectio
 
 ---
 
-### C. Suspense Boundaries
+## 2. Sections (data)
 
-- Every component that consumes async data (whether a Server Component using `async/await` or a
-  Client Component using `React.use()`) must be wrapped at its call site in a
-  `<Suspense fallback={<Skeleton />}>` boundary.
-- Blocking the entire page while data loads must be avoided; component-level independent loading
-  states (streaming) must be provided.
+A **section** is a visually distinct area of a page that loads its own data (`program-hero`,
+`transcript-card`, `quiz-card`).
+
+- It is either an **async Server Component** that awaits `params` and read services, or a **Client
+  Component** that receives a promise and unwraps it with `use()`.
+- **It is always wrapped in `<Suspense fallback={<NameFallback />}>` at its call site** **(build)**.
+  The build fails when request data (`headers()`, `params`, `usePathname()` on a dynamic route, …) is
+  read outside a boundary. The same applies to client components that read request-bound hooks: the
+  header wraps `NavTabs` (it uses `usePathname`) in Suspense with a static fallback.
+- **Page-wide blocking dependency:** when every section needs the result of one lookup (params →
+  section id, with `notFound()`), that lookup becomes **one async section**. It resolves the
+  dependency, starts its children's fetches, and renders them inside their own boundaries.
+  `section-workspace.tsx` is the reference:
+
+```tsx
+export default async function SectionWorkspace({ params }: SectionWorkspaceProps) {
+  const { programSlug, sectionSlug } = await params;
+  const [user, section] = await Promise.all([             // parallel, never sequential
+    getCurrentUserService(),
+    getSectionByOrderService(programSlug, order),
+  ]);
+  if (!section) notFound();
+
+  const quizPromise = getQuizService(section.id);          // started, not awaited
+  return (
+    <Suspense fallback={<QuizCardFallback />}>
+      <QuizCard quizPromise={quizPromise} … />
+    </Suspense>
+  );
+}
+```
+
+- `notFound()` / `redirect()` inside a streamed section can no longer change the HTTP status. Next
+  renders the not-found UI and adds `noindex`. This is the accepted trade-off for a static shell.
+
+### Avoiding waterfalls
+
+- Independent awaits run in `Promise.all`, never one after another.
+- Start a child's fetch before any `await` it doesn't depend on. Either pass the promise down (for a
+  client child using `use()`) or call the child's read service without awaiting it
+  (`void getVideoService(id)`) so its later call hits `React.cache`.
 
 ---
 
-## 5. Custom Components & Accessibility
+## 3. Data rules
 
-Prefer `@/components/ui/*` (shadcn) components; the `ui-design` skill governs when to add a new one.
-Build a custom component only when shadcn has no equivalent. When you do, follow these conventions:
+- **Server components read only through `get…Service` functions.** They never import `db`, the DAL
+  or `ai` **(lint)**.
+- **Client components never fetch.** No `authClient.useSession()`, no `fetch` in effects. Server data
+  arrives as props or as a promise consumed with `use()`.
+- **Client components write only through server actions** and handle the returned `ActionResult`.
+  The only exception is sign-in via `authClient` (see backend.md → Auth).
+- After a mutation that changes server state shown elsewhere, call `router.refresh()`. Use a full
+  reload (`window.location.assign`) after sign-in, so the server re-reads the session.
 
-- Use `cva` + `VariantProps` for variant management (match the `button.tsx` pattern).
-- Set `data-slot="<component-name>"` on the root element.
-- Use `cn()` from `@/lib/utils` for className merging.
-- Accept `className` and spread `...props` onto the root element.
-- Use Lucide icons from `lucide-react` (or Radix icons) for iconography.
+---
 
-### Accessibility (WCAG 2.1 AA)
+## 4. Component files
 
-- Interactive elements need `aria-*` labels or visible text.
-- Provide `focus-visible` rings on all interactive elements.
-- Ensure full keyboard operability.
+- **One component per file**, exported as `export default function <Name>`.
+  - `<Name>` is the file name in PascalCase: `program-hero.tsx` → `ProgramHero`.
+  - A folder entry `index.tsx` is named after its folder: `quiz-card/index.tsx` → `QuizCard`.
+  - Special files are named after their role: `page.tsx` → `Page`, `layout.tsx` → `Layout`,
+    `error.tsx` → `ErrorBoundary`.
+- **A section's fallback** is a named export `<Name>Fallback` in the same entry file. It is the only
+  other export allowed:
+
+  ```tsx
+  export default async function ProgramsGrid() { … }
+  export function ProgramsGridFallback() { … }
+  ```
+
+- **Private sub-parts** (a card inside a grid, a shell shared by a component and its fallback) are
+  non-exported functions in the same file.
+- **Props** are a named `interface <Name>Props` above the component.
+- **Non-component modules**, all with named exports:
+
+  | File                 | Holds                                           |
+  | -------------------- | ----------------------------------------------- |
+  | `<name>-context.tsx` | a context's `<Name>Provider` + its `use…` hooks |
+  | `use-<name>.ts`      | one hook                                        |
+  | `reducer.ts`         | a component's reducer, state and action types   |
+  | `<concept>.ts`       | pure helpers and static data (`utils.ts`, `options.ts`, `steps.ts`) |
+
+### When to use a folder
+
+A component stays a single file until **any** of these is true, and then it becomes
+`<name>/index.tsx` plus sibling files:
+
+1. It mixes Server and Client parts (`account-panel/`: server `index.tsx` + client
+   `sign-out-button.tsx`).
+2. The file would exceed **250 lines**.
+3. It has sub-components or helpers of its own that no one else uses.
+
+A folder **without** `index.tsx` is a plain grouping of sibling files, named
+`<variant>-<role>.tsx`. `quiz-card/question-types/` holds `translation-input.tsx`,
+`fill-in-the-blank-graded.tsx`, … plus the per-role dispatchers `question-input.tsx` and
+`question-graded.tsx`.
+
+### Placement
+
+- `_components/` sits in the closest route segment that uses the component.
+- A component used by several routes moves to `components/shared/`.
+- `components/ui/` is shadcn-generated and edited only through the shadcn CLI.
+
+---
+
+## 5. Styling
+
+- Conditional or merged classes always go through `cn()` from `@/lib/utils`, never template
+  literals.
+- Class maps (variant → classes) are `SCREAMING_SNAKE` constants next to the component that uses
+  them (`DIFFICULTY_CLASSES` in `difficulty-badge.tsx`), never in `constants/`.
+- Images always use `next/image`. A new remote host is added to `images.remotePatterns` in
+  `next.config.ts`.
+- Use the semantic Tailwind tokens from `globals.css`, never raw colour values.
+
+## 6. Custom components & accessibility
+
+Prefer `@/components/ui/*`. When shadcn has no equivalent, build a custom component that:
+
+- sets `data-slot="<component-name>"` on its root;
+- accepts `className` and merges it with `cn()` (and spreads `...props` for primitives);
+- uses `cva` + `VariantProps` when it has variants (match `button.tsx`);
+- uses `lucide-react` icons.
+
+Accessibility (WCAG 2.1 AA):
+
+- Interactive elements have visible text or an `aria-label`.
+- Every interactive element has a `focus-visible` ring.
+- Everything works from the keyboard.
