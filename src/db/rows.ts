@@ -1,30 +1,34 @@
-import {
-  createInsertSchema,
-  createSelectSchema,
-  createUpdateSchema,
-} from "drizzle-zod";
-import {
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+
+import type {
   accountTable,
-  aiTracesTable,
-  answersTable,
   channelsTable,
-  learningProfilesTable,
   programsTable,
-  questionsTable,
-  quizzesTable,
-  sectionProgressTable,
   sectionsTable,
   sessionTable,
   transcriptsTable,
-  userTable,
   verificationTable,
-  videosTable,
-} from "./schema";
+  videosTable} from "@/db/schema";
+import {
+  aiTracesTable,
+  answersTable,
+  learningProfilesTable,
+  questionsTable,
+  quizzesTable,
+  sectionProgressTable,
+  userTable
+} from "@/db/schema";
 import {
   answerResultSchema,
   questionPayloadSchema,
 } from "@/schemas/column-types";
 
+// Raw, generated shapes only — narrowing happens in schemas/<module>.ts.
+//   <Entity>Row             every table ($inferSelect)
+//   <entity>RowSchema       select schema, only where a read is parsed at runtime
+//   create<Entity>RowSchema insert schema, only for tables the app writes;
+//                           update/upsert inputs derive from it via .partial()
+//
 // drizzle-zod only *types* `$type<>()` jsonb columns — at runtime it emits a
 // generic JSON validator. Every typed jsonb column must be refined with its
 // real schema below so the row schema actually validates it.
@@ -33,20 +37,24 @@ export type UserRow = typeof userTable.$inferSelect;
 export const userRowSchema = createSelectSchema(userTable);
 export const createUserRowSchema = createInsertSchema(userTable);
 
-export type LearningProfileRow = typeof learningProfilesTable.$inferSelect;
-export const createLearningProfileRowSchema = createInsertSchema(
-  learningProfilesTable,
-);
-
 export type SessionRow = typeof sessionTable.$inferSelect;
 
 export type AccountRow = typeof accountTable.$inferSelect;
 
 export type VerificationRow = typeof verificationTable.$inferSelect;
 
+export type LearningProfileRow = typeof learningProfilesTable.$inferSelect;
+export const createLearningProfileRowSchema = createInsertSchema(
+  learningProfilesTable,
+);
+
 export type ProgramRow = typeof programsTable.$inferSelect;
 
 export type SectionRow = typeof sectionsTable.$inferSelect;
+
+export type SectionProgressRow = typeof sectionProgressTable.$inferSelect;
+export const createSectionProgressRowSchema =
+  createInsertSchema(sectionProgressTable);
 
 export type ChannelRow = typeof channelsTable.$inferSelect;
 
@@ -66,10 +74,6 @@ export type AnswerRow = typeof answersTable.$inferSelect;
 export const createAnswerRowSchema = createInsertSchema(answersTable, {
   result: answerResultSchema,
 });
-
-export type SectionProgressRow = typeof sectionProgressTable.$inferSelect;
-export const updateSectionProgressRowSchema =
-  createUpdateSchema(sectionProgressTable);
 
 export type AiTraceRow = typeof aiTracesTable.$inferSelect;
 export const createAiTraceRowSchema = createInsertSchema(aiTracesTable);

@@ -1,26 +1,19 @@
-import { cache } from "react";
 import { headers } from "next/headers";
+import { cache } from "react";
+
 import { auth } from "@/lib/auth";
-import { userSchema } from "@/schemas/auth";
+import { userSchema  } from "@/schemas/user";
+import type {User} from "@/schemas/user";
 
-export const getCurrentUser = cache(async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  if (session?.user) {
-    return userSchema.parse({
-      id: session.user.id,
-      name: session.user.name,
-      email: session.user.email,
-      nativeLanguage: session.user.nativeLanguage,
-      plan: session.user.plan,
-      role: session.user.role,
-    });
-  }
-  return null;
+// better-auth owns sessions and the auth tables, so this module wraps its API
+// instead of a DAL.
+
+export const getCurrentUserService = cache(async (): Promise<User | null> => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return null;
+  return userSchema.parse(session.user);
 });
 
-export const isUserAdmin = cache(async () => {
-  const user = await getCurrentUser();
-  return user?.role === "admin";
-});
+export async function signOutService(): Promise<void> {
+  await auth.api.signOut({ headers: await headers() });
+}

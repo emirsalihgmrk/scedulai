@@ -1,4 +1,4 @@
-import { Difficulty } from "@/constants/difficulty";
+import type { Difficulty } from "@/constants/difficulty";
 import { db } from "@/db";
 import {
   channelsTable,

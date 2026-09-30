@@ -1,5 +1,6 @@
-import { TranscriptLine } from "@/schemas/video";
 import { YoutubeTranscript } from "youtube-transcript";
+
+import type { TranscriptLine } from "@/schemas/video";
 
 const API_BASE = "https://www.googleapis.com/youtube/v3";
 

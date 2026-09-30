@@ -1,15 +1,17 @@
-import { z } from "zod";
-import {
-  ProgramRow,
-  SectionRow,
-  ChannelRow,
-  VideoRow,
-  SectionProgressRow,
-  updateSectionProgressRowSchema,
-} from "@/db/rows";
+import type { z } from "zod";
 
-// query types
-export type Program = Omit<ProgramRow, "createdAt" | "updatedAt">;
+import {
+  createSectionProgressRowSchema
+  
+  
+  
+  
+  
+} from "@/db/rows";
+import type {ChannelRow, ProgramRow, SectionProgressRow, SectionRow, VideoRow} from "@/db/rows";
+
+// ── Query types ──
+
 export type Section = Omit<SectionRow, "createdAt" | "updatedAt">;
 
 export type ProgramListItem = Pick<
@@ -47,19 +49,19 @@ export type SectionListItem = Pick<SectionRow, "id" | "title" | "order"> & {
   progress: SectionProgress | null;
 };
 
-// mutation schemas
-export const saveVideoPositionSchema = updateSectionProgressRowSchema
-  .pick({ videoPositionSeconds: true })
-  .required();
-export type SaveVideoPositionInput = z.infer<typeof saveVideoPositionSchema>;
+// ── DAL input schemas ──
 
-// `quizStatus` is derived server-side, so it is not exposed as a user-input schema.
-export const upsertSectionProgressSchema = z
-  .object({
-    ...saveVideoPositionSchema.shape,
-    quizStatus: updateSectionProgressRowSchema.shape.quizStatus,
-  })
+export const upsertSectionProgressSchema = createSectionProgressRowSchema
+  .pick({ videoPositionSeconds: true, quizStatus: true })
   .partial();
 export type UpsertSectionProgressInput = z.infer<
   typeof upsertSectionProgressSchema
 >;
+
+// ── Service input schemas ──
+
+// `quizStatus` is derived server-side, so only the position is user input.
+export const saveVideoPositionSchema = upsertSectionProgressSchema
+  .pick({ videoPositionSeconds: true })
+  .required();
+export type SaveVideoPositionInput = z.infer<typeof saveVideoPositionSchema>;

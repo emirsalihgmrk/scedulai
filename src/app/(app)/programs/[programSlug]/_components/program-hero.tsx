@@ -1,7 +1,3 @@
-import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import { getProgramService, getSectionsService } from "@/services/program";
-import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,21 +6,26 @@ import {
   ListChecks,
   PlayCircle,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
-import { DIFFICULTY_BADGE_CLASSES } from "@/constants/difficulty";
-import { formatDuration } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import DifficultyBadge from "@/components/shared/difficulty-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { formatDuration } from "@/lib/utils";
 import type { ProgramDetail } from "@/schemas/program";
-import { currentSectionId } from "./section-progress";
+import { getProgramService, getSectionsService } from "@/services/program";
 
-export async function ProgramHero({
-  params,
-}: {
+import { getCurrentSectionId } from "./section-progress";
+
+interface ProgramHeroProps {
   params: Promise<{ programSlug: string }>;
-}) {
+}
+
+export default async function ProgramHero({ params }: ProgramHeroProps) {
   const { programSlug } = await params;
   const program = await getProgramService(programSlug);
   if (!program) notFound();
@@ -43,14 +44,19 @@ export async function ProgramHero({
       <Card className="grid grid-cols-1 gap-6 p-(--card-spacing) [--card-spacing:--spacing(5)] md:grid-cols-[minmax(0,320px)_1fr] md:items-start">
         {/* Thumbnail */}
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={thumbnailUrl} alt="" className="size-full object-cover" />
+          <Image
+            src={thumbnailUrl}
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 768px) 320px, 100vw"
+            className="object-cover"
+          />
           {difficulty && (
-            <Badge
-              className={`absolute top-3 left-3 ${DIFFICULTY_BADGE_CLASSES[difficulty]}`}
-            >
-              {difficulty}
-            </Badge>
+            <DifficultyBadge
+              difficulty={difficulty}
+              className="absolute top-3 left-3"
+            />
           )}
         </div>
 
@@ -74,7 +80,11 @@ export async function ProgramHero({
   );
 }
 
-async function ProgramSectionsInfo({ program }: { program: ProgramDetail }) {
+interface ProgramSectionsInfoProps {
+  program: ProgramDetail;
+}
+
+async function ProgramSectionsInfo({ program }: ProgramSectionsInfoProps) {
   const { slug, title, referenceUrl, channel } = program;
   const sections = await getSectionsService(slug);
 
@@ -90,7 +100,7 @@ async function ProgramSectionsInfo({ program }: { program: ProgramDetail }) {
       ? Math.round((completedCount / sections.length) * 100)
       : 0;
 
-  const currentId = currentSectionId(sections);
+  const currentId = getCurrentSectionId(sections);
   const resumeSection =
     sections.find((section) => section.id === currentId) ?? sections[0];
   const resumeLabel =
@@ -109,14 +119,13 @@ async function ProgramSectionsInfo({ program }: { program: ProgramDetail }) {
         </span>
         {channel && (
           <span className="inline-flex items-center gap-1.5">
-            <span className="flex size-5 items-center justify-center overflow-hidden rounded-full bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={channel.thumbnailUrl}
-                alt=""
-                className="size-full object-cover"
-              />
-            </span>
+            <Image
+              src={channel.thumbnailUrl}
+              alt=""
+              width={20}
+              height={20}
+              className="size-5 rounded-full bg-muted object-cover"
+            />
             {channel.title}
           </span>
         )}

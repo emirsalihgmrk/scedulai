@@ -1,6 +1,7 @@
+import { and, eq } from "drizzle-orm";
+
 import { db } from "@/db";
 import { sectionsTable, transcriptsTable } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
 import type { Transcript, Video } from "@/schemas/video";
 
 export async function getVideo(sectionId: string): Promise<Video | undefined> {
@@ -36,13 +37,11 @@ export async function getVideo(sectionId: string): Promise<Video | undefined> {
 export async function getTranscript(
   videoId: string,
 ): Promise<Transcript | undefined> {
-  const row = await db.query.transcriptsTable.findFirst({
+  return db.query.transcriptsTable.findFirst({
     where: and(
       eq(transcriptsTable.videoId, videoId),
       eq(transcriptsTable.language, "en"),
     ),
     columns: { content: true },
   });
-
-  return row;
 }

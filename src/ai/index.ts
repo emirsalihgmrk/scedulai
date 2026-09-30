@@ -1,6 +1,7 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText, Output, ModelMessage } from "ai";
-import { z } from "zod";
+import { generateText, Output  } from "ai";
+import type {ModelMessage} from "ai";
+import type { z } from "zod";
 
 if (!process.env.OPENROUTER_API_KEY) {
   throw new Error("OPENROUTER_API_KEY environment variable is not defined!");
@@ -20,7 +21,7 @@ export const aiProvider = createOpenRouter({
 const SYSTEM_PROMPT =
   "You are an expert language teacher on the ScedulAI platform.";
 
-interface ObjectAgentArgs<T> {
+interface GetAiObjectResponseArgs<T> {
   model?: string;
   system?: string;
   messages: ModelMessage[];
@@ -31,7 +32,7 @@ interface ObjectAgentArgs<T> {
   };
 }
 
-export interface AIObjectResult<T> {
+export interface AiObjectResult<T> {
   output: T;
   model: string;
   latencyMs: number;
@@ -45,13 +46,13 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 const REQUEST_TIMEOUT_MS = 30_000;
 
-export async function getAIObjectResponse<T>({
+export async function getAiObjectResponse<T>({
   model = DEFAULT_MODEL,
   system = SYSTEM_PROMPT,
   messages,
   temperature,
   output,
-}: ObjectAgentArgs<T>): Promise<AIObjectResult<T>> {
+}: GetAiObjectResponseArgs<T>): Promise<AiObjectResult<T>> {
   let lastError: unknown;
   const start = Date.now();
 

@@ -1,14 +1,16 @@
 import {
+  cases
+  
+  
+} from "@/ai/eval/analyze-sentence-cases";
+import type {EvalCase, Expectation} from "@/ai/eval/analyze-sentence-cases";
+import {
   analyzeSentence,
   ANALYZE_SENTENCE_MODEL,
   ANALYZE_SENTENCE_PROMPT_VERSION,
 } from "@/ai/tasks/analyze-sentence";
-import {
-  cases,
-  type EvalCase,
-  type Expectation,
-} from "./analyze-sentence-cases";
 import type { TranslationAnalysis } from "@/schemas/quiz";
+
 
 function check(output: TranslationAnalysis, expected: Expectation): string[] {
   const reasons: string[] = [];

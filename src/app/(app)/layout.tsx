@@ -1,20 +1,15 @@
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import Header from "@/components/shared/header";
-import { getCurrentUser } from "@/services/auth";
-import { getCurrentLearningProfileService } from "@/services/learning-profile";
 
-export default async function AppLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  const [user, profile] = await Promise.all([
-    getCurrentUser(),
-    getCurrentLearningProfileService(),
-  ]);
-  if (user && !profile) redirect("/onboarding");
+import OnboardingRedirect from "./_components/onboarding-redirect";
 
+export default function Layout({ children }: LayoutProps<"/">) {
   return (
     <div className="min-h-screen bg-background">
+      <Suspense fallback={null}>
+        <OnboardingRedirect />
+      </Suspense>
       <Header />
       {children}
     </div>

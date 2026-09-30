@@ -1,20 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
-import { authClient } from "@/lib/auth-client";
-import {
-  sendOtpSchema,
-  verifyOtpSchema,
-  type SendOtpInput,
-  type VerifyOtpInput,
-} from "@/schemas/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Field,
   FieldDescription,
@@ -22,6 +14,15 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
+import {
+  sendOtpSchema,
+  verifyOtpSchema
+  
+  
+} from "@/schemas/auth";
+import type {SendOtpInput, VerifyOtpInput} from "@/schemas/auth";
 
 interface EmailOtpFormProps {
   // Display name for accounts created by this sign-in (ignored for existing
@@ -43,7 +44,7 @@ export default function EmailOtpForm({
 }: EmailOtpFormProps) {
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [resending, setResending] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   const emailForm = useForm<SendOtpInput>({
     resolver: zodResolver(sendOtpSchema),
@@ -54,7 +55,7 @@ export default function EmailOtpForm({
     defaultValues: { email: "", otp: "" },
   });
 
-  const sendCode = async ({ email }: SendOtpInput) => {
+  const handleSendCode = async ({ email }: SendOtpInput) => {
     setFormError(null);
     const { error } = await authClient.emailOtp.sendVerificationOtp({
       email,
@@ -68,7 +69,7 @@ export default function EmailOtpForm({
     setSentTo(email);
   };
 
-  const verifyCode = async ({ email, otp }: VerifyOtpInput) => {
+  const handleVerifyCode = async ({ email, otp }: VerifyOtpInput) => {
     setFormError(null);
     const { error } = await authClient.signIn.emailOtp({ email, otp, name });
     if (error) {
@@ -87,7 +88,7 @@ export default function EmailOtpForm({
   if (!sentTo) {
     const { errors, isSubmitting } = emailForm.formState;
     return (
-      <form onSubmit={emailForm.handleSubmit(sendCode)} noValidate>
+      <form onSubmit={emailForm.handleSubmit(handleSendCode)} noValidate>
         <FieldGroup>
           {errorAlert}
           <Field>
@@ -121,7 +122,7 @@ export default function EmailOtpForm({
 
   const { errors, isSubmitting } = codeForm.formState;
   return (
-    <form onSubmit={codeForm.handleSubmit(verifyCode)} noValidate>
+    <form onSubmit={codeForm.handleSubmit(handleVerifyCode)} noValidate>
       <FieldGroup>
         {errorAlert}
         <Field>
@@ -172,11 +173,11 @@ export default function EmailOtpForm({
           </button>
           <button
             type="button"
-            disabled={resending}
+            disabled={isResending}
             onClick={async () => {
-              setResending(true);
-              await sendCode({ email: sentTo });
-              setResending(false);
+              setIsResending(true);
+              await handleSendCode({ email: sentTo });
+              setIsResending(false);
             }}
             className="rounded-sm font-medium text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
           >

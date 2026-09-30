@@ -1,12 +1,16 @@
-import { getAIObjectResponse } from "@/ai";
-import {
-  generateSentencesOutputSchema,
-  sentencePairSchema,
-  GenerateSentencesOutput,
-} from "@/ai/outputs/generate-sentences";
 import { z } from "zod";
 
-interface GenerateSentencesArgs {
+import { getAiObjectResponse } from "@/ai";
+import {
+  generateSentencesOutputSchema,
+  sentencePairSchema
+  
+} from "@/ai/outputs/generate-sentences";
+import type {GenerateSentencesOutput} from "@/ai/outputs/generate-sentences";
+
+export const GENERATE_SENTENCES_MODEL = "google/gemini-2.5-flash";
+
+export interface GenerateSentencesArgs {
   transcript: string;
   nativeLanguage: string;
   count: number;
@@ -31,8 +35,8 @@ export async function generateSentences({
   - Write the sentence in ${nativeLanguage}.
   - Provide its correct English translation.`;
 
-  const { output } = await getAIObjectResponse<GenerateSentencesOutput>({
-    model: "google/gemini-2.5-flash",
+  const { output } = await getAiObjectResponse<GenerateSentencesOutput>({
+    model: GENERATE_SENTENCES_MODEL,
     system,
     messages: [
       {

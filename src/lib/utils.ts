@@ -1,4 +1,5 @@
-import { clsx, type ClassValue } from "clsx";
+import { clsx  } from "clsx";
+import type {ClassValue} from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -35,6 +36,3 @@ export function formatDuration(totalSeconds: number | null | undefined) {
     ? `${hours}:${pad(minutes)}:${pad(seconds)}`
     : `${pad(minutes)}:${pad(seconds)}`;
 }
-
-export const sleep = (ms: number) =>
-  new Promise((resolve) => setTimeout(resolve, ms));

@@ -1,33 +1,33 @@
+import { after } from "next/server";
+import { cache } from "react";
+
+import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
-import { getTranscriptService, getVideoService } from "@/services/video";
-import {
-  CreateAnswerInput,
-  CreateQuestionInput,
-  Question,
-  QuestionWithAnswer,
-  QuizWithQuestions,
-  SubmitTranslationAnswerInput,
-  submitTranslationAnswerSchema,
-} from "@/schemas/quiz";
+import { getNativeLanguageEnglishName } from "@/constants/language";
+import { QUIZ_PASS_ACCURACY  } from "@/constants/progress";
+import type {QuizStatus} from "@/constants/progress";
+import { createAiTrace } from "@/dal/ai/mutations";
+import { upsertSectionProgress } from "@/dal/program/mutations";
 import {
   createQuestions,
   createQuiz,
   deleteAnswers,
   upsertAnswer,
 } from "@/dal/quiz/mutations";
-import { createAiTrace } from "@/dal/ai/mutations";
-import { after } from "next/server";
-import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
-import { upsertSectionProgress } from "@/dal/program/mutations";
-import { getCurrentUser } from "@/services/auth";
-import { getCurrentLearningProfileService } from "@/services/learning-profile";
-import { AppError } from "@/lib/errors";
-import { getNativeLanguageEnglishName } from "@/constants/language";
-import { QUIZ_PASS_ACCURACY, type QuizStatus } from "@/constants/progress";
 import { db } from "@/db";
-import { Transaction } from "@/schemas/common";
-import { cache } from "react";
+import { AppError } from "@/lib/errors";
+import {
+  submitTranslationAnswerSchema
+  
+  
+  
+  
+} from "@/schemas/quiz";
+import type {Question, QuestionWithAnswer, QuizWithQuestions, SubmitTranslationAnswerInput} from "@/schemas/quiz";
+import { getCurrentUserService } from "@/services/auth";
+import { getLearningProfileService } from "@/services/learning-profile";
+import { getTranscriptService, getVideoService } from "@/services/video";
 
 const QUESTION_COUNT = 5;
 
@@ -35,8 +35,8 @@ const QUESTION_COUNT = 5;
 // target language on their learning profile.
 async function getLearnerLanguages() {
   const [user, profile] = await Promise.all([
-    getCurrentUser(),
-    getCurrentLearningProfileService(),
+    getCurrentUserService(),
+    getLearningProfileService(),
   ]);
   if (!user || !profile) return null;
   return {
@@ -46,25 +46,95 @@ async function getLearnerLanguages() {
   };
 }
 
+export const getQuizService = cache(
+  async (sectionId: string): Promise<QuizWithQuestions | null> => {
+    const learner = await getLearnerLanguages();
+    if (!learner) return null;
+    const quiz = await getQuiz(
+      sectionId,
+      learner.nativeLanguage,
+      learner.targetLanguage,
+      learner.user.id,
+    );
+    return quiz ?? null;
+  },
+);
+
+export const getQuestionService = cache(
+  async (questionId: string): Promise<Question | null> => {
+    const question = await getQuestion(questionId);
+    return question ?? null;
+  },
+);
+
+export async function generateQuizByAiService(
+  sectionId: string,
+): Promise<QuizWithQuestions> {
+  const learner = await getLearnerLanguages();
+  if (!learner) throw new AppError("Unauthorized");
+
+  const video = await getVideoService(sectionId);
+  if (!video) throw new AppError("This section has no video");
+
+  const lines = await getTranscriptService(video.id);
+  if (lines.length === 0) throw new AppError("This video has no transcript");
+
+  const { sentences } = await generateSentences({
+    transcript: lines.map((line) => line.text).join("\n"),
+    nativeLanguage: getNativeLanguageEnglishName(learner.nativeLanguage),
+    count: QUESTION_COUNT,
+  });
+
+  return db.transaction(async (tx) => {
+    const quiz = await createQuiz(
+      sectionId,
+      {
+        nativeLanguage: learner.nativeLanguage,
+        targetLanguage: learner.targetLanguage,
+      },
+      tx,
+    );
+    if (!quiz) throw new AppError("Quiz could not be created");
+
+    const questions = await createQuestions(
+      quiz.id,
+      sentences.map((sentence, index) => ({
+        order: index,
+        type: "translation",
+        payload: {
+          type: "translation",
+          sourceSentence: sentence.native,
+          expectedTranslation: sentence.english,
+        },
+      })),
+      tx,
+    );
+
+    return {
+      id: quiz.id,
+      questions: questions.map((question) => ({ ...question, answer: null })),
+    };
+  });
+}
+
 export async function submitTranslationAnswerService(
   questionId: string,
   input: SubmitTranslationAnswerInput,
 ): Promise<QuestionWithAnswer> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
 
-  const parsedInput = submitTranslationAnswerSchema.safeParse(input);
-  if (!parsedInput.success) throw new AppError("Invalid data");
-  const response = parsedInput.data;
+  const response = submitTranslationAnswerSchema.parse(input);
 
-  const question = await getQuestion(questionId);
+  const question = await getQuestionService(questionId);
   if (!question) throw new AppError("Not found");
-  if (question.payload.type !== "translation")
+  if (question.payload.type !== "translation") {
     throw new AppError("Invalid question type");
+  }
 
   const analyzeInput = {
     sentence: question.payload.sourceSentence,
-    originalSentence: question.payload.expectedTranslation ?? "",
+    originalSentence: question.payload.expectedTranslation,
     userTranslation: response.userTranslation,
     nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
   };
@@ -77,24 +147,23 @@ export async function submitTranslationAnswerService(
     latencyMs,
     usage,
   } = await analyzeSentence(analyzeInput);
+  const roundedAccuracy = Math.round(accuracy);
 
-  const answerInput: CreateAnswerInput = {
+  const answer = await upsertAnswer(user.id, questionId, {
     result: { type: "translation", response, analysis },
-    accuracy: Math.round(accuracy),
-  };
+    accuracy: roundedAccuracy,
+  });
 
-  const answer = await upsertAnswer(user.id, questionId, answerInput);
-
+  // Tracing must never fail or slow down the learner's request.
   after(async () => {
     try {
-      await createAiTrace({
+      await createAiTrace(user.id, {
         task: "analyze-sentence",
         model,
         promptVersion,
-        userId: user.id,
         input: analyzeInput,
         output: analysis,
-        metadata: { questionId, accuracy: Math.round(accuracy) },
+        metadata: { questionId, accuracy: roundedAccuracy },
         latencyMs,
         inputTokens: usage.inputTokens ?? null,
         outputTokens: usage.outputTokens ?? null,
@@ -107,22 +176,25 @@ export async function submitTranslationAnswerService(
   return { ...question, answer };
 }
 
+// `null` until every question has been graded.
 export async function evaluateQuizService(
   sectionId: string,
 ): Promise<QuizStatus | null> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
 
   const quiz = await getQuizService(sectionId);
   if (!quiz) throw new AppError("Not found");
 
-  const graded = quiz.questions.filter((q) => q.answer !== null);
-  if (quiz.questions.length === 0 || graded.length < quiz.questions.length) {
+  const answers = quiz.questions.flatMap((question) =>
+    question.answer ? [question.answer] : [],
+  );
+  if (answers.length === 0 || answers.length < quiz.questions.length) {
     return null;
   }
 
   const avgAccuracy = Math.round(
-    graded.reduce((sum, q) => sum + q.answer!.accuracy, 0) / graded.length,
+    answers.reduce((sum, answer) => sum + answer.accuracy, 0) / answers.length,
   );
   const quizStatus: QuizStatus =
     avgAccuracy >= QUIZ_PASS_ACCURACY ? "passed" : "failed";
@@ -132,7 +204,7 @@ export async function evaluateQuizService(
 }
 
 export async function retryQuizService(sectionId: string): Promise<void> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
 
   const quiz = await getQuizService(sectionId);
@@ -146,97 +218,5 @@ export async function retryQuizService(sectionId: string): Promise<void> {
       { quizStatus: "in_progress" },
       tx,
     );
-  });
-}
-
-export const getQuizService = cache(async function getQuizService(
-  sectionId: string,
-): Promise<QuizWithQuestions | null> {
-  const learner = await getLearnerLanguages();
-  if (!learner) return null;
-  const quiz = await getQuiz(
-    sectionId,
-    learner.nativeLanguage,
-    learner.targetLanguage,
-    learner.user.id,
-  );
-  return quiz ?? null;
-});
-
-export async function createQuizService(
-  sectionId: string,
-  tx?: Transaction,
-): Promise<string | null> {
-  const learner = await getLearnerLanguages();
-  if (!learner) return null;
-  const result = await createQuiz(
-    sectionId,
-    {
-      nativeLanguage: learner.nativeLanguage,
-      targetLanguage: learner.targetLanguage,
-    },
-    tx,
-  );
-  return result?.id ?? null;
-}
-
-export async function createQuestionsService(
-  quizId: string,
-  input: CreateQuestionInput[],
-  tx?: Transaction,
-): Promise<Question[]> {
-  const user = await getCurrentUser();
-  if (!user) return [];
-  const result = await createQuestions(quizId, input, tx);
-  return result ?? [];
-}
-
-export async function generateQuizByAiService(
-  sectionId: string,
-): Promise<QuizWithQuestions> {
-  const user = await getCurrentUser();
-  if (!user) throw new AppError("Unauthorized");
-
-  const video = await getVideoService(sectionId);
-  if (!video) throw new AppError("There is no video");
-
-  const lines = await getTranscriptService(video.id);
-  if (lines.length === 0) throw new AppError("The video has no transcript");
-
-  const transcript = lines.map((line) => line.text).join("\n");
-
-  const { sentences } = await generateSentences({
-    transcript,
-    nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
-    count: QUESTION_COUNT,
-  });
-  return db.transaction(async (tx) => {
-    const createdQuizId = await createQuizService(sectionId, tx);
-    if (!createdQuizId) throw new AppError("Quiz could not be created");
-    const questionInput: CreateQuestionInput[] = sentences.map(
-      (sentence, index) => ({
-        quizId: createdQuizId,
-        order: index,
-        type: "translation",
-        payload: {
-          type: "translation",
-          sourceSentence: sentence.native,
-          expectedTranslation: sentence.english,
-        },
-      }),
-    );
-    const createdQuestions = await createQuestionsService(
-      createdQuizId,
-      questionInput,
-      tx,
-    );
-
-    return {
-      id: createdQuizId,
-      questions: createdQuestions.map((question) => ({
-        ...question,
-        answer: null,
-      })),
-    };
   });
 }

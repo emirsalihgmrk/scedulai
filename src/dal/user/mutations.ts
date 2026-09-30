@@ -1,8 +1,9 @@
-import { db } from "@/db";
-import { userTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import type { UpdateUserInput } from "@/schemas/auth";
-import type { Transaction } from "@/schemas/common";
+
+import { db  } from "@/db";
+import type {Transaction} from "@/db";
+import { userTable } from "@/db/schema";
+import type { UpdateUserInput } from "@/schemas/user";
 
 export async function updateUser(
   userId: string,
@@ -10,6 +11,7 @@ export async function updateUser(
   tx?: Transaction,
 ): Promise<void> {
   const executor = tx ?? db;
+  // better-auth's user table has no $onUpdate hook, so bump it by hand.
   await executor
     .update(userTable)
     .set({ ...input, updatedAt: new Date() })

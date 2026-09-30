@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
 import { TriangleAlert } from "lucide-react";
+import { useEffect } from "react";
 
+import EmptyState from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/shared/empty-state";
 
-export default function GlobalError({
-  error,
-  reset,
-}: {
+interface ErrorBoundaryProps {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}
+
+export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
   useEffect(() => {
     console.error(error);
   }, [error]);

@@ -1,15 +1,15 @@
-import { ExternalLink, LibraryBig, ArrowRight } from "lucide-react";
-
-import { EmptyState } from "@/components/shared/empty-state";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { DIFFICULTY_BADGE_CLASSES } from "@/constants/difficulty";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import type { ProgramListItem } from "@/schemas/program";
+import { ArrowRight, ExternalLink, LibraryBig } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+
+import DifficultyBadge from "@/components/shared/difficulty-badge";
+import EmptyState from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import type { ProgramListItem } from "@/schemas/program";
 import { getProgramsService } from "@/services/program";
 
-export async function ProgramsGrid() {
+export default async function ProgramsGrid() {
   const programs = await getProgramsService();
 
   if (programs.length === 0) {
@@ -38,7 +38,11 @@ export async function ProgramsGrid() {
   );
 }
 
-function ProgramCard({ program }: { program: ProgramListItem }) {
+interface ProgramCardProps {
+  program: ProgramListItem;
+}
+
+function ProgramCard({ program }: ProgramCardProps) {
   const {
     slug,
     title,
@@ -52,18 +56,18 @@ function ProgramCard({ program }: { program: ProgramListItem }) {
     <Card className="group/program transition-shadow hover:ring-foreground/20">
       {/* Thumbnail — first child so Card rounds the top corners */}
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={thumbnailUrl}
           alt=""
-          className="size-full object-cover transition-transform duration-300 group-hover/program:scale-105"
+          fill
+          sizes="(min-width: 1280px) 384px, (min-width: 640px) 50vw, 100vw"
+          className="object-cover transition-transform duration-300 group-hover/program:scale-105"
         />
         {difficulty && (
-          <Badge
-            className={`absolute top-3 left-3 ${DIFFICULTY_BADGE_CLASSES[difficulty]}`}
-          >
-            {difficulty}
-          </Badge>
+          <DifficultyBadge
+            difficulty={difficulty}
+            className="absolute top-3 left-3"
+          />
         )}
       </div>
 

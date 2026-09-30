@@ -1,20 +1,24 @@
-import Link from "next/link";
 import { ArrowRight, Check, CirclePlay, Clock, Play, X } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
-import { cn, formatDuration } from "@/lib/utils";
 import type { QuizStatus } from "@/constants/progress";
+import { cn, formatDuration } from "@/lib/utils";
 import type { SectionListItem } from "@/schemas/program";
-import { currentSectionId } from "./section-progress";
 import { getSectionsService } from "@/services/program";
 
-export async function SectionTimeline({
-  params,
-}: {
+import { getCurrentSectionId } from "./section-progress";
+
+interface SectionTimelineProps {
   params: Promise<{ programSlug: string }>;
-}) {
+}
+
+export default async function SectionTimeline({
+  params,
+}: SectionTimelineProps) {
   const { programSlug } = await params;
   const sections = await getSectionsService(programSlug);
-  const currentId = currentSectionId(sections);
+  const currentId = getCurrentSectionId(sections);
 
   return (
     <section aria-label="Program sections" className="flex flex-col gap-5">
@@ -43,19 +47,21 @@ export async function SectionTimeline({
   );
 }
 
+interface SectionRowProps {
+  section: SectionListItem;
+  programSlug: string;
+  quizStatus: QuizStatus | undefined;
+  isCurrent: boolean;
+  isLast: boolean;
+}
+
 function SectionRow({
   section,
   programSlug,
   quizStatus,
   isCurrent,
   isLast,
-}: {
-  section: SectionListItem;
-  programSlug: string;
-  quizStatus: QuizStatus | undefined;
-  isCurrent: boolean;
-  isLast: boolean;
-}) {
+}: SectionRowProps) {
   const isCompleted = quizStatus === "passed";
   const isFailed = quizStatus === "failed";
 
@@ -116,11 +122,12 @@ function SectionRow({
           {/* Thumbnail */}
           {section.video && (
             <div className="relative hidden aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted sm:block">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={section.video.thumbnailUrl}
                 alt=""
-                className="size-full object-cover transition-transform duration-300 group-hover/section:scale-105"
+                fill
+                sizes="112px"
+                className="object-cover transition-transform duration-300 group-hover/section:scale-105"
               />
             </div>
           )}
@@ -131,7 +138,7 @@ function SectionRow({
               <span>Section {section.order}</span>
               {statusLabel && (
                 <>
-                  <span className="" aria-hidden>
+                  <span aria-hidden>
                     ·
                   </span>
                   <span>{statusLabel}</span>

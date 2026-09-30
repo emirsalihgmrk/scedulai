@@ -1,5 +1,5 @@
-import { LoginPanel } from "@/app/auth/_components/login-panel";
+import PageView from "./_components/page-view";
 
 export default function Page() {
-  return <LoginPanel />;
+  return <PageView />;
 }

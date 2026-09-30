@@ -1,6 +1,7 @@
+import { and, eq } from "drizzle-orm";
+
 import { db } from "@/db";
 import { programsTable, sectionProgressTable } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
 import type {
   ProgramDetail,
   ProgramListItem,
@@ -81,24 +82,6 @@ export async function getSections(
     ...section,
     progress: progress[0] ?? null,
   }));
-}
-
-export async function getFirstSection(
-  programSlug: string,
-): Promise<Section | undefined> {
-  const row = await db.query.programsTable.findFirst({
-    where: eq(programsTable.slug, programSlug),
-    columns: {},
-    with: {
-      sections: {
-        columns: { createdAt: false, updatedAt: false },
-        orderBy: (sections, { asc }) => asc(sections.order),
-        limit: 1,
-      },
-    },
-  });
-
-  return row?.sections[0];
 }
 
 export async function getSectionProgress(

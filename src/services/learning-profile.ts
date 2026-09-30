@@ -1,19 +1,21 @@
 import { cache } from "react";
-import { db } from "@/db";
-import { getLearningProfile } from "@/dal/learning-profile/queries";
+
 import { createLearningProfile } from "@/dal/learning-profile/mutations";
+import { getLearningProfile } from "@/dal/learning-profile/queries";
 import { updateUser } from "@/dal/user/mutations";
-import { getCurrentUser } from "@/services/auth";
+import { db } from "@/db";
 import { AppError } from "@/lib/errors";
 import {
-  completeOnboardingSchema,
-  type CompleteOnboardingInput,
-  type LearningProfile,
+  completeOnboardingSchema
+  
+  
 } from "@/schemas/learning-profile";
+import type {CompleteOnboardingInput, LearningProfile} from "@/schemas/learning-profile";
+import { getCurrentUserService } from "@/services/auth";
 
-export const getCurrentLearningProfileService = cache(
-  async function getCurrentLearningProfileService(): Promise<LearningProfile | null> {
-    const user = await getCurrentUser();
+export const getLearningProfileService = cache(
+  async (): Promise<LearningProfile | null> => {
+    const user = await getCurrentUserService();
     if (!user) return null;
     const profile = await getLearningProfile(user.id);
     return profile ?? null;
@@ -24,21 +26,19 @@ export const getCurrentLearningProfileService = cache(
 // their session expired) keeps their existing profile untouched.
 export async function completeOnboardingService(
   input: CompleteOnboardingInput,
-): Promise<{ created: boolean }> {
-  const user = await getCurrentUser();
+): Promise<void> {
+  const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
 
-  const parsedInput = completeOnboardingSchema.safeParse(input);
-  if (!parsedInput.success) throw new AppError("Invalid data");
   const { name, nativeLanguage, targetLanguage, level, goal, dailyMinutes } =
-    parsedInput.data;
+    completeOnboardingSchema.parse(input);
 
-  const existing = await getLearningProfile(user.id);
-  if (existing) return { created: false };
+  const profile = await getLearningProfileService();
+  if (profile) return;
 
-  return db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     await updateUser(user.id, { name, nativeLanguage }, tx);
-    const row = await createLearningProfile(
+    await createLearningProfile(
       user.id,
       {
         targetLanguage,
@@ -49,6 +49,5 @@ export async function completeOnboardingService(
       },
       tx,
     );
-    return { created: row !== undefined };
   });
 }

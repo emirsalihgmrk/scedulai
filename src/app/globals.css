@@ -43,6 +43,8 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-mark: var(--brand-mark);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-space-grotesk), var(--font-inter), sans-serif;
   --radius-sm: calc(var(--radius) * 0.6);
@@ -80,6 +82,9 @@
   --warning-foreground: oklch(0.32 0.07 75);
   --highlight: oklch(0.72 0.16 350);
   --highlight-foreground: oklch(0.3 0.08 350);
+  /* Logo colours: fixed brand values, identical in every theme. */
+  --brand-ink: #1b1a18;
+  --brand-mark: #5f6b3a;
   --chart-1: oklch(0.53 0.21 285);
   --chart-2: oklch(0.62 0.15 155);
   --chart-3: oklch(0.78 0.14 75);

@@ -1,50 +1,44 @@
 import { cache } from "react";
 
+import { upsertSectionProgress } from "@/dal/program/mutations";
 import {
-  getFirstSection,
   getProgram,
   getPrograms,
   getSectionByOrder,
   getSectionProgress,
   getSections,
 } from "@/dal/program/queries";
-import { upsertSectionProgress } from "@/dal/program/mutations";
-import { getCurrentUser } from "@/services/auth";
-import { AppError } from "@/lib/errors";
 import {
-  ProgramDetail,
-  ProgramListItem,
-  Section,
-  SectionListItem,
-  SectionProgress,
-  SaveVideoPositionInput,
-  saveVideoPositionSchema,
+  saveVideoPositionSchema
+  
+  
+  
+  
+  
+  
 } from "@/schemas/program";
+import type {ProgramDetail, ProgramListItem, SaveVideoPositionInput, Section, SectionListItem, SectionProgress} from "@/schemas/program";
+import { getCurrentUserService } from "@/services/auth";
 
-export async function getProgramsService(): Promise<ProgramListItem[]> {
-  return getPrograms();
-}
-
-export async function getProgramService(
-  slug: string,
-): Promise<ProgramDetail | null> {
-  const program = await getProgram(slug);
-  return program ?? null;
-}
-
-export const getSectionsService = cache(
-  async (programSlug: string): Promise<SectionListItem[]> => {
-    const user = await getCurrentUser();
-    return getSections(programSlug, user?.id ?? null);
+export const getProgramsService = cache(
+  async (): Promise<ProgramListItem[]> => {
+    return getPrograms();
   },
 );
 
-export async function getFirstSectionService(
-  programSlug: string,
-): Promise<Section | null> {
-  const section = await getFirstSection(programSlug);
-  return section ?? null;
-}
+export const getProgramService = cache(
+  async (slug: string): Promise<ProgramDetail | null> => {
+    const program = await getProgram(slug);
+    return program ?? null;
+  },
+);
+
+export const getSectionsService = cache(
+  async (programSlug: string): Promise<SectionListItem[]> => {
+    const user = await getCurrentUserService();
+    return getSections(programSlug, user?.id ?? null);
+  },
+);
 
 export const getSectionByOrderService = cache(
   async (programSlug: string, order: number): Promise<Section | null> => {
@@ -55,23 +49,22 @@ export const getSectionByOrderService = cache(
 
 export const getSectionProgressService = cache(
   async (sectionId: string): Promise<SectionProgress | null> => {
-    const user = await getCurrentUser();
+    const user = await getCurrentUserService();
     if (!user) return null;
-
     const progress = await getSectionProgress(user.id, sectionId);
     return progress ?? null;
   },
 );
 
+// Guests can watch videos too; their position is simply not saved.
 export async function saveVideoPositionService(
   sectionId: string,
   input: SaveVideoPositionInput,
 ): Promise<void> {
-  const user = await getCurrentUser();
-  if (!user) return; // anonim → no-op
+  const user = await getCurrentUserService();
+  if (!user) return;
 
-  const parsedResult = saveVideoPositionSchema.safeParse(input);
-  if (!parsedResult.success) throw new AppError("Invalid data");
+  const data = saveVideoPositionSchema.parse(input);
 
-  await upsertSectionProgress(user.id, sectionId, parsedResult.data);
+  await upsertSectionProgress(user.id, sectionId, data);
 }

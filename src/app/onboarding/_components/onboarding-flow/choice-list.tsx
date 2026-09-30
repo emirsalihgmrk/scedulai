@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
 import {
   Field,
   FieldContent,
@@ -11,6 +10,7 @@ import {
   FieldTitle,
 } from "@/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { cn } from "@/lib/utils";
 
 export interface ChoiceOption {
   value: string;

@@ -1,6 +1,6 @@
 import { Library } from "lucide-react";
 
-export function ProgramsHeader() {
+export default function ProgramsHeader() {
   return (
     <div className="flex flex-col gap-3">
       <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-semibold tracking-wider text-secondary-foreground uppercase">

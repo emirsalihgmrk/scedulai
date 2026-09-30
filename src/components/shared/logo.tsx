@@ -1,20 +1,19 @@
-export function Logo() {
+export default function Logo() {
   return (
-    <div className="inline-flex items-baseline font-normal text-xl leading-none tracking-wider  text-[#1b1a18]">
+    <div
+      data-slot="logo"
+      className="inline-flex items-baseline text-xl leading-none font-normal tracking-wider text-brand-ink"
+    >
       scedu
       <svg
         viewBox="0 0 100 70"
-        style={{
-          height: "0.7em",
-          width: "1em",
-          margin: "0 0.1em",
-          overflow: "visible",
-        }}
+        aria-hidden
+        className="mx-[0.1em] h-[0.7em] w-[1em] overflow-visible"
       >
         <path
           d="M4 0 V70 M20 70 L50 0 L80 70 M96 0 V70"
           fill="none"
-          stroke="#5f6b3a"
+          className="stroke-brand-mark"
           strokeWidth="8"
           strokeLinejoin="miter"
           strokeMiterlimit="6"

@@ -1,15 +1,15 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { db } from "@/db";
+
+import { db  } from "@/db";
+import type {Transaction} from "@/db";
 import { answersTable, questionsTable, quizzesTable } from "@/db/schema";
 import type {
   Answer,
-  CreateAnswerInput,
   CreateQuestionInput,
   CreateQuizInput,
   Question,
+  UpsertAnswerInput,
 } from "@/schemas/quiz";
-
-import { Transaction } from "@/schemas/common";
 
 const questionColumns = {
   id: questionsTable.id,
@@ -20,20 +20,19 @@ const questionColumns = {
   payload: questionsTable.payload,
 };
 
+// `undefined` when a quiz for this section and language pair already exists.
 export async function createQuiz(
   sectionId: string,
   input: CreateQuizInput,
   tx?: Transaction,
 ): Promise<{ id: string } | undefined> {
   const executor = tx ?? db;
-
-  const [result] = await executor
+  const [row] = await executor
     .insert(quizzesTable)
     .values({ sectionId, ...input })
     .onConflictDoNothing()
     .returning({ id: quizzesTable.id });
-
-  return result;
+  return row;
 }
 
 export async function createQuestions(
@@ -44,31 +43,29 @@ export async function createQuestions(
   const executor = tx ?? db;
   return executor
     .insert(questionsTable)
-    .values(input.map((q) => ({ ...q, quizId })))
+    .values(input.map((question) => ({ quizId, ...question })))
     .returning(questionColumns);
 }
 
 export async function upsertAnswer(
   userId: string,
   questionId: string,
-  input: CreateAnswerInput,
+  input: UpsertAnswerInput,
+  tx?: Transaction,
 ): Promise<Answer> {
-  const [answer] = await db
+  const executor = tx ?? db;
+  const [row] = await executor
     .insert(answersTable)
     .values({ userId, questionId, ...input })
     .onConflictDoUpdate({
       target: [answersTable.userId, answersTable.questionId],
-      set: {
-        result: input.result,
-        accuracy: input.accuracy,
-      },
+      set: input,
     })
     .returning({
       result: answersTable.result,
       accuracy: answersTable.accuracy,
     });
-
-  return answer;
+  return row;
 }
 
 export async function deleteAnswers(

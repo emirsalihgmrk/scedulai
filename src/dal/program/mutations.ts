@@ -1,7 +1,7 @@
-import { db } from "@/db";
+import { db  } from "@/db";
+import type {Transaction} from "@/db";
 import { sectionProgressTable } from "@/db/schema";
 import type { UpsertSectionProgressInput } from "@/schemas/program";
-import type { Transaction } from "@/schemas/common";
 
 export async function upsertSectionProgress(
   userId: string,

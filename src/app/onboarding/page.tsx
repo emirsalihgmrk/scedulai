@@ -1,5 +1,5 @@
-import OnboardingPageView from "./_components/onboarding-page-view";
+import PageView from "./_components/page-view";
 
 export default function Page() {
-  return <OnboardingPageView />;
+  return <PageView />;
 }

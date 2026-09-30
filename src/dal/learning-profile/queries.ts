@@ -1,6 +1,7 @@
+import { eq } from "drizzle-orm";
+
 import { db } from "@/db";
 import { learningProfilesTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import type { LearningProfile } from "@/schemas/learning-profile";
 
 // Users have a single profile until multiple target languages ship; the most

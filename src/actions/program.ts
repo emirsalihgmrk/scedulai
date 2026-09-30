@@ -1,9 +1,9 @@
 "use server";
 
-import { saveVideoPositionService } from "@/services/program";
-import { toActionFailure } from "@/lib/action";
-import type { ActionResult } from "@/schemas/common";
+import { toActionFailure  } from "@/lib/action";
+import type {ActionResult} from "@/lib/action";
 import type { SaveVideoPositionInput } from "@/schemas/program";
+import { saveVideoPositionService } from "@/services/program";
 
 export async function saveVideoPositionAction(
   sectionId: string,

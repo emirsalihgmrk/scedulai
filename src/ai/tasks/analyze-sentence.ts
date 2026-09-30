@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { getAIObjectResponse, type AIObjectResult } from "..";
+
+import { getAiObjectResponse  } from "@/ai";
+import type {AiObjectResult} from "@/ai";
 import { analyzeSentenceOutputSchema } from "@/ai/outputs/analyze-sentence";
 import type { TranslationAnalysis } from "@/schemas/quiz";
 
@@ -13,7 +15,7 @@ export interface AnalyzeSentenceArgs {
   nativeLanguage: string;
 }
 
-export type AnalyzeSentenceResult = AIObjectResult<TranslationAnalysis> & {
+export type AnalyzeSentenceResult = AiObjectResult<TranslationAnalysis> & {
   promptVersion: string;
   accuracy: number;
 };
@@ -95,7 +97,7 @@ export async function analyzeSentence({
     };
   }
 
-  const result = await getAIObjectResponse<TranslationAnalysis>({
+  const result = await getAiObjectResponse<TranslationAnalysis>({
     model: ANALYZE_SENTENCE_MODEL,
     temperature: 0,
     system: buildSystemPrompt(nativeLanguage),

@@ -1,18 +1,3 @@
-import { AI_TASKS } from "@/constants/ai";
-import { DIFFICULTIES } from "@/constants/difficulty";
-import {
-  CEFR_LEVELS,
-  LEARNING_GOALS,
-  LEVEL_SOURCES,
-} from "@/constants/learning";
-import {
-  SUPPORTED_NATIVE_LANGUAGE_CODES,
-  SUPPORTED_TARGET_LANGUAGE_CODES,
-} from "@/constants/language";
-import { PLANS } from "@/constants/plan";
-import { ROLES } from "@/constants/role";
-import { QUIZ_STATUSES } from "@/constants/progress";
-import { QUESTION_DIRECTIONS, QUESTION_TYPES } from "@/constants/question";
 import { relations } from "drizzle-orm";
 import {
   boolean,
@@ -26,6 +11,22 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+
+import { AI_TASKS } from "@/constants/ai";
+import { DIFFICULTIES } from "@/constants/difficulty";
+import {
+  SUPPORTED_NATIVE_LANGUAGE_CODES,
+  SUPPORTED_TARGET_LANGUAGE_CODES,
+} from "@/constants/language";
+import {
+  CEFR_LEVELS,
+  LEARNING_GOALS,
+  LEVEL_SOURCES,
+} from "@/constants/learning";
+import { PLANS } from "@/constants/plan";
+import { QUIZ_STATUSES } from "@/constants/progress";
+import { QUESTION_DIRECTIONS, QUESTION_TYPES } from "@/constants/question";
+import { ROLES } from "@/constants/role";
 import type {
   AnswerResult,
   QuestionPayload,

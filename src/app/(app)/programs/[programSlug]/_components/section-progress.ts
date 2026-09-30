@@ -1,6 +1,7 @@
 import type { SectionListItem } from "@/schemas/program";
 
-export function currentSectionId(sections: SectionListItem[]): string | null {
+// The section the learner touched most recently, if any.
+export function getCurrentSectionId(sections: SectionListItem[]): string | null {
   let current: SectionListItem | null = null;
 
   for (const section of sections) {

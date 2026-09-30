@@ -1,16 +1,16 @@
 "use server";
 
-import { toActionFailure } from "@/lib/action";
-import { completeOnboardingService } from "@/services/learning-profile";
+import { toActionFailure  } from "@/lib/action";
+import type {ActionResult} from "@/lib/action";
 import type { CompleteOnboardingInput } from "@/schemas/learning-profile";
-import type { ActionResult } from "@/schemas/common";
+import { completeOnboardingService } from "@/services/learning-profile";
 
 export async function completeOnboardingAction(
   input: CompleteOnboardingInput,
-): Promise<ActionResult<{ created: boolean }>> {
+): Promise<ActionResult> {
   try {
-    const data = await completeOnboardingService(input);
-    return { ok: true, data };
+    await completeOnboardingService(input);
+    return { ok: true, data: undefined };
   } catch (error) {
     return toActionFailure(error);
   }

@@ -122,10 +122,10 @@ export type SupportedTargetLanguageCode =
 export type SupportedTargetLanguage =
   (typeof SUPPORTED_TARGET_LANGUAGES)[number];
 
-type UserLanguageCodes = {
+interface UserLanguageCodes {
   nativeLanguage?: string | null;
   targetLanguage?: string | null;
-};
+}
 
 export function getUserLanguageLabels({
   nativeLanguage,
@@ -151,10 +151,4 @@ export function getNativeLanguageEnglishName(
   code: SupportedNativeLanguageCode,
 ): string {
   return SUPPORTED_NATIVE_LANGUAGES.find((l) => l.code === code)!.englishName;
-}
-
-export function getTargetLanguageEnglishName(
-  code: SupportedTargetLanguageCode,
-): string {
-  return SUPPORTED_TARGET_LANGUAGES.find((l) => l.code === code)!.englishName;
 }

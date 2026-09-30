@@ -1,7 +1,12 @@
 import { APIError } from "better-auth/api";
 import { z } from "zod";
+
 import { AppError } from "@/lib/errors";
-import type { ActionResult } from "@/schemas/common";
+
+// The return type of every server action.
+export type ActionResult<T = undefined> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
 
 // Normalize a thrown error into a typed action failure. Only messages from
 // expected error types (validation, auth, deliberate service errors) are
