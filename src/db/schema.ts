@@ -1,6 +1,11 @@
 import { AI_TASKS } from "@/constants/ai";
 import { DIFFICULTIES } from "@/constants/difficulty";
 import {
+  CEFR_LEVELS,
+  LEARNING_GOALS,
+  LEVEL_SOURCES,
+} from "@/constants/learning";
+import {
   SUPPORTED_NATIVE_LANGUAGE_CODES,
   SUPPORTED_TARGET_LANGUAGE_CODES,
 } from "@/constants/language";
@@ -54,6 +59,9 @@ export const targetLanguageEnum = pgEnum(
   SUPPORTED_TARGET_LANGUAGE_CODES,
 );
 export const aiTaskEnum = pgEnum("ai_task", AI_TASKS);
+export const cefrLevelEnum = pgEnum("cefr_level", CEFR_LEVELS);
+export const levelSourceEnum = pgEnum("level_source", LEVEL_SOURCES);
+export const learningGoalEnum = pgEnum("learning_goal", LEARNING_GOALS);
 
 // better-auth managed tables
 export const userTable = pgTable("user", {
@@ -67,7 +75,6 @@ export const userTable = pgTable("user", {
   plan: planEnum("plan").default("free").notNull(),
   role: roleEnum("role").default("user").notNull(),
   nativeLanguage: nativeLanguageEnum("native_language").default("tr").notNull(),
-  targetLanguage: targetLanguageEnum("target_language").default("en").notNull(),
 });
 
 export const sessionTable = pgTable(
@@ -313,13 +320,49 @@ export const sectionProgressTable = pgTable(
   ],
 );
 
+// One row per (user, target language). A user is "onboarded" once they have a
+// profile; there is no separate flag.
+export const learningProfilesTable = pgTable(
+  "learning_profiles",
+  {
+    ...commonFields,
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    targetLanguage: targetLanguageEnum("target_language").notNull(),
+    // null = the learner doesn't know their level yet (placement test pending)
+    level: cefrLevelEnum("level"),
+    levelSource: levelSourceEnum("level_source"),
+    goal: learningGoalEnum("goal").notNull(),
+    dailyMinutes: integer("daily_minutes").notNull(),
+  },
+  (table) => [
+    unique("learning_profiles_user_target_unique").on(
+      table.userId,
+      table.targetLanguage,
+    ),
+    index("learning_profiles_user_id_idx").on(table.userId),
+  ],
+);
+
 // Relations
 export const userRelations = relations(userTable, ({ many }) => ({
+  learningProfiles: many(learningProfilesTable),
   answers: many(answersTable),
   sectionProgress: many(sectionProgressTable),
   sessions: many(sessionTable),
   accounts: many(accountTable),
 }));
+
+export const learningProfilesRelations = relations(
+  learningProfilesTable,
+  ({ one }) => ({
+    user: one(userTable, {
+      fields: [learningProfilesTable.userId],
+      references: [userTable.id],
+    }),
+  }),
+);
 
 export const sessionRelations = relations(sessionTable, ({ one }) => ({
   user: one(userTable, {

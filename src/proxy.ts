@@ -4,7 +4,13 @@ import { auth } from "@/lib/auth";
 
 const HOME = "/";
 
-const PUBLIC_ROUTES = ["/", "/programs/**", "/practice/**", "/account/**"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/onboarding",
+  "/programs/**",
+  "/practice/**",
+  "/account/**",
+];
 
 const GUEST_ONLY_ROUTES = ["/auth/**"];
 

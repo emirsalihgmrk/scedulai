@@ -5,6 +5,7 @@ async function reset() {
   await db.execute(sql`
     DROP TABLE IF EXISTS account CASCADE;
     DROP TABLE IF EXISTS channels CASCADE;
+    DROP TABLE IF EXISTS learning_profiles CASCADE;
     DROP TABLE IF EXISTS programs CASCADE;
     DROP TABLE IF EXISTS questions CASCADE;
     DROP TABLE IF EXISTS quizzes CASCADE;

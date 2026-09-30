@@ -21,12 +21,9 @@ import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
 import { upsertSectionProgress } from "@/dal/program/mutations";
 import { getCurrentUser } from "@/services/auth";
+import { getCurrentLearningProfileService } from "@/services/learning-profile";
 import { AppError } from "@/lib/errors";
-import {
-  getNativeLanguageEnglishName,
-  type SupportedNativeLanguageCode,
-  type SupportedTargetLanguageCode,
-} from "@/constants/language";
+import { getNativeLanguageEnglishName } from "@/constants/language";
 import { QUIZ_PASS_ACCURACY, type QuizStatus } from "@/constants/progress";
 import { db } from "@/db";
 import { Transaction } from "@/schemas/common";
@@ -34,15 +31,18 @@ import { cache } from "react";
 
 const QUESTION_COUNT = 5;
 
-function userLanguages(user: {
-  nativeLanguage?: string | null;
-  targetLanguage?: string | null;
-}) {
+// Quizzes are keyed per language pair: native language lives on the user,
+// target language on their learning profile.
+async function getLearnerLanguages() {
+  const [user, profile] = await Promise.all([
+    getCurrentUser(),
+    getCurrentLearningProfileService(),
+  ]);
+  if (!user || !profile) return null;
   return {
-    nativeLanguage: (user.nativeLanguage ??
-      "tr") as SupportedNativeLanguageCode,
-    targetLanguage: (user.targetLanguage ??
-      "en") as SupportedTargetLanguageCode,
+    user,
+    nativeLanguage: user.nativeLanguage,
+    targetLanguage: profile.targetLanguage,
   };
 }
 
@@ -62,13 +62,11 @@ export async function submitTranslationAnswerService(
   if (question.payload.type !== "translation")
     throw new AppError("Invalid question type");
 
-  const { nativeLanguage } = userLanguages(user);
-
   const analyzeInput = {
     sentence: question.payload.sourceSentence,
     originalSentence: question.payload.expectedTranslation ?? "",
     userTranslation: response.userTranslation,
-    nativeLanguage: getNativeLanguageEnglishName(nativeLanguage),
+    nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
   };
 
   const {
@@ -154,14 +152,13 @@ export async function retryQuizService(sectionId: string): Promise<void> {
 export const getQuizService = cache(async function getQuizService(
   sectionId: string,
 ): Promise<QuizWithQuestions | null> {
-  const user = await getCurrentUser();
-  if (!user) return null;
-  const { nativeLanguage, targetLanguage } = userLanguages(user);
+  const learner = await getLearnerLanguages();
+  if (!learner) return null;
   const quiz = await getQuiz(
     sectionId,
-    nativeLanguage,
-    targetLanguage,
-    user.id,
+    learner.nativeLanguage,
+    learner.targetLanguage,
+    learner.user.id,
   );
   return quiz ?? null;
 });
@@ -170,10 +167,16 @@ export async function createQuizService(
   sectionId: string,
   tx?: Transaction,
 ): Promise<string | null> {
-  const user = await getCurrentUser();
-  if (!user) return null;
-  const quizInput = userLanguages(user);
-  const result = await createQuiz(sectionId, quizInput, tx);
+  const learner = await getLearnerLanguages();
+  if (!learner) return null;
+  const result = await createQuiz(
+    sectionId,
+    {
+      nativeLanguage: learner.nativeLanguage,
+      targetLanguage: learner.targetLanguage,
+    },
+    tx,
+  );
   return result?.id ?? null;
 }
 
@@ -193,7 +196,6 @@ export async function generateQuizByAiService(
 ): Promise<QuizWithQuestions> {
   const user = await getCurrentUser();
   if (!user) throw new AppError("Unauthorized");
-  const { nativeLanguage } = userLanguages(user);
 
   const video = await getVideoService(sectionId);
   if (!video) throw new AppError("There is no video");
@@ -205,7 +207,7 @@ export async function generateQuizByAiService(
 
   const { sentences } = await generateSentences({
     transcript,
-    nativeLanguage: getNativeLanguageEnglishName(nativeLanguage),
+    nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
     count: QUESTION_COUNT,
   });
   return db.transaction(async (tx) => {

@@ -6,30 +6,23 @@ export const userSchema = userRowSchema.pick({
   name: true,
   email: true,
   nativeLanguage: true,
-  targetLanguage: true,
   plan: true,
   role: true,
 });
 export type User = z.infer<typeof userSchema>;
 
-export const signUpSchema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-  password: z
-    .string()
-    .min(8)
-    .regex(/[A-Z]/, "Must contain an uppercase letter")
-    .regex(/[a-z]/, "Must contain a lowercase letter")
-    .regex(/[0-9]/, "Must contain a number"),
-  nativeLanguage: createUserRowSchema.shape.nativeLanguage,
-  plan: createUserRowSchema.shape.plan,
-  rememberMe: z.boolean().optional().default(false),
+export const sendOtpSchema = z.object({
+  email: z.email("Enter a valid email address"),
 });
-export type SignUpInput = z.infer<typeof signUpSchema>;
+export type SendOtpInput = z.infer<typeof sendOtpSchema>;
 
-export const signInSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-  rememberMe: z.boolean().optional().default(false),
+export const verifyOtpSchema = sendOtpSchema.extend({
+  otp: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
 });
-export type SignInInput = z.infer<typeof signInSchema>;
+export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
+
+// better-auth owns `user` writes for identity; onboarding only touches these.
+export const updateUserSchema = createUserRowSchema
+  .pick({ name: true, nativeLanguage: true })
+  .partial();
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;

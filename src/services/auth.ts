@@ -13,7 +13,6 @@ export const getCurrentUser = cache(async () => {
       name: session.user.name,
       email: session.user.email,
       nativeLanguage: session.user.nativeLanguage,
-      targetLanguage: session.user.targetLanguage,
       plan: session.user.plan,
       role: session.user.role,
     });

@@ -78,7 +78,16 @@ Auth tables (`user`, `session`, `account`, `verification`) are owned by better-a
 `quizzes` → `questions` → `answers` on the exercise side. `section_progress` tracks per-user
 progress. Quizzes are keyed per user language pair, so questions can be generated on demand.
 
+`user.nativeLanguage` is a property of the person; everything about *what* they learn (target
+language, CEFR level, goal, daily minutes) lives in `learning_profiles`, one row per
+(user, target language). Having a profile **is** "onboarded" — there is no flag. Signed-in users
+without one are redirected to `/onboarding` by the `(app)` layout; guests never are.
+
+Auth is passwordless (email OTP). Onboarding (`/onboarding`) is also sign-up: its last step is
+email → code, then `completeOnboardingAction` writes the profile.
+
 ## Environment variables
 
 `DATABASE_URL`, `DIRECT_URL`, `BETTER_AUTH_SECRET`, `NEXT_PUBLIC_APP_URL`, `OPENROUTER_API_KEY`,
-`RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `YOUTUBE_API_KEY`.
+`RESEND_API_KEY`, `RESEND_FROM_EMAIL` (sign-in codes; in dev the code is also logged to the server
+console), `YOUTUBE_API_KEY`.

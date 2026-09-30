@@ -21,14 +21,14 @@ constants/ · schemas/column-types.ts  →  db/schema.ts · db/rows.ts  →  sch
 - **`db/rows.ts`** — Generated **raw** types and schemas only; no narrowing or business logic:
   - Raw row types via `$inferSelect`: `<Module>Row` (e.g. `QuizRow`).
   - Raw insert/update schemas via `drizzle-zod`: `create<Module>RowSchema` / `update<Module>RowSchema`.
-  - ⚠️ drizzle-zod only *types* `$type<>()` jsonb columns; at runtime it emits a generic JSON
+  - ⚠️ drizzle-zod only _types_ `$type<>()` jsonb columns; at runtime it emits a generic JSON
     validator. Every typed jsonb column **must** be refined with its real schema
     (`createInsertSchema(questionsTable, { payload: questionPayloadSchema })`).
 
 ### JSONB Column Shapes (`schemas/column-types.ts`)
 
 Every JSONB shape is defined **once**, as a Zod schema, in `schemas/column-types.ts` — the single
-exception to the one-file-per-module layout, because these shapes must sit *below* `db/schema.ts`.
+exception to the one-file-per-module layout, because these shapes must sit _below_ `db/schema.ts`.
 Everything else derives from them: `db/schema.ts` via `import type` + `$type<>()`, `db/rows.ts` via
 drizzle-zod refinement, and mutation schemas by aliasing/narrowing.
 
@@ -65,7 +65,7 @@ This is the public DTO contract. Upper layers (especially the UI) **never import
 
 - Raw `create<Module>RowSchema` / `update<Module>RowSchema` schemas are **narrowed** as needed with
   `.pick()` / `.omit()` / `.partial()`.
-  > This is *field narrowing*; do not confuse it with Zod's `.refine()` method (custom validation).
+  > This is _field narrowing_; do not confuse it with Zod's `.refine()` method (custom validation).
 - Narrowed schemas combine into the **widest** form of the operation for the DAL layer:
   ```ts
   // archiveDocumentSchema + publishDocumentSchema → updateDocumentSchema
@@ -181,23 +181,14 @@ Business logic and auth are enforced here. It calls the DAL; Pages/Actions call 
   - Error → `toActionFailure(error)` (`@/lib/action`)
   - The result is a standard `ActionResult<T>` object.
 
-### Exception: Auth (better-auth)
-
-Because better-auth is a thin wrapper, identity operations are an **exception** to these layer rules:
-
-- The `signUpUser` / `signInUser` / `signOutUser` actions may perform validation (`schema.parse`) and call
-  `auth.api.*` directly, without going through a separate service; a dedicated auth mutation service and
-  the `Action` suffix are not required.
-- `getCurrentUser` still lives in `services/auth.ts` and is used by other services as the auth boundary.
-
 ---
 
 ## Naming Quick Reference
 
-| Layer             | Query                         | Mutation                                    |
-| ----------------- | ----------------------------- | ------------------------------------------- |
-| `db/rows.ts`      | `QuizRow`                     | `createQuizRowSchema` / `updateQuizRowSchema` |
-| `schemas/`        | `QuizWithQuestions`           | `updateDocumentSchema` / `UpdateDocumentInput` |
-| `dal/`            | `getQuiz` → `… \| undefined`   | `createQuiz` → `… \| undefined`              |
-| `services/`       | `getQuizService` → `… \| null` | `publishDocumentService` → `… \| null`       |
-| `actions/`        | —                             | `submitAnswerAction` → `ActionResult<T>`     |
+| Layer        | Query                          | Mutation                                       |
+| ------------ | ------------------------------ | ---------------------------------------------- |
+| `db/rows.ts` | `QuizRow`                      | `createQuizRowSchema` / `updateQuizRowSchema`  |
+| `schemas/`   | `QuizWithQuestions`            | `updateDocumentSchema` / `UpdateDocumentInput` |
+| `dal/`       | `getQuiz` → `… \| undefined`   | `createQuiz` → `… \| undefined`                |
+| `services/`  | `getQuizService` → `… \| null` | `publishDocumentService` → `… \| null`         |
+| `actions/`   | —                              | `submitAnswerAction` → `ActionResult<T>`       |

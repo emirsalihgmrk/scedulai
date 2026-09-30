@@ -8,6 +8,7 @@ import {
   aiTracesTable,
   answersTable,
   channelsTable,
+  learningProfilesTable,
   programsTable,
   questionsTable,
   quizzesTable,
@@ -31,6 +32,11 @@ import {
 export type UserRow = typeof userTable.$inferSelect;
 export const userRowSchema = createSelectSchema(userTable);
 export const createUserRowSchema = createInsertSchema(userTable);
+
+export type LearningProfileRow = typeof learningProfilesTable.$inferSelect;
+export const createLearningProfileRowSchema = createInsertSchema(
+  learningProfilesTable,
+);
 
 export type SessionRow = typeof sessionTable.$inferSelect;
 
