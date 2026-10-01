@@ -1,14 +1,13 @@
 import type { z } from "zod";
 
-import {
-  createSectionProgressRowSchema
-  
-  
-  
-  
-  
+import { createSectionProgressRowSchema } from "@/db/rows";
+import type {
+  ChannelRow,
+  ProgramRow,
+  SectionProgressRow,
+  SectionRow,
+  VideoRow,
 } from "@/db/rows";
-import type {ChannelRow, ProgramRow, SectionProgressRow, SectionRow, VideoRow} from "@/db/rows";
 
 // ── Query types ──
 

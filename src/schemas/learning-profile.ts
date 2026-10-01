@@ -1,11 +1,8 @@
 import { z } from "zod";
 
 import { DAILY_MINUTES_OPTIONS } from "@/constants/learning";
-import {
-  createLearningProfileRowSchema
-  
-} from "@/db/rows";
-import type {LearningProfileRow} from "@/db/rows";
+import { createLearningProfileRowSchema } from "@/db/rows";
+import type { LearningProfileRow } from "@/db/rows";
 import { updateUserSchema } from "@/schemas/user";
 
 // ── Query types ──
@@ -17,8 +14,6 @@ export type LearningProfile = Pick<
 
 // ── DAL input schemas ──
 
-// `level` is nullable: "I don't know my level" leaves it null until the
-// placement test sets it.
 export const createLearningProfileSchema = createLearningProfileRowSchema
   .pick({ targetLanguage: true, level: true, levelSource: true, goal: true })
   .extend({
@@ -36,8 +31,6 @@ export type CreateLearningProfileInput = z.infer<
 
 // ── Service input schemas ──
 
-// Everything onboarding collects apart from the email/OTP account step.
-// `levelSource` is derived server-side from whether a level was picked.
 export const completeOnboardingSchema = createLearningProfileSchema
   .omit({ levelSource: true })
   .extend(
