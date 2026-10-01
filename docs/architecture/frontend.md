@@ -13,29 +13,41 @@ static.
 
 ## 1. Route anatomy
 
-Every route has exactly three tiers:
+Every route has exactly two tiers:
 
 ```
-page.tsx            routing      sync, no data, renders <PageView/>
-└ page-view.tsx     layout       sync, owns <main> and every Suspense boundary
-  └ <section>       data         async server component or client component with use()
+page.tsx            routing + layout   sync, never awaits, owns <main> and every Suspense boundary
+└ <section>         data               async server component or client component with use()
 ```
 
 ### `page.tsx`
 
-- **Synchronous**, with no data access and no markup of its own.
-- Renders only `<PageView />`. It passes `params` / `searchParams` down **as promises**; only the ones
-  the page uses.
+- **Synchronous and never awaits.** It owns the page's `<main>`, its layout grid, and the `Suspense`
+  boundary around every async section.
+- It passes `params` / `searchParams` down **as promises**; only the ones the page uses.
 - Typed with Next's generated route helper:
 
 ```tsx
 // app/(app)/programs/[programSlug]/page.tsx
-import PageView from "./_components/page-view";
-
 export default function Page({ params }: PageProps<"/programs/[programSlug]">) {
-  return <PageView params={params} />;
+  return (
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8">
+      <Suspense fallback={<ProgramHeroFallback />}>
+        <ProgramHero params={params} />
+      </Suspense>
+      <Suspense fallback={<SectionTimelineFallback />}>
+        <SectionTimeline params={params} />
+      </Suspense>
+    </main>
+  );
 }
 ```
+
+- **Initial data** a child needs is started here **without `await`** and passed down as a promise
+  (client child unwraps it with `use()`). Anything that must be resolved before rendering (a lookup
+  that can `notFound()`) belongs to a section; see "Page-wide blocking dependency" below.
+- Static markup that grows beyond a few lines is extracted into a regular component in `_components/`
+  (`login-intro.tsx`); `page.tsx` stays a composition.
 
 ### `layout.tsx`
 
@@ -62,27 +74,6 @@ export default function Layout({ children }: LayoutProps<"/">) {
 
 Unconditional redirects (`/` → `/programs`) live in `next.config.ts` → `redirects()`, never in a page.
 Conditional redirects are guards (above) or live in the section that owns the check.
-
-### `_components/page-view.tsx`
-
-- Every route has one. It is a **synchronous Server Component that never awaits**.
-- It owns the page's `<main>`, its layout grid, and the `Suspense` boundary around every async
-  section:
-
-```tsx
-export default function PageView({ params }: PageViewProps) {
-  return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8">
-      <Suspense fallback={<ProgramHeroFallback />}>
-        <ProgramHero params={params} />
-      </Suspense>
-      <Suspense fallback={<SectionTimelineFallback />}>
-        <SectionTimeline params={params} />
-      </Suspense>
-    </main>
-  );
-}
-```
 
 ---
 

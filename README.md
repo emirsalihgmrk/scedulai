@@ -95,7 +95,7 @@ See the convention docs before writing code:
 
 - [`docs/architecture/backend.md`](./docs/architecture/backend.md) — layer boundaries,
   naming, narrowed mutation schemas, return-type contracts.
-- [`docs/architecture/frontend.md`](./docs/architecture/frontend.md) — `page.tsx`/`page-view`
-  split, RSC/Client boundary, the preload pattern, `Suspense` rules.
+- [`docs/architecture/frontend.md`](./docs/architecture/frontend.md) — `page.tsx` → sections
+  anatomy, RSC/Client boundary, the preload pattern, `Suspense` rules.
 
 Detailed guidance for contributors (and Claude Code) lives in [`CLAUDE.md`](./CLAUDE.md).

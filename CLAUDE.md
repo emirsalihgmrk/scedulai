@@ -35,12 +35,12 @@ Every file follows written rules; read the relevant doc before writing code:
 - [`docs/architecture/backend.md`](./docs/architecture/backend.md): layers and modules, `db/`,
   schemas, DAL, services, actions, auth and the AI layer.
 - [`docs/architecture/frontend.md`](./docs/architecture/frontend.md): route anatomy
-  (`page.tsx` → `page-view.tsx` → sections), Suspense, data rules, component files and styling. The
+  (`page.tsx` → sections), Suspense, data rules, component files and styling. The
   design system itself is governed by the `ui-design` skill.
 
 ```
 src/
-  app/          # routes: page.tsx → _components/page-view.tsx → sections
+  app/          # routes: page.tsx → _components/ sections
   actions/      # server actions: one per mutation service
   services/     # module public API: auth, business rules, cached reads
   dal/          # raw Drizzle, per module: {queries,mutations}.ts

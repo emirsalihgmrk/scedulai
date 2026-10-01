@@ -1,5 +1,13 @@
-import PageView from "./_components/page-view";
+import { Suspense } from "react";
+
+import OnboardingFlow, { OnboardingFlowFallback } from "./_components/onboarding-flow";
 
 export default function Page() {
-  return <PageView />;
+  return (
+    <main className="mx-auto flex min-h-svh w-full max-w-lg flex-col px-6 py-8">
+      <Suspense fallback={<OnboardingFlowFallback />}>
+        <OnboardingFlow />
+      </Suspense>
+    </main>
+  );
 }
