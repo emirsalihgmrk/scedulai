@@ -20,7 +20,6 @@ export type ProgramListItem = Pick<
   | "title"
   | "shortDescription"
   | "thumbnailUrl"
-  | "difficulty"
   | "referenceUrl"
 >;
 
@@ -32,7 +31,6 @@ export type ProgramDetail = Pick<
   | "description"
   | "shortDescription"
   | "thumbnailUrl"
-  | "difficulty"
   | "referenceUrl"
 > & {
   channel: Pick<ChannelRow, "title" | "thumbnailUrl"> | null;
@@ -44,7 +42,10 @@ export type SectionProgress = Pick<
 >;
 
 export type SectionListItem = Pick<SectionRow, "id" | "title" | "order"> & {
-  video: Pick<VideoRow, "title" | "durationSeconds" | "thumbnailUrl"> | null;
+  video: Pick<
+    VideoRow,
+    "title" | "durationSeconds" | "thumbnailUrl" | "cefrLevel"
+  > | null;
   progress: SectionProgress | null;
 };
 

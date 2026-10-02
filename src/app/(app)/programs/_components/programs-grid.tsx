@@ -2,7 +2,6 @@ import { ArrowRight, ExternalLink, LibraryBig } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import DifficultyBadge from "@/components/shared/difficulty-badge";
 import EmptyState from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -43,14 +42,7 @@ interface ProgramCardProps {
 }
 
 function ProgramCard({ program }: ProgramCardProps) {
-  const {
-    slug,
-    title,
-    shortDescription,
-    thumbnailUrl,
-    difficulty,
-    referenceUrl,
-  } = program;
+  const { slug, title, shortDescription, thumbnailUrl, referenceUrl } = program;
 
   return (
     <Card className="group/program transition-shadow hover:ring-foreground/20">
@@ -63,12 +55,6 @@ function ProgramCard({ program }: ProgramCardProps) {
           sizes="(min-width: 1280px) 384px, (min-width: 640px) 50vw, 100vw"
           className="object-cover transition-transform duration-300 group-hover/program:scale-105"
         />
-        {difficulty && (
-          <DifficultyBadge
-            difficulty={difficulty}
-            className="absolute top-3 left-3"
-          />
-        )}
       </div>
 
       <CardContent className="flex flex-col gap-2">

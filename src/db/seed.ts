@@ -1,4 +1,4 @@
-import type { Difficulty } from "@/constants/difficulty";
+import type { CefrLevel } from "@/constants/learning";
 import { db } from "@/db";
 import {
   channelsTable,
@@ -19,7 +19,6 @@ const PROGRAMS_SEED: {
   channelHandle: string;
   title: string;
   slug: string;
-  difficulty: Difficulty;
   description: string;
   shortDescription: string;
   thumbnailUrl: string;
@@ -29,7 +28,6 @@ const PROGRAMS_SEED: {
     channelHandle: "@TED",
     title: "TED Talks",
     slug: "ted-talks",
-    difficulty: "intermediate",
     shortDescription:
       "Inspiring talks from the world's leading thinkers, scientists, and leaders. Sharpen your intermediate listening with diverse accents and rich, real-world vocabulary.",
     description:
@@ -42,7 +40,6 @@ const PROGRAMS_SEED: {
     channelHandle: "@TEDx",
     title: "TEDx Talks",
     slug: "tedx-talks",
-    difficulty: "advanced",
     shortDescription:
       "Independent, authentic stories from local communities around the world. Push past the language barrier with advanced terms, abstract ideas, and fluent delivery.",
     description:
@@ -55,7 +52,6 @@ const PROGRAMS_SEED: {
     channelHandle: "@TEDEd",
     title: "TED-Ed Talks",
     slug: "teded-talks",
-    difficulty: "intermediate",
     shortDescription:
       "Explore science and history through stunning animations and engaging stories. Reinforce your comprehension with clear, well-structured, and easy-to-follow narration.",
     description:
@@ -68,7 +64,6 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "6 Minute English",
     slug: "6-minutes-english",
-    difficulty: "beginner",
     shortDescription:
       "Everyday topics explored through entertaining 6-minute conversations. Learn the key vocabulary in context and get used to the natural British accent and rhythm.",
     description:
@@ -82,7 +77,6 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "Learning English From The News",
     slug: "learning-english-from-the-news",
-    difficulty: "beginner",
     shortDescription:
       "Build your skills by following the biggest headlines on the world agenda. Learn the vocabulary and phrases most common in media, while boosting your general knowledge.",
     description:
@@ -96,7 +90,6 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "Really Easy English",
     slug: "really-easy-english",
-    difficulty: "beginner",
     shortDescription:
       "Basic grammar and everyday phrases tailored for absolute beginners. Grasp the fundamentals through short, clear, step-by-step explanations that build real confidence.",
     description:
@@ -110,7 +103,6 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "The English We Speak",
     slug: "the-english-we-speak",
-    difficulty: "beginner",
     shortDescription:
       "Discover the idioms and slang native speakers use in daily life. Pick up the real, street-level English and popular expressions you won't find in textbooks.",
     description:
@@ -124,7 +116,6 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "Learning English For Work",
     slug: "learning-english-for-work",
-    difficulty: "beginner",
     shortDescription:
       "Practical English for the business world, interviews, and professional emails. Master phrases for running meetings, giving presentations, and writing with confidence.",
     description:
@@ -138,7 +129,6 @@ const PROGRAMS_SEED: {
     channelHandle: "@bbclearningenglish",
     title: "Alice in Wonderland",
     slug: "alice-in-wonderland",
-    difficulty: "intermediate",
     shortDescription:
       "Follow Alice through a curious world of riddles, wordplay, and surprising encounters. Build listening confidence with vivid storytelling and memorable English expressions.",
     description:
@@ -155,227 +145,272 @@ const VIDEOS_SEED: {
   youtubeId: string;
   programSlug: string;
   sectionTitle: string;
+  cefrLevel: CefrLevel;
 }[] = [
   {
     youtubeId: "6Af6b_wyiwI",
     programSlug: "ted-talks",
     sectionTitle: "Global Health & Pandemics",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "_QdPW8JrYzQ",
     programSlug: "ted-talks",
     sectionTitle: "Internet Humor & Spam Mail",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "eIho2S0ZahI",
     programSlug: "ted-talks",
     sectionTitle: "Powerful Speaking & Listening",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "DFjIi2hxxf0",
     programSlug: "ted-talks",
     sectionTitle: "Vocal Arts & Human Sound",
+    cefrLevel: "C1",
   },
   {
     youtubeId: "36m1o-tM05g",
     programSlug: "tedx-talks",
     sectionTitle: "Philosophy for a Happy Life",
+    cefrLevel: "C1",
   },
   {
     youtubeId: "LNHBMFCzznE",
     programSlug: "tedx-talks",
     sectionTitle: "Neuroplasticity & Brain Change",
+    cefrLevel: "C1",
   },
   {
     youtubeId: "5MgBikgcWnY",
     programSlug: "tedx-talks",
     sectionTitle: "Rapid Skill Acquisition (20 Hours)",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "F4Zu5ZZAG7I",
     programSlug: "tedx-talks",
     sectionTitle: "The Art of Conversation & Mingling",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "w-HYZv6HzAs",
     programSlug: "tedx-talks",
     sectionTitle: "Building Self-Confidence as a Skill",
+    cefrLevel: "C1",
   },
   {
     youtubeId: "xKxrkht7CpY",
     programSlug: "teded-talks",
     sectionTitle: "How Solar Energy Works",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "N5vJSNXPEwA",
     programSlug: "teded-talks",
     sectionTitle: "Logic Puzzles & Problem Solving",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "7SWvDHvWXok",
     programSlug: "teded-talks",
     sectionTitle: "Unsolved Mysteries of Science",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "z-IR48Mb3W0",
     programSlug: "teded-talks",
     sectionTitle: "Understanding Mental Health",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "Uj3_KqkI9Zo",
     programSlug: "teded-talks",
     sectionTitle: "Infinity & Mathematical Paradoxes",
+    cefrLevel: "C1",
   },
   {
     youtubeId: "xwseWCSXD3Y",
     programSlug: "6-minutes-english",
     sectionTitle: "Describing Smells & Senses",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "SC_opiKLohg",
     programSlug: "6-minutes-english",
     sectionTitle: "Autonomous Tech & Driving",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "D9jZMLm72a8",
     programSlug: "6-minutes-english",
     sectionTitle: "Household Chores & Equality",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "sv9DItmJvlI",
     programSlug: "6-minutes-english",
     sectionTitle: "Climate Science & Predictions",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "0XccoTXPu_c",
     programSlug: "6-minutes-english",
     sectionTitle: "Doping & Sports Ethics",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "zl0dwwKhmuM",
     programSlug: "learning-english-from-the-news",
     sectionTitle: "AI Security & Cyber Threats",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "8ip3fMwdhx0",
     programSlug: "learning-english-from-the-news",
     sectionTitle: "Social Media Regulation & Meta",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "K8Dwy0u5pp8",
     programSlug: "learning-english-from-the-news",
     sectionTitle: "Astronomy: The Solar Eclipse",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "MlHJCNLa__k",
     programSlug: "learning-english-from-the-news",
     sectionTitle: "Border Crises & Global Migration",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "zXz72SmVg2E",
     programSlug: "learning-english-from-the-news",
     sectionTitle: "Gaming Industry & Digital Media",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "BFJsSnEEGrI",
     programSlug: "really-easy-english",
     sectionTitle: "Coffee Culture & Phrasal Verbs",
+    cefrLevel: "A2",
   },
   {
     youtubeId: "qfQ61oYIbxY",
     programSlug: "really-easy-english",
     sectionTitle: "Moods, Feelings & Reactions",
+    cefrLevel: "A2",
   },
   {
     youtubeId: "ChYnYM0txRk",
     programSlug: "really-easy-english",
     sectionTitle: "Talking About Food & Spiciness",
+    cefrLevel: "A1",
   },
   {
     youtubeId: "bGxdYW_6rjQ",
     programSlug: "really-easy-english",
     sectionTitle: "Urban Living: Pros & Cons",
+    cefrLevel: "A2",
   },
   {
     youtubeId: "W_yFHgHafKM",
     programSlug: "really-easy-english",
     sectionTitle: "Family Tree & Relationships",
+    cefrLevel: "A1",
   },
   {
     youtubeId: "bwYEdYaXExw",
     programSlug: "the-english-we-speak",
     sectionTitle: "Body Part Idioms & Expressions",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "S2Dyi7qf4k4",
     programSlug: "the-english-we-speak",
     sectionTitle: "Essential Daily Phrasal Verbs",
+    cefrLevel: "A2",
   },
   {
     youtubeId: "HblUS4Ha1io",
     programSlug: "the-english-we-speak",
     sectionTitle: "Two-Word Expressions: Part 1",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "8D5Ag-TxErg",
     programSlug: "the-english-we-speak",
     sectionTitle: "Two-Word Expressions: Part 2",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "WHCsOQvDkeQ",
     programSlug: "the-english-we-speak",
     sectionTitle: "Core Everyday Idiomatic English",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "k188_aGDklQ",
     programSlug: "learning-english-for-work",
     sectionTitle: "Professional Email Etiquette",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "m2UD0-IC7iY",
     programSlug: "learning-english-for-work",
     sectionTitle: "Running Effective Meetings",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "7sDcsE_HsDw",
     programSlug: "learning-english-for-work",
     sectionTitle: "Following Up & Chasing People",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "umVkjRE73sE",
     programSlug: "learning-english-for-work",
     sectionTitle: "Phone Calls & Quick Messaging",
+    cefrLevel: "A2",
   },
   {
     youtubeId: "o295dPuPNGo",
     programSlug: "learning-english-for-work",
     sectionTitle: "Managing & Resolving Mistakes",
+    cefrLevel: "B2",
   },
   //
   {
     youtubeId: "yZxlx7FegBM",
     programSlug: "alice-in-wonderland",
     sectionTitle: "Entering Wonderland & Fantasy",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "_fpLGvoEiEg",
     programSlug: "alice-in-wonderland",
     sectionTitle: "Emotions, Crying & Body Size",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "svI_6zz9yPk",
     programSlug: "alice-in-wonderland",
     sectionTitle: "Absurd Logic & Playful Riddles",
+    cefrLevel: "B2",
   },
   {
     youtubeId: "_H-zhw0YJh4",
     programSlug: "alice-in-wonderland",
     sectionTitle: "Curiosity, Rooms & Transformations",
+    cefrLevel: "B1",
   },
   {
     youtubeId: "h9-23pAqouo",
     programSlug: "alice-in-wonderland",
     sectionTitle: "Identity, Wisdom & Dialogue",
+    cefrLevel: "B2",
   },
 ];
 
@@ -450,7 +485,6 @@ async function seed() {
         shortDescription: prog.shortDescription,
         channelId: channelDbIdBySlug.get(prog.channelHandle)!,
         thumbnailUrl: prog.thumbnailUrl,
-        difficulty: prog.difficulty,
         referenceUrl: prog.referenceUrl,
       })),
     )
@@ -472,7 +506,12 @@ async function seed() {
   let skipped = 0;
   let videoCount = 0;
 
-  for (const { youtubeId, programSlug, sectionTitle } of VIDEOS_SEED) {
+  for (const {
+    youtubeId,
+    programSlug,
+    sectionTitle,
+    cefrLevel,
+  } of VIDEOS_SEED) {
     const meta = metaById.get(youtubeId);
     if (!meta) {
       console.warn(`  ⵜ No metadata, skipping: ${youtubeId}`);
@@ -503,6 +542,7 @@ async function seed() {
         publishedAt: meta.publishedAt,
         durationSeconds: meta.durationSeconds,
         thumbnailUrl: meta.thumbnailUrl,
+        cefrLevel,
       })
       .returning({ id: videosTable.id });
 

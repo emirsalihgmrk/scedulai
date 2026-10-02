@@ -11,10 +11,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import DifficultyBadge from "@/components/shared/difficulty-badge";
+import CefrBadge from "@/components/shared/cefr-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { CEFR_LEVELS } from "@/constants/learning";
 import { formatDuration } from "@/lib/utils";
 import type { ProgramDetail } from "@/schemas/program";
 import { getProgramService, getSectionsService } from "@/services/program";
@@ -29,7 +30,7 @@ export default async function ProgramHero({ params }: ProgramHeroProps) {
   const { programSlug } = await params;
   const program = await getProgramService(programSlug);
   if (!program) notFound();
-  const { title, description, thumbnailUrl, difficulty } = program;
+  const { title, description, thumbnailUrl } = program;
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,12 +53,6 @@ export default async function ProgramHero({ params }: ProgramHeroProps) {
             sizes="(min-width: 768px) 320px, 100vw"
             className="object-cover"
           />
-          {difficulty && (
-            <DifficultyBadge
-              difficulty={difficulty}
-              className="absolute top-3 left-3"
-            />
-          )}
         </div>
 
         {/* Info */}
@@ -100,6 +95,19 @@ async function ProgramSectionsInfo({ program }: ProgramSectionsInfoProps) {
       ? Math.round((completedCount / sections.length) * 100)
       : 0;
 
+  // Derived from the (request-cached) sections instead of stored, so it can
+  // never drift from the video ratings. CEFR_LEVELS is ordered A1 → C2.
+  const levelIndexes = sections.flatMap(({ video }) =>
+    video?.cefrLevel ? [CEFR_LEVELS.indexOf(video.cefrLevel)] : [],
+  );
+  const levelRange =
+    levelIndexes.length > 0
+      ? {
+          min: CEFR_LEVELS[Math.min(...levelIndexes)],
+          max: CEFR_LEVELS[Math.max(...levelIndexes)],
+        }
+      : null;
+
   const currentId = getCurrentSectionId(sections);
   const resumeSection =
     sections.find((section) => section.id === currentId) ?? sections[0];
@@ -109,6 +117,7 @@ async function ProgramSectionsInfo({ program }: ProgramSectionsInfoProps) {
   return (
     <>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+        {levelRange && <CefrBadge min={levelRange.min} max={levelRange.max} />}
         <span className="inline-flex items-center gap-1.5">
           <ListChecks className="size-4" />
           {sections.length} sections
@@ -195,6 +204,7 @@ function ProgramSectionsInfoFallback() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-5">
+        <div className="h-5 w-12 animate-pulse rounded-full bg-muted" />
         <div className="h-4 w-20 animate-pulse rounded bg-muted" />
         <div className="h-4 w-24 animate-pulse rounded bg-muted" />
         <div className="h-4 w-28 animate-pulse rounded bg-muted" />

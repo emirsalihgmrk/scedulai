@@ -13,7 +13,6 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { AI_TASKS } from "@/constants/ai";
-import { DIFFICULTIES } from "@/constants/difficulty";
 import {
   SUPPORTED_NATIVE_LANGUAGE_CODES,
   SUPPORTED_TARGET_LANGUAGE_CODES,
@@ -44,7 +43,6 @@ const commonFields = {
 
 export const planEnum = pgEnum("plan", PLANS);
 export const roleEnum = pgEnum("role", ROLES);
-export const difficultyEnum = pgEnum("difficulty", DIFFICULTIES);
 export const questionTypeEnum = pgEnum("question_type", QUESTION_TYPES);
 export const questionDirectionEnum = pgEnum(
   "question_direction",
@@ -149,7 +147,6 @@ export const programsTable = pgTable("programs", {
     onDelete: "set null",
   }),
   thumbnailUrl: text("thumbnail_url").notNull(),
-  difficulty: difficultyEnum("difficulty"),
   referenceUrl: text("reference_url"),
 });
 
@@ -190,6 +187,9 @@ export const videosTable = pgTable("videos", {
   publishedAt: text("published_at").notNull(),
   durationSeconds: integer("duration_seconds").notNull(),
   thumbnailUrl: text("thumbnail_url").notNull(),
+  // A property of the video itself (null until rated), so it is shared by every
+  // section that uses the video.
+  cefrLevel: cefrLevelEnum("cefr_level"),
 });
 
 export const transcriptsTable = pgTable(

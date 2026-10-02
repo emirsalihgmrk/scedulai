@@ -18,7 +18,6 @@ export async function getPrograms(): Promise<ProgramListItem[]> {
       title: true,
       shortDescription: true,
       thumbnailUrl: true,
-      difficulty: true,
       referenceUrl: true,
     },
     orderBy: (programs, { asc }) => asc(programs.title),
@@ -37,7 +36,6 @@ export async function getProgram(
       description: true,
       shortDescription: true,
       thumbnailUrl: true,
-      difficulty: true,
       referenceUrl: true,
     },
     with: {
@@ -61,7 +59,12 @@ export async function getSections(
         orderBy: (sections, { asc }) => asc(sections.order),
         with: {
           video: {
-            columns: { title: true, durationSeconds: true, thumbnailUrl: true },
+            columns: {
+              title: true,
+              durationSeconds: true,
+              thumbnailUrl: true,
+              cefrLevel: true,
+            },
           },
           progress: {
             // "" never matches a better-auth user id → anonymous stays neutral.
