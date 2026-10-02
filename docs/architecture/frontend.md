@@ -89,12 +89,15 @@ A **section** is a visually distinct area of a page that loads its own data (`pr
   read outside a boundary. The same applies to client components that read request-bound hooks: the
   header wraps `NavTabs` (it uses `usePathname`) in Suspense with a static fallback.
 - **Page-wide blocking dependency:** when every section needs the result of one lookup (params →
-  section id, with `notFound()`), that lookup becomes **one async section**. It resolves the
-  dependency, starts its children's fetches, and renders them inside their own boundaries.
-  `section-workspace.tsx` is the reference:
+  section id, with `notFound()`), that lookup becomes **one async section**, `content.tsx`, next to
+  `page.tsx` (`Content` + `ContentFallback`). It resolves the dependency, starts its children's
+  fetches, and renders them inside their own boundaries. `page.tsx` wraps it in a single
+  `<Suspense fallback={<ContentFallback />}>`. Routes without such a dependency have no
+  `content.tsx`; their sections await `params` themselves.
+  `[sectionSlug]/content.tsx` is the reference:
 
 ```tsx
-export default async function SectionWorkspace({ params }: SectionWorkspaceProps) {
+export default async function Content({ params }: ContentProps) {
   const { programSlug, sectionSlug } = await params;
   const [user, section] = await Promise.all([             // parallel, never sequential
     getCurrentUserService(),
@@ -142,7 +145,7 @@ export default async function SectionWorkspace({ params }: SectionWorkspaceProps
   - `<Name>` is the file name in PascalCase: `program-hero.tsx` → `ProgramHero`.
   - A folder entry `index.tsx` is named after its folder: `quiz-card/index.tsx` → `QuizCard`.
   - Special files are named after their role: `page.tsx` → `Page`, `layout.tsx` → `Layout`,
-    `error.tsx` → `ErrorBoundary`.
+    `content.tsx` → `Content`, `error.tsx` → `ErrorBoundary`.
 - **A section's fallback** is a named export `<Name>Fallback` in the same entry file. It is the only
   other export allowed:
 

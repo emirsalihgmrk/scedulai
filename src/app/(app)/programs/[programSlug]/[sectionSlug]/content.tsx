@@ -6,10 +6,10 @@ import { getSectionByOrderService } from "@/services/program";
 import { getQuizService } from "@/services/quiz";
 import { getTranscriptService, getVideoService } from "@/services/video";
 
-import { PlayerProvider } from "./player-context";
-import QuizCard, { QuizCardFallback } from "./quiz-card";
-import TranscriptCard, { TranscriptCardFallback } from "./transcript-card";
-import VideoSection, { VideoSectionFallback } from "./video-section";
+import { PlayerProvider } from "./_components/player-context";
+import QuizCard, { QuizCardFallback } from "./_components/quiz-card";
+import TranscriptCard, { TranscriptCardFallback } from "./_components/transcript-card";
+import VideoSection, { VideoSectionFallback } from "./_components/video-section";
 
 // Section slugs look like "section-3"; the number is the section's order.
 function parseSectionOrder(sectionSlug: string): number | null {
@@ -17,15 +17,15 @@ function parseSectionOrder(sectionSlug: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
-interface SectionWorkspaceProps {
+interface ContentProps {
   params: Promise<{ programSlug: string; sectionSlug: string }>;
 }
 
 // Every panel needs the section id, so this resolves it once (the page-wide
 // blocking lookup) and streams the panels in their own Suspense boundaries.
-export default async function SectionWorkspace({
+export default async function Content({
   params,
-}: SectionWorkspaceProps) {
+}: ContentProps) {
   const { programSlug, sectionSlug } = await params;
   const order = parseSectionOrder(sectionSlug);
   if (order === null) notFound();
@@ -69,7 +69,7 @@ export default async function SectionWorkspace({
   );
 }
 
-export function SectionWorkspaceFallback() {
+export function ContentFallback() {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_minmax(0,1fr)] xl:gap-8">
       <section
