@@ -8,10 +8,13 @@ import { getTranscriptService, getVideoService } from "@/services/video";
 
 import { PlayerProvider } from "./_components/player-context";
 import QuizCard, { QuizCardFallback } from "./_components/quiz-card";
-import TranscriptCard, { TranscriptCardFallback } from "./_components/transcript-card";
-import VideoSection, { VideoSectionFallback } from "./_components/video-section";
+import TranscriptCard, {
+  TranscriptCardFallback,
+} from "./_components/transcript-card";
+import VideoSection, {
+  VideoSectionFallback,
+} from "./_components/video-section";
 
-// Section slugs look like "section-3"; the number is the section's order.
 function parseSectionOrder(sectionSlug: string): number | null {
   const match = /^section-(\d+)$/.exec(sectionSlug);
   return match ? Number(match[1]) : null;
@@ -21,11 +24,7 @@ interface ContentProps {
   params: Promise<{ programSlug: string; sectionSlug: string }>;
 }
 
-// Every panel needs the section id, so this resolves it once (the page-wide
-// blocking lookup) and streams the panels in their own Suspense boundaries.
-export default async function Content({
-  params,
-}: ContentProps) {
+export default async function Content({ params }: ContentProps) {
   const { programSlug, sectionSlug } = await params;
   const order = parseSectionOrder(sectionSlug);
   if (order === null) notFound();
