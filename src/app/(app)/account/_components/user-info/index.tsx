@@ -5,7 +5,7 @@ import { getCurrentUserService } from "@/services/auth";
 
 import SignOutButton from "./sign-out-button";
 
-export default async function AccountPanel() {
+export default async function UserInfo() {
   const user = await getCurrentUserService();
 
   if (!user) {
@@ -38,7 +38,7 @@ export default async function AccountPanel() {
   );
 }
 
-export function AccountPanelFallback() {
+export function UserInfoFallback() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
