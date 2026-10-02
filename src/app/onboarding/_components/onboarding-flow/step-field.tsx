@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 
 import ChoiceList from "./choice-list";
 import { DAILY_MINUTES_LABELS, GOAL_OPTIONS, LEVEL_OPTIONS } from "./options";
+import PlacementTest from "./placement-test";
 import type { Draft, StepId } from "./steps";
 
 interface StepFieldProps {
@@ -87,6 +88,16 @@ export default function StepField({
           value={draft.level}
           onValueChange={(value) => onDraftChange({ level: value })}
           options={LEVEL_OPTIONS}
+        />
+      )}
+
+      {step === "placement" && (
+        <PlacementTest
+          targetLanguage={draft.targetLanguage}
+          answers={draft.placementAnswers}
+          onAnswersChange={(placementAnswers) =>
+            onDraftChange({ placementAnswers })
+          }
         />
       )}
 

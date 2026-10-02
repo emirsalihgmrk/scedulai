@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SUPPORTED_TARGET_LANGUAGES } from "@/constants/language";
+import { PLACEMENT_QUESTIONS } from "@/constants/placement";
 import { cn } from "@/lib/utils";
 
 import StepField from "./step-field";
@@ -28,18 +29,19 @@ interface WizardProps {
 }
 
 export default function Wizard({ viewer }: WizardProps) {
-  const steps = buildSteps(viewer);
   const [stepIndex, setStepIndex] = useState(0);
   const [draft, setDraft] = useState<Draft>({
     nativeLanguage: viewer?.nativeLanguage,
     targetLanguage: SUPPORTED_TARGET_LANGUAGES[0].code,
     level: undefined,
+    placementAnswers: {},
     goal: undefined,
     dailyMinutes: undefined,
     name: viewer?.name ?? "",
   });
   const [isFinishing, setIsFinishing] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
+  const steps = buildSteps(viewer, draft);
 
   const step = steps[stepIndex];
   const copy = STEP_COPY[step];
@@ -51,6 +53,9 @@ export default function Wizard({ viewer }: WizardProps) {
     nativeLanguage: !!draft.nativeLanguage,
     targetLanguage: !!draft.targetLanguage,
     level: !!draft.level,
+    placement:
+      Object.keys(draft.placementAnswers).length ===
+      PLACEMENT_QUESTIONS[draft.targetLanguage].length,
     goal: !!draft.goal,
     dailyMinutes: !!draft.dailyMinutes,
     name: draft.name.trim().length > 0,

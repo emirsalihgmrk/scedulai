@@ -12,6 +12,7 @@ export type StepId =
   | "nativeLanguage"
   | "targetLanguage"
   | "level"
+  | "placement"
   | "goal"
   | "dailyMinutes"
   | "name"
@@ -21,6 +22,8 @@ export interface Draft {
   nativeLanguage: SupportedNativeLanguageCode | undefined;
   targetLanguage: SupportedTargetLanguageCode;
   level: string | undefined;
+  // questionId → chosen option index; null = "I don't know".
+  placementAnswers: Record<string, number | null>;
   goal: LearningGoal | undefined;
   dailyMinutes: DailyMinutes | undefined;
   name: string;
@@ -44,6 +47,10 @@ export const STEP_COPY: Record<StepId, { title: string; description: string }> =
     title: "How would you rate your level?",
     description: "A rough guess is fine — we'll adjust as you go.",
   },
+  placement: {
+    title: "Quick level check",
+    description: "Pick the best answer. Not sure? Skip it — that's useful too.",
+  },
   goal: {
     title: "What are you learning for?",
     description: "We'll pick videos and practice around it.",
@@ -62,10 +69,15 @@ export const STEP_COPY: Record<StepId, { title: string; description: string }> =
   },
 };
 
-export function buildSteps(viewer: OnboardingViewer | null): StepId[] {
+export function buildSteps(
+  viewer: OnboardingViewer | null,
+  draft: Draft,
+): StepId[] {
   const steps: StepId[] = ["nativeLanguage"];
   if (SUPPORTED_TARGET_LANGUAGES.length > 1) steps.push("targetLanguage");
-  steps.push("level", "goal", "dailyMinutes");
+  steps.push("level");
+  if (draft.level === UNSURE_LEVEL) steps.push("placement");
+  steps.push("goal", "dailyMinutes");
   if (!viewer?.name) steps.push("name");
   if (!viewer) steps.push("account");
   return steps;
@@ -75,11 +87,17 @@ export function toInput(draft: Draft): CompleteOnboardingInput | null {
   const { nativeLanguage, level, goal, dailyMinutes } = draft;
   const name = draft.name.trim();
   if (!nativeLanguage || !level || !goal || !dailyMinutes || !name) return null;
+  const isUnsure = level === UNSURE_LEVEL;
   return {
     name,
     nativeLanguage,
     targetLanguage: draft.targetLanguage,
-    level: level === UNSURE_LEVEL ? null : (level as CompleteOnboardingInput["level"]),
+    level: isUnsure ? null : (level as CompleteOnboardingInput["level"]),
+    placementAnswers: isUnsure
+      ? Object.entries(draft.placementAnswers).map(
+          ([questionId, optionIndex]) => ({ questionId, optionIndex }),
+        )
+      : undefined,
     goal,
     dailyMinutes,
   };
