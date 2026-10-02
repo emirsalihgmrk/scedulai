@@ -5,12 +5,11 @@ import { getLearningProfile } from "@/dal/learning-profile/queries";
 import { updateUser } from "@/dal/user/mutations";
 import { db } from "@/db";
 import { AppError } from "@/lib/errors";
-import {
-  completeOnboardingSchema
-  
-  
+import { completeOnboardingSchema } from "@/schemas/learning-profile";
+import type {
+  CompleteOnboardingInput,
+  LearningProfile,
 } from "@/schemas/learning-profile";
-import type {CompleteOnboardingInput, LearningProfile} from "@/schemas/learning-profile";
 import { getCurrentUserService } from "@/services/auth";
 
 export const getLearningProfileService = cache(
@@ -22,8 +21,6 @@ export const getLearningProfileService = cache(
   },
 );
 
-// Idempotent: a returning user who walks through onboarding again (e.g. after
-// their session expired) keeps their existing profile untouched.
 export async function completeOnboardingService(
   input: CompleteOnboardingInput,
 ): Promise<void> {
