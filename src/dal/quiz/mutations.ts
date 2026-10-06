@@ -63,7 +63,7 @@ export async function upsertAnswer(
     })
     .returning({
       result: answersTable.result,
-      accuracy: answersTable.accuracy,
+      isCorrect: answersTable.isCorrect,
     });
   return row;
 }

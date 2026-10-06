@@ -1,6 +1,7 @@
 import {
   ChevronRight,
   CircleCheck,
+  CircleX,
   Gauge,
   Loader2,
   RotateCcw,
@@ -9,13 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { QUIZ_PASS_ACCURACY  } from "@/constants/progress";
+import { QUIZ_PASS_RATIO } from "@/constants/progress";
 import type {QuizStatus} from "@/constants/progress";
 import { cn } from "@/lib/utils";
 import type { QuestionWithAnswer } from "@/schemas/quiz";
 
 import { getQuestionPreview } from "./question-types/question-preview";
-import { getAccuracyClasses } from "./utils";
 
 interface OverviewStepProps {
   questions: QuestionWithAnswer[];
@@ -43,14 +43,9 @@ export default function OverviewStep({
   const isFailed = status === "failed";
   const isInProgress = !isPassed && !isFailed && answered > 0;
 
-  const gradedQuestions = questions.filter((q) => q.answer !== null);
-  const avgAccuracy =
-    gradedQuestions.length > 0
-      ? Math.round(
-          gradedQuestions.reduce((sum, q) => sum + q.answer!.accuracy, 0) /
-            gradedQuestions.length,
-        )
-      : null;
+  const passMark = Math.ceil(total * QUIZ_PASS_RATIO);
+  const correct = questions.filter((q) => q.answer?.isCorrect).length;
+  const isOnTrack = answered > 0 && correct / answered >= QUIZ_PASS_RATIO;
 
   return (
     <>
@@ -78,7 +73,7 @@ export default function OverviewStep({
             </span>
           )}
           <span className="text-[11px] font-medium text-muted-foreground">
-            Pass mark {QUIZ_PASS_ACCURACY}%
+            Pass mark {passMark} / {total}
           </span>
         </div>
       </CardHeader>
@@ -97,16 +92,18 @@ export default function OverviewStep({
           />
         </div>
 
-        {avgAccuracy !== null && (
+        {answered > 0 && (
           <div
             className={cn(
               "flex items-center justify-between rounded-xl px-4 py-3",
-              getAccuracyClasses(avgAccuracy),
+              isOnTrack
+                ? "bg-success/12 text-success"
+                : "bg-warning/12 text-warning-foreground",
             )}
           >
-            <span className="text-sm font-medium">Avg. accuracy</span>
+            <span className="text-sm font-medium">Correct answers</span>
             <span className="font-display text-lg font-bold tabular-nums">
-              {avgAccuracy}%
+              {correct} / {answered}
             </span>
           </div>
         )}
@@ -118,7 +115,7 @@ export default function OverviewStep({
             </p>
             <ul className="flex flex-col gap-1.5">
               {questions.map((q, i) => {
-                const isGraded = q.answer !== null;
+                const { answer } = q;
                 return (
                   <li key={q.id}>
                     <button
@@ -132,16 +129,18 @@ export default function OverviewStep({
                       <span className="min-w-0 flex-1 text-[13px] leading-snug text-foreground/80">
                         {getQuestionPreview(q.payload)}
                       </span>
-                      {isGraded && (
-                        <span
-                          className={cn(
-                            "shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-bold tabular-nums",
-                            getAccuracyClasses(q.answer!.accuracy),
-                          )}
-                        >
-                          {q.answer!.accuracy}%
-                        </span>
-                      )}
+                      {answer &&
+                        (answer.isCorrect ? (
+                          <CircleCheck
+                            aria-label="Correct"
+                            className="mt-0.5 size-4 shrink-0 text-success"
+                          />
+                        ) : (
+                          <CircleX
+                            aria-label="Incorrect"
+                            className="mt-0.5 size-4 shrink-0 text-destructive"
+                          />
+                        ))}
                     </button>
                   </li>
                 );

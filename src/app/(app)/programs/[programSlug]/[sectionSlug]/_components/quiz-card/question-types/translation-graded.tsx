@@ -18,23 +18,34 @@ import type {
   TranslationResult,
 } from "@/schemas/quiz";
 
-import { getAccuracyClasses } from "../utils";
 import TranslationPrompt from "./translation-prompt";
 
 interface TranslationGradedProps {
   question: QuestionWithAnswer;
   payload: TranslationPayload;
   result: TranslationResult;
-  accuracy: number;
 }
+
+const MEANING_BADGE: Record<
+  TranslationResult["analysis"]["meaningPreserved"],
+  { label: string; className: string }
+> = {
+  yes: { label: "Meaning preserved", className: "bg-success/12 text-success" },
+  partial: {
+    label: "Partially preserved",
+    className: "bg-warning/12 text-warning-foreground",
+  },
+  no: { label: "Meaning lost", className: "bg-destructive/10 text-destructive" },
+};
 
 export default function TranslationGraded({
   payload,
   result,
-  accuracy,
 }: TranslationGradedProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const userTranslation = result.response.userTranslation;
+  const meaning = MEANING_BADGE[result.analysis.meaningPreserved];
+  const mistakeCount = result.analysis.mistakes.length;
 
   return (
     <div className="relative min-h-0 flex-1 perspective-distant">
@@ -44,7 +55,7 @@ export default function TranslationGraded({
           isFlipped && "transform-[rotateY(180deg)]",
         )}
       >
-        {/* Front — kept question + answer + accuracy */}
+        {/* Front — kept question + answer + verdict */}
         <div className="absolute inset-0 flex flex-col gap-4 overflow-y-auto px-5 backface-hidden sm:px-6">
           <TranslationPrompt payload={payload} />
 
@@ -60,15 +71,17 @@ export default function TranslationGraded({
             </div>
             <span
               className={cn(
-                "flex shrink-0 flex-col items-center rounded-xl px-3 py-2",
-                getAccuracyClasses(accuracy),
+                "flex shrink-0 flex-col items-center rounded-xl px-3 py-2 text-center",
+                meaning.className,
               )}
             >
-              <span className="font-display text-lg font-bold leading-none">
-                {accuracy}%
+              <span className="text-xs font-bold leading-tight">
+                {meaning.label}
               </span>
               <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                Accuracy
+                {mistakeCount === 0
+                  ? "No mistakes"
+                  : `${mistakeCount} ${mistakeCount === 1 ? "mistake" : "mistakes"}`}
               </span>
             </span>
           </div>
@@ -103,11 +116,11 @@ export default function TranslationGraded({
             </div>
             <span
               className={cn(
-                "rounded-lg px-2.5 py-1 font-display text-sm font-bold",
-                getAccuracyClasses(accuracy),
+                "rounded-lg px-2.5 py-1 text-xs font-bold",
+                meaning.className,
               )}
             >
-              {accuracy}%
+              {meaning.label}
             </span>
           </div>
 

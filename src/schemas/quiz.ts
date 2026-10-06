@@ -45,7 +45,7 @@ export type {
 
 export type Question = Omit<QuestionRow, "createdAt" | "updatedAt">;
 
-export type Answer = Pick<AnswerRow, "result" | "accuracy">;
+export type Answer = Pick<AnswerRow, "result" | "isCorrect">;
 
 export type QuestionWithAnswer = Question & {
   answer: Answer | null;
@@ -72,7 +72,7 @@ export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 
 export const upsertAnswerSchema = createAnswerRowSchema.pick({
   result: true,
-  accuracy: true,
+  isCorrect: true,
 });
 export type UpsertAnswerInput = z.infer<typeof upsertAnswerSchema>;
 

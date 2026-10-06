@@ -40,7 +40,7 @@ async function main() {
 
   for (const [i, c] of cases.entries()) {
     const input: EvalCase = c;
-    const { output, accuracy } = await analyzeSentence({
+    const { output } = await analyzeSentence({
       sentence: input.sentence,
       originalSentence: input.originalSentence,
       userTranslation: input.userTranslation,
@@ -58,7 +58,7 @@ async function main() {
 
     const tag = ok ? "PASS" : "FAIL";
     const detail = ok ? "" : `  <- ${reasons.join("; ")}`;
-    const rubric = `meaning=${output.meaningPreserved} m=${output.mistakes.length} acc=${accuracy}`;
+    const rubric = `meaning=${output.meaningPreserved} m=${output.mistakes.length}`;
     console.log(
       `[${String(i + 1).padStart(2)}/${cases.length}] ${tag}  ${c.category} — ${c.note} (${rubric})${detail}`,
     );

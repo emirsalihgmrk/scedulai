@@ -30,7 +30,7 @@ export async function getQuiz(
             where: (answers, { eq }) => eq(answers.userId, userId),
             columns: {
               result: true,
-              accuracy: true,
+              isCorrect: true,
             },
           },
         },

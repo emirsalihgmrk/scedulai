@@ -4,7 +4,7 @@ import { cache } from "react";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getNativeLanguageEnglishName } from "@/constants/language";
-import { QUIZ_PASS_ACCURACY  } from "@/constants/progress";
+import { QUIZ_PASS_RATIO } from "@/constants/progress";
 import type {QuizStatus} from "@/constants/progress";
 import { createAiTrace } from "@/dal/ai/mutations";
 import { upsertSectionProgress } from "@/dal/program/mutations";
@@ -144,17 +144,17 @@ export async function submitTranslationAnswerService(
 
   const {
     output: analysis,
-    accuracy,
     model,
     promptVersion,
     latencyMs,
     usage,
   } = await analyzeSentence(analyzeInput);
-  const roundedAccuracy = Math.round(accuracy);
 
+  // Correct only when the meaning is fully kept and the form is flawless.
   const answer = await upsertAnswer(user.id, questionId, {
     result: { type: "translation", response, analysis },
-    accuracy: roundedAccuracy,
+    isCorrect:
+      analysis.meaningPreserved === "yes" && analysis.mistakes.length === 0,
   });
 
   // Tracing must never fail or slow down the learner's request.
@@ -166,7 +166,7 @@ export async function submitTranslationAnswerService(
         promptVersion,
         input: analyzeInput,
         output: analysis,
-        metadata: { questionId, accuracy: roundedAccuracy },
+        metadata: { questionId },
         latencyMs,
         inputTokens: usage.inputTokens ?? null,
         outputTokens: usage.outputTokens ?? null,
@@ -211,13 +211,9 @@ export async function submitFillInTheBlankAnswerService(
     (answer, i) =>
       normalizeBlankAnswer(answer) === normalizeBlankAnswer(response.answers[i]),
   );
-  const accuracy = Math.round(
-    (blankResults.filter(Boolean).length / expected.length) * 100,
-  );
-
   const answer = await upsertAnswer(user.id, questionId, {
     result: { type: "fill-in-the-blank", response, analysis: { blankResults } },
-    accuracy,
+    isCorrect: blankResults.every(Boolean),
   });
 
   return { ...question, answer };
@@ -240,11 +236,9 @@ export async function evaluateQuizService(
     return null;
   }
 
-  const avgAccuracy = Math.round(
-    answers.reduce((sum, answer) => sum + answer.accuracy, 0) / answers.length,
-  );
+  const correctCount = answers.filter((answer) => answer.isCorrect).length;
   const quizStatus: QuizStatus =
-    avgAccuracy >= QUIZ_PASS_ACCURACY ? "passed" : "failed";
+    correctCount / answers.length >= QUIZ_PASS_RATIO ? "passed" : "failed";
 
   await upsertSectionProgress(user.id, sectionId, { quizStatus });
   return quizStatus;
