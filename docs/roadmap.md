@@ -53,7 +53,7 @@ verisine göre yeniden belirlenmeli (ör. kullanıcılar kendi videolarını ço
 
 - [x] **Onboarding:** ana dil, hedef dil, seviye, hedef (iş / seyahat / sınav / eğlence), günlük süre · _~1 hafta_
 - [x] **Kısa seviye testi** → tahmini CEFR seviyesi · _1–1,5 hafta_ (soru havuzu + puanlama mantığı asıl iş)
-- [ ] **Bölümlere CEFR etiketi** (konuşma hızı + kelime sıklığıyla otomatik) → "Senin seviyene uygun videolar" · _0,5–1 hafta_
+- [x] **Bölümlere CEFR etiketi** (konuşma hızı + kelime sıklığıyla otomatik) → "Senin seviyene uygun videolar" · _0,5–1 hafta_
 - [ ] **Kayıtsız demo:** landing'de tek cümle çevir → AI geri bildirimini gör → kayıt ol · _~0,5 hafta_ (kötüye kullanım limiti dahil)
 
 ## Faz 2 — Hafıza döngüsü (ürünün kalbi) · _5–7 hafta_
