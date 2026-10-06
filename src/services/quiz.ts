@@ -18,13 +18,16 @@ import { getQuestion, getQuiz } from "@/dal/quiz/queries";
 import { db } from "@/db";
 import { AppError } from "@/lib/errors";
 import {
-  submitTranslationAnswerSchema
-  
-  
-  
-  
+  submitFillInTheBlankAnswerSchema,
+  submitTranslationAnswerSchema,
 } from "@/schemas/quiz";
-import type {Question, QuestionWithAnswer, QuizWithQuestions, SubmitTranslationAnswerInput} from "@/schemas/quiz";
+import type {
+  Question,
+  QuestionWithAnswer,
+  QuizWithQuestions,
+  SubmitFillInTheBlankAnswerInput,
+  SubmitTranslationAnswerInput,
+} from "@/schemas/quiz";
 import { getCurrentUserService } from "@/services/auth";
 import { getLearningProfileService } from "@/services/learning-profile";
 import { getTranscriptService, getVideoService } from "@/services/video";
@@ -171,6 +174,50 @@ export async function submitTranslationAnswerService(
     } catch (err) {
       console.error("Failed to write AI trace", err);
     }
+  });
+
+  return { ...question, answer };
+}
+
+// Blanks are graded deterministically; case and surrounding whitespace don't
+// count as mistakes.
+function normalizeBlankAnswer(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export async function submitFillInTheBlankAnswerService(
+  questionId: string,
+  input: SubmitFillInTheBlankAnswerInput,
+): Promise<QuestionWithAnswer> {
+  const user = await getCurrentUserService();
+  if (!user) throw new AppError("Unauthorized");
+
+  const response = submitFillInTheBlankAnswerSchema.parse(input);
+
+  const question = await getQuestionService(questionId);
+  if (!question) throw new AppError("Not found");
+  if (question.payload.type !== "fill-in-the-blank") {
+    throw new AppError("Invalid question type");
+  }
+
+  const expected = question.payload.segments.flatMap((segment) =>
+    segment.kind === "blank" ? [segment.answer] : [],
+  );
+  if (expected.length === 0 || response.answers.length !== expected.length) {
+    throw new AppError("Invalid answers");
+  }
+
+  const blankResults = expected.map(
+    (answer, i) =>
+      normalizeBlankAnswer(answer) === normalizeBlankAnswer(response.answers[i]),
+  );
+  const accuracy = Math.round(
+    (blankResults.filter(Boolean).length / expected.length) * 100,
+  );
+
+  const answer = await upsertAnswer(user.id, questionId, {
+    result: { type: "fill-in-the-blank", response, analysis: { blankResults } },
+    accuracy,
   });
 
   return { ...question, answer };
