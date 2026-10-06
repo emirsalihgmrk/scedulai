@@ -22,7 +22,7 @@ error **(lint)**:
 | -------------------------- | ------------------------------------------------------------------- |
 | `constants/`               | other constants                                                     |
 | `schemas/column-types.ts`  | `zod`, constants                                                    |
-| `db/`                      | constants, `column-types`, `lib/` (seed scripts only)               |
+| `db/`                      | constants, `column-types`, `lib/` and `ai/tasks` (seed script only) |
 | `schemas/`                 | `db/rows`, other schemas, constants                                 |
 | `dal/`                     | `db`, schemas, constants                                            |
 | `ai/`                      | schemas, constants                                                  |

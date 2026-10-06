@@ -1,3 +1,7 @@
+import { eq, inArray } from "drizzle-orm";
+
+import { generateQuiz } from "@/ai/tasks/generate-quiz";
+import { SUPPORTED_NATIVE_LANGUAGES } from "@/constants/language";
 import type { CefrLevel } from "@/constants/learning";
 import { db } from "@/db";
 import {
@@ -15,6 +19,10 @@ import {
   getVideoDetails,
 } from "@/lib/youtube";
 
+// Dev-only seed. It owns exactly the programs listed in PROGRAMS_SEED: re-running
+// replaces those programs (and their videos, quizzes and learner answers) and
+// never touches any other program or channel already in the database.
+
 const PROGRAMS_SEED: {
   channelHandle: string;
   title: string;
@@ -24,68 +32,6 @@ const PROGRAMS_SEED: {
   thumbnailUrl: string;
   referenceUrl: string;
 }[] = [
-  {
-    channelHandle: "@TED",
-    title: "TED Talks",
-    slug: "ted-talks",
-    shortDescription:
-      "Inspiring talks from the world's leading thinkers, scientists, and leaders. Sharpen your intermediate listening with diverse accents and rich, real-world vocabulary.",
-    description:
-      "Discover inspiring talks from the world's leading thinkers, scientists, and leaders.\nImprove your intermediate listening skills with diverse accents and rich vocabulary.\nPractice English through talks on global ideas, technology, psychology, and culture.",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&q=80&auto=format&fit=crop",
-    referenceUrl: "https://www.youtube.com/@TED",
-  },
-  {
-    channelHandle: "@TEDx",
-    title: "TEDx Talks",
-    slug: "tedx-talks",
-    shortDescription:
-      "Independent, authentic stories from local communities around the world. Push past the language barrier with advanced terms, abstract ideas, and fluent delivery.",
-    description:
-      "Listen to independent, authentic, and eye-opening stories from local communities.\nOvercome the language barrier with advanced academic terms, abstract concepts, and fluent delivery.\nStrengthen your comprehension and discussion skills by following innovative projects in various fields.",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&q=80&auto=format&fit=crop",
-    referenceUrl: "https://www.youtube.com/@TEDx",
-  },
-  {
-    channelHandle: "@TEDEd",
-    title: "TED-Ed Talks",
-    slug: "teded-talks",
-    shortDescription:
-      "Explore science and history through stunning animations and engaging stories. Reinforce your comprehension with clear, well-structured, and easy-to-follow narration.",
-    description:
-      "Explore science and history accompanied by stunning animations and engaging stories.\nReinforce your listening comprehension with clear, understandable, and well-structured narratives.\nEnrich your vocabulary through intriguing philosophical and scientific questions.",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=800&q=80&auto=format&fit=crop",
-    referenceUrl: "https://www.youtube.com/@TEDEd",
-  },
-  {
-    channelHandle: "@bbclearningenglish",
-    title: "6 Minute English",
-    slug: "6-minutes-english",
-    shortDescription:
-      "Everyday topics explored through entertaining 6-minute conversations. Learn the key vocabulary in context and get used to the natural British accent and rhythm.",
-    description:
-      "Explore current everyday topics through entertaining 6-minute conversations.\nPractically learn the key vocabulary and example usages presented in each episode.\nEasily get accustomed to the British accent and rhythm thanks to the natural dialogues of BBC presenters.",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80&auto=format&fit=crop",
-    referenceUrl:
-      "https://www.youtube.com/playlist?list=PLcetZ6gSk96-FECmH9l7Vlx5VDigvgZpt",
-  },
-  {
-    channelHandle: "@bbclearningenglish",
-    title: "Learning English From The News",
-    slug: "learning-english-from-the-news",
-    shortDescription:
-      "Build your skills by following the biggest headlines on the world agenda. Learn the vocabulary and phrases most common in media, while boosting your general knowledge.",
-    description:
-      "Improve your language skills by following the hottest news headlines on the world agenda.\nLearn the vocabulary patterns and phrases frequently used in media and news language.\nBoost both your general knowledge and reading-listening skills through real-world events.",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&q=80&auto=format&fit=crop",
-    referenceUrl:
-      "https://www.youtube.com/playlist?list=PLcetZ6gSk96-8vlsfui2jrM0CAJ4MfrMT",
-  },
   {
     channelHandle: "@bbclearningenglish",
     title: "Really Easy English",
@@ -99,45 +45,6 @@ const PROGRAMS_SEED: {
     referenceUrl:
       "https://www.youtube.com/playlist?list=PLcetZ6gSk96_IQnT7zKUjp7GtQeeGDI1a",
   },
-  {
-    channelHandle: "@bbclearningenglish",
-    title: "The English We Speak",
-    slug: "the-english-we-speak",
-    shortDescription:
-      "Discover the idioms and slang native speakers use in daily life. Pick up the real, street-level English and popular expressions you won't find in textbooks.",
-    description:
-      "Discover the idioms and slang phrases frequently used by native English speakers in daily life.\nLearn the real street English and popular expressions not found in textbooks.\nGain a more natural and fluent expression in spoken language with short and fun dialogues.",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80&auto=format&fit=crop",
-    referenceUrl:
-      "https://www.youtube.com/playlist?list=PLcetZ6gSk9692J5Mq2pY4siPVbMCu4v6c",
-  },
-  {
-    channelHandle: "@bbclearningenglish",
-    title: "Learning English For Work",
-    slug: "learning-english-for-work",
-    shortDescription:
-      "Practical English for the business world, interviews, and professional emails. Master phrases for running meetings, giving presentations, and writing with confidence.",
-    description:
-      "Practical English you will need in the business world, job interviews, and professional correspondence.\nMaster specific phrases for scenarios like managing meetings, writing emails, and giving presentations.\nGain the ability to express yourself professionally in a global business environment.",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80&auto=format&fit=crop",
-    referenceUrl:
-      "https://www.youtube.com/playlist?list=PLcetZ6gSk96-PF8EvW5280NI79fUWilWD",
-  },
-  {
-    channelHandle: "@bbclearningenglish",
-    title: "Alice in Wonderland",
-    slug: "alice-in-wonderland",
-    shortDescription:
-      "Follow Alice through a curious world of riddles, wordplay, and surprising encounters. Build listening confidence with vivid storytelling and memorable English expressions.",
-    description:
-      "Follow Alice as she tumbles into a strange and imaginative world filled with riddles, playful conversations, and unforgettable characters.\nStrengthen your listening comprehension through a classic story with clear narrative context and naturally recurring vocabulary.\nDiscover idioms, descriptive language, and literary expressions while enjoying one of English literature's most beloved adventures.",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1642192328313-ee18ab51c84d?w=800&auto=format&fit=crop&q=80",
-    referenceUrl:
-      "https://www.youtube.com/playlist?list=PLcetZ6gSk96_Kh2b2K2O2uaI14lnp6w4h",
-  },
 ];
 
 // Duplicate 6Af6b_wyiwI removed from ted-talks (was listed twice)
@@ -147,150 +54,6 @@ const VIDEOS_SEED: {
   sectionTitle: string;
   cefrLevel: CefrLevel;
 }[] = [
-  {
-    youtubeId: "6Af6b_wyiwI",
-    programSlug: "ted-talks",
-    sectionTitle: "Global Health & Pandemics",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "_QdPW8JrYzQ",
-    programSlug: "ted-talks",
-    sectionTitle: "Internet Humor & Spam Mail",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "eIho2S0ZahI",
-    programSlug: "ted-talks",
-    sectionTitle: "Powerful Speaking & Listening",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "DFjIi2hxxf0",
-    programSlug: "ted-talks",
-    sectionTitle: "Vocal Arts & Human Sound",
-    cefrLevel: "C1",
-  },
-  {
-    youtubeId: "36m1o-tM05g",
-    programSlug: "tedx-talks",
-    sectionTitle: "Philosophy for a Happy Life",
-    cefrLevel: "C1",
-  },
-  {
-    youtubeId: "LNHBMFCzznE",
-    programSlug: "tedx-talks",
-    sectionTitle: "Neuroplasticity & Brain Change",
-    cefrLevel: "C1",
-  },
-  {
-    youtubeId: "5MgBikgcWnY",
-    programSlug: "tedx-talks",
-    sectionTitle: "Rapid Skill Acquisition (20 Hours)",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "F4Zu5ZZAG7I",
-    programSlug: "tedx-talks",
-    sectionTitle: "The Art of Conversation & Mingling",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "w-HYZv6HzAs",
-    programSlug: "tedx-talks",
-    sectionTitle: "Building Self-Confidence as a Skill",
-    cefrLevel: "C1",
-  },
-  {
-    youtubeId: "xKxrkht7CpY",
-    programSlug: "teded-talks",
-    sectionTitle: "How Solar Energy Works",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "N5vJSNXPEwA",
-    programSlug: "teded-talks",
-    sectionTitle: "Logic Puzzles & Problem Solving",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "7SWvDHvWXok",
-    programSlug: "teded-talks",
-    sectionTitle: "Unsolved Mysteries of Science",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "z-IR48Mb3W0",
-    programSlug: "teded-talks",
-    sectionTitle: "Understanding Mental Health",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "Uj3_KqkI9Zo",
-    programSlug: "teded-talks",
-    sectionTitle: "Infinity & Mathematical Paradoxes",
-    cefrLevel: "C1",
-  },
-  {
-    youtubeId: "xwseWCSXD3Y",
-    programSlug: "6-minutes-english",
-    sectionTitle: "Describing Smells & Senses",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "SC_opiKLohg",
-    programSlug: "6-minutes-english",
-    sectionTitle: "Autonomous Tech & Driving",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "D9jZMLm72a8",
-    programSlug: "6-minutes-english",
-    sectionTitle: "Household Chores & Equality",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "sv9DItmJvlI",
-    programSlug: "6-minutes-english",
-    sectionTitle: "Climate Science & Predictions",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "0XccoTXPu_c",
-    programSlug: "6-minutes-english",
-    sectionTitle: "Doping & Sports Ethics",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "zl0dwwKhmuM",
-    programSlug: "learning-english-from-the-news",
-    sectionTitle: "AI Security & Cyber Threats",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "8ip3fMwdhx0",
-    programSlug: "learning-english-from-the-news",
-    sectionTitle: "Social Media Regulation & Meta",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "K8Dwy0u5pp8",
-    programSlug: "learning-english-from-the-news",
-    sectionTitle: "Astronomy: The Solar Eclipse",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "MlHJCNLa__k",
-    programSlug: "learning-english-from-the-news",
-    sectionTitle: "Border Crises & Global Migration",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "zXz72SmVg2E",
-    programSlug: "learning-english-from-the-news",
-    sectionTitle: "Gaming Industry & Digital Media",
-    cefrLevel: "B1",
-  },
   {
     youtubeId: "BFJsSnEEGrI",
     programSlug: "really-easy-english",
@@ -321,159 +84,117 @@ const VIDEOS_SEED: {
     sectionTitle: "Family Tree & Relationships",
     cefrLevel: "A1",
   },
-  {
-    youtubeId: "bwYEdYaXExw",
-    programSlug: "the-english-we-speak",
-    sectionTitle: "Body Part Idioms & Expressions",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "S2Dyi7qf4k4",
-    programSlug: "the-english-we-speak",
-    sectionTitle: "Essential Daily Phrasal Verbs",
-    cefrLevel: "A2",
-  },
-  {
-    youtubeId: "HblUS4Ha1io",
-    programSlug: "the-english-we-speak",
-    sectionTitle: "Two-Word Expressions: Part 1",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "8D5Ag-TxErg",
-    programSlug: "the-english-we-speak",
-    sectionTitle: "Two-Word Expressions: Part 2",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "WHCsOQvDkeQ",
-    programSlug: "the-english-we-speak",
-    sectionTitle: "Core Everyday Idiomatic English",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "k188_aGDklQ",
-    programSlug: "learning-english-for-work",
-    sectionTitle: "Professional Email Etiquette",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "m2UD0-IC7iY",
-    programSlug: "learning-english-for-work",
-    sectionTitle: "Running Effective Meetings",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "7sDcsE_HsDw",
-    programSlug: "learning-english-for-work",
-    sectionTitle: "Following Up & Chasing People",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "umVkjRE73sE",
-    programSlug: "learning-english-for-work",
-    sectionTitle: "Phone Calls & Quick Messaging",
-    cefrLevel: "A2",
-  },
-  {
-    youtubeId: "o295dPuPNGo",
-    programSlug: "learning-english-for-work",
-    sectionTitle: "Managing & Resolving Mistakes",
-    cefrLevel: "B2",
-  },
-  //
-  {
-    youtubeId: "yZxlx7FegBM",
-    programSlug: "alice-in-wonderland",
-    sectionTitle: "Entering Wonderland & Fantasy",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "_fpLGvoEiEg",
-    programSlug: "alice-in-wonderland",
-    sectionTitle: "Emotions, Crying & Body Size",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "svI_6zz9yPk",
-    programSlug: "alice-in-wonderland",
-    sectionTitle: "Absurd Logic & Playful Riddles",
-    cefrLevel: "B2",
-  },
-  {
-    youtubeId: "_H-zhw0YJh4",
-    programSlug: "alice-in-wonderland",
-    sectionTitle: "Curiosity, Rooms & Transformations",
-    cefrLevel: "B1",
-  },
-  {
-    youtubeId: "h9-23pAqouo",
-    programSlug: "alice-in-wonderland",
-    sectionTitle: "Identity, Wisdom & Dialogue",
-    cefrLevel: "B2",
-  },
 ];
 
+// Quizzes are pre-generated per native language, because they are keyed by the
+// learner's language pair. Languages without a seeded quiz still fall back to
+// on-demand generation in the app.
+const QUIZ_TARGET_LANGUAGE = "en";
+const QUIZ_NATIVE_LANGUAGES = SUPPORTED_NATIVE_LANGUAGES.filter(
+  (language) => language.code !== QUIZ_TARGET_LANGUAGE,
+);
+const QUIZ_TRANSLATION_COUNT = 3;
+const QUIZ_FILL_IN_THE_BLANK_COUNT = 2;
+const QUIZ_BATCH_SIZE = 6;
+
+async function removeSeededPrograms() {
+  // Cascades to sections, quizzes, questions, answers and progress.
+  await db
+    .delete(programsTable)
+    .where(inArray(programsTable.slug, PROGRAMS_SEED.map((p) => p.slug)));
+  // Cascades to transcripts.
+  await db
+    .delete(videosTable)
+    .where(
+      inArray(
+        videosTable.youtubeId,
+        VIDEOS_SEED.map((v) => v.youtubeId),
+      ),
+    );
+}
+
+async function seedQuizzes(sectionId: string, transcript: string) {
+  for (let i = 0; i < QUIZ_NATIVE_LANGUAGES.length; i += QUIZ_BATCH_SIZE) {
+    const batch = QUIZ_NATIVE_LANGUAGES.slice(i, i + QUIZ_BATCH_SIZE);
+    await Promise.all(
+      batch.map(async (language) => {
+        try {
+          const payloads = await generateQuiz({
+            transcript,
+            nativeLanguage: language.englishName,
+            translationCount: QUIZ_TRANSLATION_COUNT,
+            fillInTheBlankCount: QUIZ_FILL_IN_THE_BLANK_COUNT,
+          });
+          await db.transaction(async (tx) => {
+            const [quiz] = await tx
+              .insert(quizzesTable)
+              .values({
+                sectionId,
+                nativeLanguage: language.code,
+                targetLanguage: QUIZ_TARGET_LANGUAGE,
+              })
+              .returning({ id: quizzesTable.id });
+            await tx.insert(questionsTable).values(
+              payloads.map((payload, order) => ({
+                quizId: quiz.id,
+                order,
+                type: payload.type,
+                payload,
+              })),
+            );
+          });
+        } catch (err) {
+          console.warn(
+            `    ⵜ Quiz failed [${language.code}]:`,
+            err instanceof Error ? err.message : err,
+          );
+        }
+      }),
+    );
+  }
+}
+
 async function seed() {
-  console.log("Clearing database...");
-  await db.delete(questionsTable);
-  await db.delete(quizzesTable);
-  await db.delete(sectionsTable);
-  await db.delete(transcriptsTable);
-  await db.delete(videosTable);
-  await db.delete(programsTable);
-  await db.delete(channelsTable);
+  console.log("Removing previously seeded programs...");
+  await removeSeededPrograms();
 
   console.log(`Fetching metadata for ${VIDEOS_SEED.length} videos...`);
-  const allVideoYoutubeIds = VIDEOS_SEED.map((v) => v.youtubeId);
-  const metas = await getVideoDetails(allVideoYoutubeIds);
+  const metas = await getVideoDetails(VIDEOS_SEED.map((v) => v.youtubeId));
   const metaById = new Map(metas.map((m) => [m.videoId, m]));
 
-  // Derive real YouTube channel IDs from video metadata (only needed for thumbnail fetching)
-  const handleToChannelYoutubeId = new Map<string, string>();
-  const channelTitleByHandle = new Map<string, string>();
-  for (const prog of PROGRAMS_SEED) {
-    if (handleToChannelYoutubeId.has(prog.channelHandle)) continue;
-    const firstVideo = VIDEOS_SEED.find((v) => v.programSlug === prog.slug);
-    if (!firstVideo) throw new Error(`No videos for program: ${prog.slug}`);
-    const meta = metaById.get(firstVideo.youtubeId);
-    if (!meta)
-      throw new Error(`No metadata for video: ${firstVideo.youtubeId}`);
-    handleToChannelYoutubeId.set(prog.channelHandle, meta.channelId);
-    channelTitleByHandle.set(prog.channelHandle, meta.channelTitle);
+  // Channels can be shared with programs that are not seeded here, so an
+  // existing one is reused and only a missing one is created.
+  const channelDbIdBySlug = new Map<string, string>();
+  for (const handle of new Set(PROGRAMS_SEED.map((p) => p.channelHandle))) {
+    const [existing] = await db
+      .select({ id: channelsTable.id })
+      .from(channelsTable)
+      .where(eq(channelsTable.youtubeSlug, handle));
+    if (existing) {
+      channelDbIdBySlug.set(handle, existing.id);
+      continue;
+    }
+
+    const firstProgram = PROGRAMS_SEED.find((p) => p.channelHandle === handle)!;
+    const firstVideo = VIDEOS_SEED.find(
+      (v) => v.programSlug === firstProgram.slug,
+    );
+    const meta = firstVideo && metaById.get(firstVideo.youtubeId);
+    if (!meta) throw new Error(`No metadata for channel: ${handle}`);
+    const thumbnails = await getChannelThumbnails([meta.channelId]);
+    const thumbnailUrl = thumbnails.get(meta.channelId);
+    if (!thumbnailUrl) throw new Error(`No thumbnail for channel: ${handle}`);
+
+    const [channel] = await db
+      .insert(channelsTable)
+      .values({
+        youtubeSlug: handle,
+        title: meta.channelTitle,
+        thumbnailUrl,
+      })
+      .returning({ id: channelsTable.id });
+    channelDbIdBySlug.set(handle, channel.id);
   }
-
-  const channelThumbnails = await getChannelThumbnails([
-    ...new Set(handleToChannelYoutubeId.values()),
-  ]);
-
-  const uniqueHandles = [...new Set(PROGRAMS_SEED.map((p) => p.channelHandle))];
-
-  const insertedChannels = await db
-    .insert(channelsTable)
-    .values(
-      uniqueHandles.map((handle) => {
-        const channelYoutubeId = handleToChannelYoutubeId.get(handle)!;
-        const thumbnailUrl = channelThumbnails.get(channelYoutubeId);
-        if (!thumbnailUrl)
-          throw new Error(`No thumbnail for channel: ${handle}`);
-        return {
-          youtubeSlug: handle,
-          title: channelTitleByHandle.get(handle)!,
-          thumbnailUrl,
-        };
-      }),
-    )
-    .returning({
-      id: channelsTable.id,
-      youtubeSlug: channelsTable.youtubeSlug,
-    });
-
-  const channelDbIdBySlug = new Map(
-    insertedChannels.map((c) => [c.youtubeSlug, c.id]),
-  );
-
-  console.log(`  ✓ ${insertedChannels.length} channels inserted`);
 
   const insertedPrograms = await db
     .insert(programsTable)
@@ -493,14 +214,14 @@ async function seed() {
   const programDbIdBySlug = new Map(
     insertedPrograms.map((p) => [p.slug, p.id]),
   );
-
-  // Build programSlug → channelHandle for video insertion
   const channelHandleByProgramSlug = new Map(
     PROGRAMS_SEED.map((p) => [p.slug, p.channelHandle]),
   );
 
   console.log(`  ✓ ${insertedPrograms.length} programs inserted`);
-  console.log("Fetching transcripts and inserting videos...");
+  console.log(
+    "Fetching transcripts, inserting videos and generating quizzes...",
+  );
 
   const sectionOrderByProgramSlug = new Map<string, number>();
   let skipped = 0;
@@ -529,8 +250,9 @@ async function seed() {
       continue;
     }
 
-    const channelHandle = channelHandleByProgramSlug.get(programSlug)!;
-    const channelDbId = channelDbIdBySlug.get(channelHandle)!;
+    const channelDbId = channelDbIdBySlug.get(
+      channelHandleByProgramSlug.get(programSlug)!,
+    )!;
 
     const [video] = await db
       .insert(videosTable)
@@ -555,12 +277,20 @@ async function seed() {
     const order = (sectionOrderByProgramSlug.get(programSlug) ?? 0) + 1;
     sectionOrderByProgramSlug.set(programSlug, order);
 
-    await db.insert(sectionsTable).values({
-      programId: programDbIdBySlug.get(programSlug)!,
-      videoId: video.id,
-      title: sectionTitle,
-      order,
-    });
+    const [section] = await db
+      .insert(sectionsTable)
+      .values({
+        programId: programDbIdBySlug.get(programSlug)!,
+        videoId: video.id,
+        title: sectionTitle,
+        order,
+      })
+      .returning({ id: sectionsTable.id });
+
+    await seedQuizzes(
+      section.id,
+      transcript.map((line) => line.text).join("\n"),
+    );
 
     console.log(`  ✓ [${programSlug}] ${meta.title}`);
     videoCount++;
