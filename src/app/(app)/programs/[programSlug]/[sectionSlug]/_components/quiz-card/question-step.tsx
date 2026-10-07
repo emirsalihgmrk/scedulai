@@ -7,13 +7,15 @@ import {
   Gauge,
   Languages,
 } from "lucide-react";
+import { useState, useTransition } from "react";
 
+import { submitTranslationAnswerAction } from "@/actions/quiz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { QuestionWithAnswer } from "@/schemas/quiz";
 
-import QuestionGraded from "./question-types/question-graded";
-import QuestionInput from "./question-types/question-input";
+import AnswerInput from "./answer-input";
+import GradedQuestion from "./graded-question";
 
 interface QuestionStepProps {
   question: QuestionWithAnswer;
@@ -47,8 +49,29 @@ export default function QuestionStep({
       ? [nativeLangLabel, targetLangLabel]
       : [targetLangLabel, nativeLangLabel];
   const isLast = index === total;
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const isGraded = question.answer !== null;
+
+  function handleSubmit() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const result = await submitTranslationAnswerAction(question.id, {
+          userTranslation: value,
+        });
+        if (result.ok) {
+          onGraded(result.data);
+        } else {
+          setError(result.error);
+        }
+      } catch {
+        setError("Evaluation failed, please try again.");
+      }
+    });
+  }
 
   return (
     <>
@@ -68,13 +91,19 @@ export default function QuestionStep({
       </div>
 
       {isGraded ? (
-        <QuestionGraded question={question} />
+        <GradedQuestion
+          question={question}
+          isFlipped={isFlipped}
+          onFlip={setIsFlipped}
+        />
       ) : (
-        <QuestionInput
+        <AnswerInput
           question={question}
           value={value}
           onChange={onChange}
-          onGraded={onGraded}
+          onSubmit={handleSubmit}
+          isPending={isPending}
+          error={error}
         />
       )}
 

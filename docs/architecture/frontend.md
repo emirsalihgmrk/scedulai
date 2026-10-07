@@ -177,9 +177,7 @@ A component stays a single file until **any** of these is true, and then it beco
 3. It has sub-components or helpers of its own that no one else uses.
 
 A folder **without** `index.tsx` is a plain grouping of sibling files, named
-`<variant>-<role>.tsx`. `quiz-card/question-types/` holds `translation-input.tsx`,
-`translation-graded.tsx`, … plus the per-role dispatchers `question-input.tsx` and
-`question-graded.tsx`.
+`<variant>-<role>.tsx`.
 
 ### Placement
 

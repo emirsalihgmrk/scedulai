@@ -1,57 +1,32 @@
-"use client";
-
 import { Loader2, Sparkles } from "lucide-react";
-import { useState, useTransition } from "react";
 
-import { submitTranslationAnswerAction } from "@/actions/quiz";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import type { QuestionWithAnswer, TranslationPayload } from "@/schemas/quiz";
+import type { QuestionWithAnswer } from "@/schemas/quiz";
 
-import TranslationPrompt from "./translation-prompt";
+import SourceSentence from "./source-sentence";
 
-interface TranslationInputProps {
+interface AnswerInputProps {
   question: QuestionWithAnswer;
-  payload: TranslationPayload;
   value: string;
   onChange: (value: string) => void;
-  onGraded: (question: QuestionWithAnswer) => void;
+  onSubmit: () => void;
+  isPending: boolean;
+  error: string | null;
 }
 
-// Ungraded translation question: owns its submission (action call + pending /
-// error state) so the generic question step stays type-agnostic.
-export default function TranslationInput({
+export default function AnswerInput({
   question,
-  payload,
   value,
   onChange,
-  onGraded,
-}: TranslationInputProps) {
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  function handleSubmit() {
-    setError(null);
-    startTransition(async () => {
-      try {
-        const result = await submitTranslationAnswerAction(question.id, {
-          userTranslation: value,
-        });
-        if (result.ok) {
-          onGraded(result.data);
-        } else {
-          setError(result.error);
-        }
-      } catch {
-        setError("Evaluation failed, please try again.");
-      }
-    });
-  }
-
+  onSubmit,
+  isPending,
+  error,
+}: AnswerInputProps) {
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-5 sm:px-6">
-      <TranslationPrompt payload={payload} />
+      <SourceSentence question={question} />
 
       <Field>
         <FieldLabel htmlFor={`translation-${question.id}`}>
@@ -74,7 +49,7 @@ export default function TranslationInput({
         type="button"
         size="lg"
         disabled={value.trim().length === 0 || isPending}
-        onClick={handleSubmit}
+        onClick={onSubmit}
         className="h-12 w-full text-sm"
       >
         {isPending ? (

@@ -14,7 +14,6 @@ import type {QuizStatus} from "@/constants/progress";
 import { cn } from "@/lib/utils";
 import type { QuestionWithAnswer } from "@/schemas/quiz";
 
-import { getQuestionPreview } from "./question-types/question-preview";
 import { getAccuracyClasses } from "./utils";
 
 interface OverviewStepProps {
@@ -130,7 +129,7 @@ export default function OverviewStep({
                         {i + 1}
                       </span>
                       <span className="min-w-0 flex-1 text-[13px] leading-snug text-foreground/80">
-                        {getQuestionPreview(q.payload)}
+                        {q.payload.sourceSentence}
                       </span>
                       {isGraded && (
                         <span

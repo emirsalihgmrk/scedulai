@@ -1,5 +1,3 @@
-"use client";
-
 import {
   ChevronLeft,
   CircleCheck,
@@ -8,32 +6,29 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
-import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type {
-  QuestionWithAnswer,
-  TranslationPayload,
-  TranslationResult,
-} from "@/schemas/quiz";
+import type { QuestionWithAnswer } from "@/schemas/quiz";
 
-import { getAccuracyClasses } from "../utils";
-import TranslationPrompt from "./translation-prompt";
+import SourceSentence from "./source-sentence";
+import { getAccuracyClasses } from "./utils";
 
-interface TranslationGradedProps {
+interface GradedQuestionProps {
   question: QuestionWithAnswer;
-  payload: TranslationPayload;
-  result: TranslationResult;
-  accuracy: number;
+  isFlipped: boolean;
+  onFlip: (isFlipped: boolean) => void;
 }
 
-export default function TranslationGraded({
-  payload,
-  result,
-  accuracy,
-}: TranslationGradedProps) {
-  const [isFlipped, setIsFlipped] = useState(false);
+export default function GradedQuestion({
+  question,
+  isFlipped,
+  onFlip,
+}: GradedQuestionProps) {
+  const { answer, payload } = question;
+  if (!answer) return null;
+
+  const { result, accuracy } = answer;
   const userTranslation = result.response.userTranslation;
 
   return (
@@ -46,7 +41,7 @@ export default function TranslationGraded({
       >
         {/* Front — kept question + answer + accuracy */}
         <div className="absolute inset-0 flex flex-col gap-4 overflow-y-auto px-5 backface-hidden sm:px-6">
-          <TranslationPrompt payload={payload} />
+          <SourceSentence question={question} />
 
           <div className="flex items-start justify-between gap-3 rounded-xl border border-border bg-background p-4">
             <div className="min-w-0">
@@ -86,7 +81,7 @@ export default function TranslationGraded({
           <Button
             type="button"
             variant="secondary"
-            onClick={() => setIsFlipped(true)}
+            onClick={() => onFlip(true)}
             className="gap-1.5"
           >
             <RotateCcw data-icon="inline-start" />
@@ -158,7 +153,7 @@ export default function TranslationGraded({
           <Button
             type="button"
             variant="outline"
-            onClick={() => setIsFlipped(false)}
+            onClick={() => onFlip(false)}
             className="mt-1 gap-1.5 self-start"
           >
             <ChevronLeft data-icon="inline-start" />
