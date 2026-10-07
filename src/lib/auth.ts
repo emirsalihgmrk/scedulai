@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { emailOTP } from "better-auth/plugins";
+import { after } from "next/server";
 import { Resend } from "resend";
 
 import { db } from "@/db";
@@ -58,10 +59,6 @@ export const auth = betterAuth({
     },
   },
   plugins: [
-    // Sign-in OTPs double as sign-up: an unknown email is registered on its
-    // first successful verification; onboarding then fills in the profile.
-    // Rate limits only apply to requests through /api/auth, so the client
-    // calls these endpoints via authClient rather than a server action.
     emailOTP({
       otpLength: 6,
       expiresIn: 600,
@@ -70,12 +67,17 @@ export const auth = betterAuth({
         if (process.env.NODE_ENV !== "production") {
           console.info(`[auth] OTP for ${email}: ${otp}`);
         }
-        // Not awaited, to avoid leaking account existence through timing.
-        void resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL ?? "noreply@scedulai.com",
-          to: email,
-          subject: `${otp} is your ScedulAI code`,
-          html: `<p>Your ScedulAI sign-in code is <strong>${otp}</strong>.</p><p>It expires in 10 minutes. If you didn't request it, you can ignore this email.</p>`,
+
+        after(async () => {
+          const { error } = await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL ?? "noreply@scedulai.com",
+            to: email,
+            subject: `${otp} is your ScedulAI code`,
+            html: `<p>Your ScedulAI sign-in code is <strong>${otp}</strong>.</p><p>It expires in 10 minutes. If you didn't request it, you can ignore this email.</p>`,
+          });
+          if (error) {
+            console.error("[auth] OTP email failed:", error);
+          }
         });
       },
     }),
