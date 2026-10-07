@@ -11,7 +11,7 @@ import {
 import EmptyState from "@/components/shared/empty-state";
 import { Card } from "@/components/ui/card";
 import { getUserLanguageLabels } from "@/constants/language";
-import { QUIZ_PASS_RATIO } from "@/constants/progress";
+import { QUIZ_PASS_ACCURACY  } from "@/constants/progress";
 import type {QuizStatus} from "@/constants/progress";
 import type { QuizWithQuestions } from "@/schemas/quiz";
 import type { User } from "@/schemas/user";
@@ -67,7 +67,7 @@ export default function QuizCard({
     if (!user || !quiz || quiz.questions.length === 0) return;
     if (quiz.questions.some((q) => q.answer === null)) return;
 
-    const signature = quiz.questions.map((q) => q.answer!.isCorrect).join(",");
+    const signature = quiz.questions.map((q) => q.answer!.accuracy).join(",");
     if (lastEvaluatedRef.current === signature) return;
     lastEvaluatedRef.current = signature;
 
@@ -121,9 +121,10 @@ export default function QuizCard({
   const progress = total === 0 ? 0 : Math.round((answered / total) * 100);
 
   const isAllGraded = total > 0 && answered === total;
-  const correct = questions.filter((q) => q.answer?.isCorrect).length;
   const quizStatus: QuizStatus | null = isAllGraded
-    ? correct / total >= QUIZ_PASS_RATIO
+    ? Math.round(
+        questions.reduce((sum, q) => sum + q.answer!.accuracy, 0) / total,
+      ) >= QUIZ_PASS_ACCURACY
       ? "passed"
       : "failed"
     : null;

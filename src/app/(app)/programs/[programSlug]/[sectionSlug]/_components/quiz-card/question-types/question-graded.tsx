@@ -13,7 +13,7 @@ export default function QuestionGraded({ question }: QuestionGradedProps) {
   const { answer, payload } = question;
   if (!answer) return null;
 
-  const { result } = answer;
+  const { result, accuracy } = answer;
   switch (result.type) {
     case "translation":
       if (payload.type !== "translation") return null;
@@ -22,6 +22,7 @@ export default function QuestionGraded({ question }: QuestionGradedProps) {
           question={question}
           payload={payload}
           result={result}
+          accuracy={accuracy}
         />
       );
     case "fill-in-the-blank":
@@ -31,6 +32,7 @@ export default function QuestionGraded({ question }: QuestionGradedProps) {
           question={question}
           payload={payload}
           result={result}
+          accuracy={accuracy}
         />
       );
   }

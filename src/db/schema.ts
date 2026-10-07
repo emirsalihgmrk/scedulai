@@ -262,7 +262,7 @@ export const answersTable = pgTable(
       .references(() => questionsTable.id, { onDelete: "cascade" })
       .notNull(),
     result: jsonb("result").$type<AnswerResult>().notNull(),
-    isCorrect: boolean("is_correct").notNull(),
+    accuracy: integer("accuracy").notNull(),
   },
   (table) => [
     index("answers_user_id_idx").on(table.userId),

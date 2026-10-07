@@ -9,10 +9,7 @@ import {
   
 } from "@/db/rows";
 import type {AnswerRow, QuestionRow, QuizRow} from "@/db/rows";
-import {
-  fillInTheBlankResponseSchema,
-  translationResponseSchema,
-} from "@/schemas/column-types";
+import { translationResponseSchema } from "@/schemas/column-types";
 
 // ── Re-exports (jsonb shapes owned by this module) ──
 
@@ -45,7 +42,7 @@ export type {
 
 export type Question = Omit<QuestionRow, "createdAt" | "updatedAt">;
 
-export type Answer = Pick<AnswerRow, "result" | "isCorrect">;
+export type Answer = Pick<AnswerRow, "result" | "accuracy">;
 
 export type QuestionWithAnswer = Question & {
   answer: Answer | null;
@@ -72,7 +69,7 @@ export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 
 export const upsertAnswerSchema = createAnswerRowSchema.pick({
   result: true,
-  isCorrect: true,
+  accuracy: true,
 });
 export type UpsertAnswerInput = z.infer<typeof upsertAnswerSchema>;
 
@@ -82,9 +79,4 @@ export type UpsertAnswerInput = z.infer<typeof upsertAnswerSchema>;
 export const submitTranslationAnswerSchema = translationResponseSchema;
 export type SubmitTranslationAnswerInput = z.infer<
   typeof submitTranslationAnswerSchema
->;
-
-export const submitFillInTheBlankAnswerSchema = fillInTheBlankResponseSchema;
-export type SubmitFillInTheBlankAnswerInput = z.infer<
-  typeof submitFillInTheBlankAnswerSchema
 >;

@@ -17,7 +17,21 @@ export interface AnalyzeSentenceArgs {
 
 export type AnalyzeSentenceResult = AiObjectResult<TranslationAnalysis> & {
   promptVersion: string;
+  accuracy: number;
 };
+
+const MEANING_BASE: Record<TranslationAnalysis["meaningPreserved"], number> = {
+  yes: 100,
+  partial: 55,
+  no: 10,
+};
+const GRAMMAR_PENALTY = 6;
+
+export function computeAccuracy(o: TranslationAnalysis): number {
+  const score =
+    MEANING_BASE[o.meaningPreserved] - GRAMMAR_PENALTY * o.mistakes.length;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
 
 function buildSystemPrompt(nativeLanguage: string): string {
   return `You grade a learner's English translation of a source sentence. The learner's native language is ${nativeLanguage}. Do not assign a score; only fill the output fields below.
@@ -75,6 +89,7 @@ export async function analyzeSentence({
         mistakes: [],
         alternatives: [],
       },
+      accuracy: 0,
       model: ANALYZE_SENTENCE_MODEL,
       promptVersion: ANALYZE_SENTENCE_PROMPT_VERSION,
       latencyMs: 0,
@@ -101,6 +116,7 @@ export async function analyzeSentence({
 
   return {
     ...result,
+    accuracy: computeAccuracy(result.output),
     promptVersion: ANALYZE_SENTENCE_PROMPT_VERSION,
   };
 }

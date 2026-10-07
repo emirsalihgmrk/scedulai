@@ -4,7 +4,7 @@ import { cache } from "react";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getNativeLanguageEnglishName } from "@/constants/language";
-import { QUIZ_PASS_RATIO } from "@/constants/progress";
+import { QUIZ_PASS_ACCURACY  } from "@/constants/progress";
 import type {QuizStatus} from "@/constants/progress";
 import { createAiTrace } from "@/dal/ai/mutations";
 import { upsertSectionProgress } from "@/dal/program/mutations";
@@ -18,16 +18,13 @@ import { getQuestion, getQuiz } from "@/dal/quiz/queries";
 import { db } from "@/db";
 import { AppError } from "@/lib/errors";
 import {
-  submitFillInTheBlankAnswerSchema,
-  submitTranslationAnswerSchema,
+  submitTranslationAnswerSchema
+  
+  
+  
+  
 } from "@/schemas/quiz";
-import type {
-  Question,
-  QuestionWithAnswer,
-  QuizWithQuestions,
-  SubmitFillInTheBlankAnswerInput,
-  SubmitTranslationAnswerInput,
-} from "@/schemas/quiz";
+import type {Question, QuestionWithAnswer, QuizWithQuestions, SubmitTranslationAnswerInput} from "@/schemas/quiz";
 import { getCurrentUserService } from "@/services/auth";
 import { getLearningProfileService } from "@/services/learning-profile";
 import { getTranscriptService, getVideoService } from "@/services/video";
@@ -144,17 +141,17 @@ export async function submitTranslationAnswerService(
 
   const {
     output: analysis,
+    accuracy,
     model,
     promptVersion,
     latencyMs,
     usage,
   } = await analyzeSentence(analyzeInput);
+  const roundedAccuracy = Math.round(accuracy);
 
-  // Correct only when the meaning is fully kept and the form is flawless.
   const answer = await upsertAnswer(user.id, questionId, {
     result: { type: "translation", response, analysis },
-    isCorrect:
-      analysis.meaningPreserved === "yes" && analysis.mistakes.length === 0,
+    accuracy: roundedAccuracy,
   });
 
   // Tracing must never fail or slow down the learner's request.
@@ -166,7 +163,7 @@ export async function submitTranslationAnswerService(
         promptVersion,
         input: analyzeInput,
         output: analysis,
-        metadata: { questionId },
+        metadata: { questionId, accuracy: roundedAccuracy },
         latencyMs,
         inputTokens: usage.inputTokens ?? null,
         outputTokens: usage.outputTokens ?? null,
@@ -174,46 +171,6 @@ export async function submitTranslationAnswerService(
     } catch (err) {
       console.error("Failed to write AI trace", err);
     }
-  });
-
-  return { ...question, answer };
-}
-
-// Blanks are graded deterministically; case and surrounding whitespace don't
-// count as mistakes.
-function normalizeBlankAnswer(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-export async function submitFillInTheBlankAnswerService(
-  questionId: string,
-  input: SubmitFillInTheBlankAnswerInput,
-): Promise<QuestionWithAnswer> {
-  const user = await getCurrentUserService();
-  if (!user) throw new AppError("Unauthorized");
-
-  const response = submitFillInTheBlankAnswerSchema.parse(input);
-
-  const question = await getQuestionService(questionId);
-  if (!question) throw new AppError("Not found");
-  if (question.payload.type !== "fill-in-the-blank") {
-    throw new AppError("Invalid question type");
-  }
-
-  const expected = question.payload.segments.flatMap((segment) =>
-    segment.kind === "blank" ? [segment.answer] : [],
-  );
-  if (expected.length === 0 || response.answers.length !== expected.length) {
-    throw new AppError("Invalid answers");
-  }
-
-  const blankResults = expected.map(
-    (answer, i) =>
-      normalizeBlankAnswer(answer) === normalizeBlankAnswer(response.answers[i]),
-  );
-  const answer = await upsertAnswer(user.id, questionId, {
-    result: { type: "fill-in-the-blank", response, analysis: { blankResults } },
-    isCorrect: blankResults.every(Boolean),
   });
 
   return { ...question, answer };
@@ -236,9 +193,11 @@ export async function evaluateQuizService(
     return null;
   }
 
-  const correctCount = answers.filter((answer) => answer.isCorrect).length;
+  const avgAccuracy = Math.round(
+    answers.reduce((sum, answer) => sum + answer.accuracy, 0) / answers.length,
+  );
   const quizStatus: QuizStatus =
-    correctCount / answers.length >= QUIZ_PASS_RATIO ? "passed" : "failed";
+    avgAccuracy >= QUIZ_PASS_ACCURACY ? "passed" : "failed";
 
   await upsertSectionProgress(user.id, sectionId, { quizStatus });
   return quizStatus;

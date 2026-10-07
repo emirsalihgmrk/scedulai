@@ -8,12 +8,6 @@
 skorlar ortalanıp `QUIZ_PASS_ACCURACY` eşiğiyle quiz "passed/failed" oluyor. Yani grader'daki
 her kalibrasyon hatası = yanlış geçme/kalma kararı.
 
-> **Güncel durum:** `accuracy` skoru tamamen kaldırıldı. Bir çeviri cevabı yalnızca
-> `meaningPreserved === "yes"` ve `mistakes` boşsa doğru sayılır (`answers.is_correct`); quiz,
-> doğru cevap oranı `QUIZ_PASS_RATIO` eşiğini geçerse "passed" olur. Aşağıdaki skor/band
-> bölümleri tarihsel bağlamdır; grader'ın `meaningPreserved` ve `mistakes` kalibrasyonu hâlâ
-> geçme/kalma kararını doğrudan belirler.
-
 Gözlemlenen semptomlar grader'lar için klasik başarısızlık sınıfları:
 
 1. **Prompt injection / manipülasyon** — `userTranslation` prompt'a ham veri olarak giriyor;

@@ -6,14 +6,12 @@ import type {ActionResult} from "@/lib/action";
 import type {
   QuestionWithAnswer,
   QuizWithQuestions,
-  SubmitFillInTheBlankAnswerInput,
   SubmitTranslationAnswerInput,
 } from "@/schemas/quiz";
 import {
   evaluateQuizService,
   generateQuizByAiService,
   retryQuizService,
-  submitFillInTheBlankAnswerService,
   submitTranslationAnswerService,
 } from "@/services/quiz";
 
@@ -34,18 +32,6 @@ export async function submitTranslationAnswerAction(
 ): Promise<ActionResult<QuestionWithAnswer>> {
   try {
     const data = await submitTranslationAnswerService(questionId, input);
-    return { ok: true, data };
-  } catch (error) {
-    return toActionFailure(error);
-  }
-}
-
-export async function submitFillInTheBlankAnswerAction(
-  questionId: string,
-  input: SubmitFillInTheBlankAnswerInput,
-): Promise<ActionResult<QuestionWithAnswer>> {
-  try {
-    const data = await submitFillInTheBlankAnswerService(questionId, input);
     return { ok: true, data };
   } catch (error) {
     return toActionFailure(error);

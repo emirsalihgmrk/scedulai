@@ -228,19 +228,6 @@ const eslintConfig = defineConfig([
     files: ["src/db/**/*.ts"],
     rules: restrict({ columnTypes: false, patterns: [DB_FORBIDDEN] }),
   },
-  {
-    // The dev-only seed script generates quiz content with an AI task.
-    files: ["src/db/seed.ts"],
-    rules: restrict({
-      columnTypes: false,
-      patterns: [
-        layer(
-          ["@/dal/*", "@/services/*", "@/actions/*", "@/schemas/*", "!@/schemas/column-types"],
-          "The seed may call AI tasks, never services or the DAL.",
-        ),
-      ],
-    }),
-  },
   { files: ["src/ai/**/*.ts"], rules: restrict({ patterns: [AI_FORBIDDEN] }) },
   { files: ["src/lib/**/*.ts"], rules: restrict({ patterns: [LIB_FORBIDDEN] }) },
   {
