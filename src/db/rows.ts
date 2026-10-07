@@ -10,7 +10,6 @@ import type {
   verificationTable,
   videosTable} from "@/db/schema";
 import {
-  aiTracesTable,
   answersTable,
   learningProfilesTable,
   questionsTable,
@@ -74,6 +73,3 @@ export type AnswerRow = typeof answersTable.$inferSelect;
 export const createAnswerRowSchema = createInsertSchema(answersTable, {
   result: answerResultSchema,
 });
-
-export type AiTraceRow = typeof aiTracesTable.$inferSelect;
-export const createAiTraceRowSchema = createInsertSchema(aiTracesTable);

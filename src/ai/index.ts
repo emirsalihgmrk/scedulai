@@ -34,12 +34,6 @@ interface GetAiObjectResponseArgs<T> {
 
 export interface AiObjectResult<T> {
   output: T;
-  model: string;
-  latencyMs: number;
-  usage: {
-    inputTokens?: number;
-    outputTokens?: number;
-  };
 }
 
 const MAX_RETRIES = 3;
@@ -54,7 +48,6 @@ export async function getAiObjectResponse<T>({
   output,
 }: GetAiObjectResponseArgs<T>): Promise<AiObjectResult<T>> {
   let lastError: unknown;
-  const start = Date.now();
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -69,15 +62,7 @@ export async function getAiObjectResponse<T>({
           description: output.description,
         }),
       });
-      return {
-        output: result.output as T,
-        model,
-        latencyMs: Date.now() - start,
-        usage: {
-          inputTokens: result.usage?.inputTokens,
-          outputTokens: result.usage?.outputTokens,
-        },
-      };
+      return { output: result.output as T };
     } catch (err) {
       lastError = err;
       if (attempt < MAX_RETRIES) {

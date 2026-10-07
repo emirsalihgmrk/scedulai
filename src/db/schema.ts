@@ -12,7 +12,6 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { AI_TASKS } from "@/constants/ai";
 import {
   SUPPORTED_NATIVE_LANGUAGE_CODES,
   SUPPORTED_TARGET_LANGUAGE_CODES,
@@ -57,7 +56,6 @@ export const targetLanguageEnum = pgEnum(
   "target_language",
   SUPPORTED_TARGET_LANGUAGE_CODES,
 );
-export const aiTaskEnum = pgEnum("ai_task", AI_TASKS);
 export const cefrLevelEnum = pgEnum("cefr_level", CEFR_LEVELS);
 export const levelSourceEnum = pgEnum("level_source", LEVEL_SOURCES);
 export const learningGoalEnum = pgEnum("learning_goal", LEARNING_GOALS);
@@ -268,32 +266,6 @@ export const answersTable = pgTable(
     index("answers_user_id_idx").on(table.userId),
     index("answers_question_id_idx").on(table.questionId),
     unique("answers_user_question_unique").on(table.userId, table.questionId),
-  ],
-);
-
-export const aiTracesTable = pgTable(
-  "ai_traces",
-  {
-    ...commonFields,
-    task: aiTaskEnum("task").notNull(),
-    model: text("model").notNull(),
-    promptVersion: text("prompt_version").notNull(),
-    userId: text("user_id").references(() => userTable.id, {
-      onDelete: "set null",
-    }),
-    input: jsonb("input").$type<Record<string, unknown>>().notNull(),
-    output: jsonb("output").$type<Record<string, unknown>>().notNull(),
-    // Task-specific references live here so the table stays generic
-    // (e.g. analyze-sentence: { questionId }, generate-sentences: { sectionId }).
-    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
-    latencyMs: integer("latency_ms").notNull(),
-    inputTokens: integer("input_tokens"),
-    outputTokens: integer("output_tokens"),
-  },
-  (table) => [
-    index("ai_traces_task_idx").on(table.task),
-    index("ai_traces_created_at_idx").on(table.createdAt),
-    index("ai_traces_user_id_idx").on(table.userId),
   ],
 );
 

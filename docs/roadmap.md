@@ -132,7 +132,7 @@ verisine göre yeniden belirlenmeli (ör. kullanıcılar kendi videolarını ço
 
 ## Production hazırlığı (fazlardan bağımsız, sürekli)
 
-- [ ] Kullanıcı başına AI maliyet takibi ve limitler (`ai_traces` üzerine panel)
+- [ ] Kullanıcı başına AI maliyet takibi ve limitler
 - [ ] Rate limiting ve kötüye kullanım koruması
 - [ ] Hukuki: YouTube içerik/transkript kullanım şartları, KVKK/GDPR, hesap silme ve veri dışa aktarma
 - [ ] SEO: her video için açık "X ile İngilizce öğren" sayfası (transkript önizlemesi + örnek sorular)

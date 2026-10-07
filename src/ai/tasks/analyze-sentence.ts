@@ -16,7 +16,6 @@ export interface AnalyzeSentenceArgs {
 }
 
 export type AnalyzeSentenceResult = AiObjectResult<TranslationAnalysis> & {
-  promptVersion: string;
   accuracy: number;
 };
 
@@ -90,10 +89,6 @@ export async function analyzeSentence({
         alternatives: [],
       },
       accuracy: 0,
-      model: ANALYZE_SENTENCE_MODEL,
-      promptVersion: ANALYZE_SENTENCE_PROMPT_VERSION,
-      latencyMs: 0,
-      usage: {},
     };
   }
 
@@ -117,6 +112,5 @@ export async function analyzeSentence({
   return {
     ...result,
     accuracy: computeAccuracy(result.output),
-    promptVersion: ANALYZE_SENTENCE_PROMPT_VERSION,
   };
 }

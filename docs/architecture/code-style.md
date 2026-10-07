@@ -29,8 +29,8 @@ else is enforced in review.
 | Module-level constants and lookup maps | `SCREAMING_SNAKE`     | `QUESTION_COUNT`, `DIFFICULTY_CLASSES`      |
 | Zod schemas                            | `camelCase` + suffix  | `upsertAnswerSchema`                        |
 
-**Acronyms are written as words:** `AiTrace`, `aiTrace`, `AI_TASKS`, `SendOtpInput`,
-`thumbnailUrl`, `useYoutubePlayer`. Never `AITrace`, `OTP`, `URL`, `YouTube` inside identifiers.
+**Acronyms are written as words:** `AiObjectResult`, `aiProvider`, `SendOtpInput`,
+`thumbnailUrl`, `useYoutubePlayer`. Never `AIProvider`, `OTP`, `URL`, `YouTube` inside identifiers.
 
 **Naming by role:**
 

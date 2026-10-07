@@ -1,4 +1,3 @@
-import { after } from "next/server";
 import { cache } from "react";
 
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
@@ -6,7 +5,6 @@ import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getNativeLanguageEnglishName } from "@/constants/language";
 import { QUIZ_PASS_ACCURACY  } from "@/constants/progress";
 import type {QuizStatus} from "@/constants/progress";
-import { createAiTrace } from "@/dal/ai/mutations";
 import { upsertSectionProgress } from "@/dal/program/mutations";
 import {
   createQuestions,
@@ -139,38 +137,11 @@ export async function submitTranslationAnswerService(
     nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
   };
 
-  const {
-    output: analysis,
-    accuracy,
-    model,
-    promptVersion,
-    latencyMs,
-    usage,
-  } = await analyzeSentence(analyzeInput);
-  const roundedAccuracy = Math.round(accuracy);
+  const { output: analysis, accuracy } = await analyzeSentence(analyzeInput);
 
   const answer = await upsertAnswer(user.id, questionId, {
     result: { type: "translation", response, analysis },
-    accuracy: roundedAccuracy,
-  });
-
-  // Tracing must never fail or slow down the learner's request.
-  after(async () => {
-    try {
-      await createAiTrace(user.id, {
-        task: "analyze-sentence",
-        model,
-        promptVersion,
-        input: analyzeInput,
-        output: analysis,
-        metadata: { questionId, accuracy: roundedAccuracy },
-        latencyMs,
-        inputTokens: usage.inputTokens ?? null,
-        outputTokens: usage.outputTokens ?? null,
-      });
-    } catch (err) {
-      console.error("Failed to write AI trace", err);
-    }
+    accuracy: Math.round(accuracy),
   });
 
   return { ...question, answer };
