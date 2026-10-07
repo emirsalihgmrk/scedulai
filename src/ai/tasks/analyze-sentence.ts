@@ -1,6 +1,3 @@
-import { createHash } from "node:crypto";
-import { z } from "zod";
-
 import { getAiObjectResponse  } from "@/ai";
 import type {AiObjectResult} from "@/ai";
 import { analyzeSentenceOutputSchema } from "@/ai/outputs/analyze-sentence";
@@ -54,12 +51,6 @@ TURKISH IS AMBIGUOUS — the source carries every reading below, so each is "yes
 - Formality/number ("siz" is singular-formal or plural): "Siz çalışıyorsunuz." → "You work" and "You all work" both valid.
 Note such ambiguity in description; never treat an alternate reading as a mistake.`;
 }
-
-export const ANALYZE_SENTENCE_PROMPT_VERSION = createHash("sha256")
-  .update(buildSystemPrompt("{{nativeLanguage}}"))
-  .update(JSON.stringify(z.toJSONSchema(analyzeSentenceOutputSchema)))
-  .digest("hex")
-  .slice(0, 12);
 
 function isTriviallyInvalid(userTranslation: string): boolean {
   const trimmed = userTranslation.trim();

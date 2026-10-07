@@ -7,7 +7,6 @@ import type {EvalCase, Expectation} from "@/ai/eval/analyze-sentence-cases";
 import {
   analyzeSentence,
   ANALYZE_SENTENCE_MODEL,
-  ANALYZE_SENTENCE_PROMPT_VERSION,
 } from "@/ai/tasks/analyze-sentence";
 import type { TranslationAnalysis } from "@/schemas/quiz";
 
@@ -32,7 +31,7 @@ function check(output: TranslationAnalysis, expected: Expectation): string[] {
 
 async function main() {
   console.log(
-    `analyze-sentence scorer — model=${ANALYZE_SENTENCE_MODEL} promptVersion=${ANALYZE_SENTENCE_PROMPT_VERSION}\n`,
+    `analyze-sentence scorer — model=${ANALYZE_SENTENCE_MODEL}\n`,
   );
 
   const byCategory = new Map<string, { pass: number; total: number }>();
