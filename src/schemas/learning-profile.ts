@@ -9,13 +9,13 @@ import { updateUserSchema } from "@/schemas/user";
 
 export type LearningProfile = Pick<
   LearningProfileRow,
-  "id" | "targetLanguage" | "level" | "levelSource" | "goal" | "dailyMinutes"
+  "id" | "level" | "levelSource" | "goal" | "dailyMinutes"
 >;
 
 // ── DAL input schemas ──
 
 export const createLearningProfileSchema = createLearningProfileRowSchema
-  .pick({ targetLanguage: true, level: true, levelSource: true, goal: true })
+  .pick({ level: true, levelSource: true, goal: true })
   .extend({
     dailyMinutes: z
       .number()

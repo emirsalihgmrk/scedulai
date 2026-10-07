@@ -21,30 +21,21 @@ import { getTranscriptService, getVideoService } from "@/services/video";
 
 const QUESTION_COUNT = 5;
 
-// Quizzes are keyed per language pair: native language lives on the user,
-// target language on their learning profile.
-async function getLearnerLanguages() {
+// Quizzes are keyed per native language and only served to onboarded users.
+async function getOnboardedUser() {
   const [user, profile] = await Promise.all([
     getCurrentUserService(),
     getLearningProfileService(),
   ]);
   if (!user || !profile) return null;
-  return {
-    user,
-    nativeLanguage: user.nativeLanguage,
-    targetLanguage: profile.targetLanguage,
-  };
+  return user;
 }
 
 export const getQuizService = cache(
   async (sectionId: string): Promise<QuizWithQuestions | null> => {
-    const learner = await getLearnerLanguages();
-    if (!learner) return null;
-    const quiz = await getQuiz(
-      sectionId,
-      learner.nativeLanguage,
-      learner.targetLanguage,
-    );
+    const user = await getOnboardedUser();
+    if (!user) return null;
+    const quiz = await getQuiz(sectionId, user.nativeLanguage);
     return quiz ?? null;
   },
 );
@@ -60,8 +51,8 @@ export const getQuestionService = cache(
 export async function generateQuizByAiService(
   sectionId: string,
 ): Promise<QuizWithQuestions> {
-  const learner = await getLearnerLanguages();
-  if (!learner) throw new AppError("Unauthorized");
+  const user = await getOnboardedUser();
+  if (!user) throw new AppError("Unauthorized");
 
   const video = await getVideoService(sectionId);
   if (!video) throw new AppError("This section has no video");
@@ -71,17 +62,14 @@ export async function generateQuizByAiService(
 
   const { sentences } = await generateSentences({
     transcript: lines.map((line) => line.text).join("\n"),
-    nativeLanguage: getNativeLanguageEnglishName(learner.nativeLanguage),
+    nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
     count: QUESTION_COUNT,
   });
 
   return db.transaction(async (tx) => {
     const quiz = await createQuiz(
       sectionId,
-      {
-        nativeLanguage: learner.nativeLanguage,
-        targetLanguage: learner.targetLanguage,
-      },
+      { nativeLanguage: user.nativeLanguage },
       tx,
     );
     if (!quiz) throw new AppError("Quiz could not be created");

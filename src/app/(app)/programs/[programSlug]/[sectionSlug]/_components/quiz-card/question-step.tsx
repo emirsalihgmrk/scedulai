@@ -12,12 +12,14 @@ import type { Question, TranslationGrade } from "@/schemas/quiz";
 import AnswerInput from "./answer-input";
 import GradedQuestion from "./graded-question";
 
+// Every quiz teaches English.
+const LEARNED_LANGUAGE_LABEL = "English";
+
 interface QuestionStepProps {
   question: Question;
   solved: number;
   total: number;
   nativeLangLabel: string;
-  targetLangLabel: string;
   onContinue: (isCorrect: boolean) => void;
 }
 
@@ -26,13 +28,12 @@ export default function QuestionStep({
   solved,
   total,
   nativeLangLabel,
-  targetLangLabel,
   onContinue,
 }: QuestionStepProps) {
-  const [sourceLang, targetLang] =
+  const [fromLang, toLang] =
     question.direction === "native-to-target"
-      ? [nativeLangLabel, targetLangLabel]
-      : [targetLangLabel, nativeLangLabel];
+      ? [nativeLangLabel, LEARNED_LANGUAGE_LABEL]
+      : [LEARNED_LANGUAGE_LABEL, nativeLangLabel];
   const [draft, setDraft] = useState("");
   const [grade, setGrade] = useState<TranslationGrade | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -67,9 +68,9 @@ export default function QuestionStep({
           </Badge>
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <Languages className="size-3.5" />
-            {sourceLang}
+            {fromLang}
             <ArrowRight className="size-3" />
-            {targetLang}
+            {toLang}
           </span>
         </div>
         <Progress

@@ -12,10 +12,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import {
-  SUPPORTED_NATIVE_LANGUAGE_CODES,
-  SUPPORTED_TARGET_LANGUAGE_CODES,
-} from "@/constants/language";
+import { SUPPORTED_NATIVE_LANGUAGE_CODES } from "@/constants/language";
 import {
   CEFR_LEVELS,
   LEARNING_GOALS,
@@ -45,10 +42,6 @@ export const questionDirectionEnum = pgEnum(
 export const nativeLanguageEnum = pgEnum(
   "native_language",
   SUPPORTED_NATIVE_LANGUAGE_CODES,
-);
-export const targetLanguageEnum = pgEnum(
-  "target_language",
-  SUPPORTED_TARGET_LANGUAGE_CODES,
 );
 export const cefrLevelEnum = pgEnum("cefr_level", CEFR_LEVELS);
 export const levelSourceEnum = pgEnum("level_source", LEVEL_SOURCES);
@@ -191,16 +184,9 @@ export const transcriptsTable = pgTable(
     videoId: uuid("video_id")
       .references(() => videosTable.id, { onDelete: "cascade" })
       .notNull(),
-    language: targetLanguageEnum("language").default("en").notNull(),
     content: jsonb("content").$type<TranscriptLine[]>().notNull(),
   },
-  (table) => [
-    unique("transcripts_video_language_unique").on(
-      table.videoId,
-      table.language,
-    ),
-    index("transcripts_video_id_idx").on(table.videoId),
-  ],
+  (table) => [unique("transcripts_video_unique").on(table.videoId)],
 );
 
 export const quizzesTable = pgTable(
@@ -211,14 +197,12 @@ export const quizzesTable = pgTable(
       .references(() => sectionsTable.id, { onDelete: "cascade" })
       .notNull(),
     nativeLanguage: nativeLanguageEnum("native_language").notNull(),
-    targetLanguage: targetLanguageEnum("target_language").notNull(),
   },
   (table) => [
     index("quizzes_section_id_idx").on(table.sectionId),
-    unique("quizzes_section_langs_unique").on(
+    unique("quizzes_section_native_language_unique").on(
       table.sectionId,
       table.nativeLanguage,
-      table.targetLanguage,
     ),
   ],
 );
@@ -267,8 +251,8 @@ export const sectionProgressTable = pgTable(
   ],
 );
 
-// One row per (user, target language). A user is "onboarded" once they have a
-// profile; there is no separate flag.
+// One row per user. A user is "onboarded" once they have a profile; there is
+// no separate flag.
 export const learningProfilesTable = pgTable(
   "learning_profiles",
   {
@@ -276,20 +260,13 @@ export const learningProfilesTable = pgTable(
     userId: text("user_id")
       .references(() => userTable.id, { onDelete: "cascade" })
       .notNull(),
-    targetLanguage: targetLanguageEnum("target_language").notNull(),
     // null = the learner doesn't know their level yet (placement test pending)
     level: cefrLevelEnum("level"),
     levelSource: levelSourceEnum("level_source"),
     goal: learningGoalEnum("goal").notNull(),
     dailyMinutes: integer("daily_minutes").notNull(),
   },
-  (table) => [
-    unique("learning_profiles_user_target_unique").on(
-      table.userId,
-      table.targetLanguage,
-    ),
-    index("learning_profiles_user_id_idx").on(table.userId),
-  ],
+  (table) => [unique("learning_profiles_user_unique").on(table.userId)],
 );
 
 // Relations

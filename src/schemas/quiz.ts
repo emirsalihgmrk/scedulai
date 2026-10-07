@@ -26,7 +26,6 @@ export type QuizWithQuestions = Pick<QuizRow, "id"> & {
 
 export const createQuizSchema = createQuizRowSchema.pick({
   nativeLanguage: true,
-  targetLanguage: true,
 });
 export type CreateQuizInput = z.infer<typeof createQuizSchema>;
 

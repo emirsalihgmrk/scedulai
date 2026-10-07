@@ -7,7 +7,7 @@ import { use, useEffect, useRef, useState, useTransition } from "react";
 import { completeQuizAction, generateQuizByAiAction } from "@/actions/quiz";
 import EmptyState from "@/components/shared/empty-state";
 import { Card } from "@/components/ui/card";
-import { getUserLanguageLabels } from "@/constants/language";
+import { getNativeLanguageLabel } from "@/constants/language";
 import type { QuizWithQuestions } from "@/schemas/quiz";
 import type { User } from "@/schemas/user";
 
@@ -104,7 +104,6 @@ export default function QuizCard({
 
   const total = quiz.questions.length;
   const question = quiz.questions.find(({ id }) => id === queue[0]);
-  const { nativeLangLabel, targetLangLabel } = getUserLanguageLabels(user);
 
   return (
     <div className="sticky top-20">
@@ -120,8 +119,7 @@ export default function QuizCard({
             question={question}
             solved={total - queue.length}
             total={total}
-            nativeLangLabel={nativeLangLabel}
-            targetLangLabel={targetLangLabel}
+            nativeLangLabel={getNativeLanguageLabel(user.nativeLanguage)}
             onContinue={handleContinue}
           />
         ) : (

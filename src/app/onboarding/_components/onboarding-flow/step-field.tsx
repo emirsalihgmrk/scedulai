@@ -3,13 +3,8 @@
 import EmailOtpForm from "@/components/shared/email-otp-form";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  SUPPORTED_NATIVE_LANGUAGES,
-  SUPPORTED_TARGET_LANGUAGES
-  
-  
-} from "@/constants/language";
-import type {SupportedNativeLanguageCode, SupportedTargetLanguageCode} from "@/constants/language";
+import { SUPPORTED_NATIVE_LANGUAGES } from "@/constants/language";
+import type { SupportedNativeLanguageCode } from "@/constants/language";
 import {
   DAILY_MINUTES_OPTIONS
   
@@ -65,22 +60,6 @@ export default function StepField({
         />
       )}
 
-      {step === "targetLanguage" && (
-        <ChoiceList
-          name="targetLanguage"
-          label={label}
-          value={draft.targetLanguage}
-          onValueChange={(value) =>
-            onDraftChange({ targetLanguage: value as SupportedTargetLanguageCode })
-          }
-          options={SUPPORTED_TARGET_LANGUAGES.map((language) => ({
-            value: language.code,
-            title: language.nativeName,
-            icon: <span aria-hidden>{language.flag}</span>,
-          }))}
-        />
-      )}
-
       {step === "level" && (
         <ChoiceList
           name="level"
@@ -93,7 +72,6 @@ export default function StepField({
 
       {step === "placement" && (
         <PlacementTest
-          targetLanguage={draft.targetLanguage}
           answers={draft.placementAnswers}
           onAnswersChange={(placementAnswers) =>
             onDraftChange({ placementAnswers })

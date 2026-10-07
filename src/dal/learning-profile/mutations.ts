@@ -3,7 +3,7 @@ import type {Transaction} from "@/db";
 import { learningProfilesTable } from "@/db/schema";
 import type { CreateLearningProfileInput } from "@/schemas/learning-profile";
 
-// `undefined` when the user already has a profile for this target language.
+// `undefined` when the user already has a profile.
 export async function createLearningProfile(
   userId: string,
   input: CreateLearningProfileInput,
@@ -13,12 +13,7 @@ export async function createLearningProfile(
   const [row] = await executor
     .insert(learningProfilesTable)
     .values({ userId, ...input })
-    .onConflictDoNothing({
-      target: [
-        learningProfilesTable.userId,
-        learningProfilesTable.targetLanguage,
-      ],
-    })
+    .onConflictDoNothing({ target: learningProfilesTable.userId })
     .returning({ id: learningProfilesTable.id });
   return row;
 }

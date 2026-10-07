@@ -1,8 +1,4 @@
-import type {
-  SupportedNativeLanguageCode,
-  SupportedTargetLanguageCode,
-} from "@/constants/language";
-import { SUPPORTED_TARGET_LANGUAGES } from "@/constants/language";
+import type { SupportedNativeLanguageCode } from "@/constants/language";
 import type { DailyMinutes, LearningGoal } from "@/constants/learning";
 import type { CompleteOnboardingInput } from "@/schemas/learning-profile";
 
@@ -10,7 +6,6 @@ import { UNSURE_LEVEL } from "./options";
 
 export type StepId =
   | "nativeLanguage"
-  | "targetLanguage"
   | "level"
   | "placement"
   | "goal"
@@ -20,7 +15,6 @@ export type StepId =
 
 export interface Draft {
   nativeLanguage: SupportedNativeLanguageCode | undefined;
-  targetLanguage: SupportedTargetLanguageCode;
   level: string | undefined;
   // questionId → chosen option index; null = "I don't know".
   placementAnswers: Record<string, number | null>;
@@ -38,10 +32,6 @@ export const STEP_COPY: Record<StepId, { title: string; description: string }> =
   nativeLanguage: {
     title: "What's your native language?",
     description: "Explanations and corrections will be written in it.",
-  },
-  targetLanguage: {
-    title: "What do you want to learn?",
-    description: "You can add more languages later.",
   },
   level: {
     title: "How would you rate your level?",
@@ -73,9 +63,7 @@ export function buildSteps(
   viewer: OnboardingViewer | null,
   draft: Draft,
 ): StepId[] {
-  const steps: StepId[] = ["nativeLanguage"];
-  if (SUPPORTED_TARGET_LANGUAGES.length > 1) steps.push("targetLanguage");
-  steps.push("level");
+  const steps: StepId[] = ["nativeLanguage", "level"];
   if (draft.level === UNSURE_LEVEL) steps.push("placement");
   steps.push("goal", "dailyMinutes");
   if (!viewer?.name) steps.push("name");
@@ -91,7 +79,6 @@ export function toInput(draft: Draft): CompleteOnboardingInput | null {
   return {
     name,
     nativeLanguage,
-    targetLanguage: draft.targetLanguage,
     level: isUnsure ? null : (level as CompleteOnboardingInput["level"]),
     placementAnswers: isUnsure
       ? Object.entries(draft.placementAnswers).map(

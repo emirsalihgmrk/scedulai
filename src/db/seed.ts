@@ -548,7 +548,6 @@ async function seed() {
 
     await db.insert(transcriptsTable).values({
       videoId: video.id,
-      language: "en",
       content: transcript,
     });
 

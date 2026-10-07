@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { sectionsTable, transcriptsTable } from "@/db/schema";
@@ -38,10 +38,7 @@ export async function getTranscript(
   videoId: string,
 ): Promise<Transcript | undefined> {
   return db.query.transcriptsTable.findFirst({
-    where: and(
-      eq(transcriptsTable.videoId, videoId),
-      eq(transcriptsTable.language, "en"),
-    ),
+    where: eq(transcriptsTable.videoId, videoId),
     columns: { content: true },
   });
 }

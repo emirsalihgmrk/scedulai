@@ -9,7 +9,6 @@ import Logo from "@/components/shared/logo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { SUPPORTED_TARGET_LANGUAGES } from "@/constants/language";
 import { PLACEMENT_QUESTIONS } from "@/constants/placement";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +31,6 @@ export default function Wizard({ viewer }: WizardProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [draft, setDraft] = useState<Draft>({
     nativeLanguage: viewer?.nativeLanguage,
-    targetLanguage: SUPPORTED_TARGET_LANGUAGES[0].code,
     level: undefined,
     placementAnswers: {},
     goal: undefined,
@@ -51,11 +49,9 @@ export default function Wizard({ viewer }: WizardProps) {
 
   const canContinue = {
     nativeLanguage: !!draft.nativeLanguage,
-    targetLanguage: !!draft.targetLanguage,
     level: !!draft.level,
     placement:
-      Object.keys(draft.placementAnswers).length ===
-      PLACEMENT_QUESTIONS[draft.targetLanguage].length,
+      Object.keys(draft.placementAnswers).length === PLACEMENT_QUESTIONS.length,
     goal: !!draft.goal,
     dailyMinutes: !!draft.dailyMinutes,
     name: draft.name.trim().length > 0,

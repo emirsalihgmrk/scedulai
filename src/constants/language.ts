@@ -106,42 +106,10 @@ export type SupportedNativeLanguageCode =
 export type SupportedNativeLanguage =
   (typeof SUPPORTED_NATIVE_LANGUAGES)[number];
 
-export const SUPPORTED_TARGET_LANGUAGES = [
-  { code: "en", nativeName: "English", englishName: "English", flag: "🇬🇧" },
-] as const;
-
-export const SUPPORTED_TARGET_LANGUAGE_CODES = SUPPORTED_TARGET_LANGUAGES.map(
-  (l) => l.code,
-) as [
-  (typeof SUPPORTED_TARGET_LANGUAGES)[number]["code"],
-  ...(typeof SUPPORTED_TARGET_LANGUAGES)[number]["code"][],
-];
-
-export type SupportedTargetLanguageCode =
-  (typeof SUPPORTED_TARGET_LANGUAGES)[number]["code"];
-export type SupportedTargetLanguage =
-  (typeof SUPPORTED_TARGET_LANGUAGES)[number];
-
-interface UserLanguageCodes {
-  nativeLanguage?: string | null;
-  targetLanguage?: string | null;
-}
-
-export function getUserLanguageLabels({
-  nativeLanguage,
-  targetLanguage,
-}: UserLanguageCodes) {
-  const nativeLang = SUPPORTED_NATIVE_LANGUAGES.find(
-    (language) => language.code === nativeLanguage,
-  );
-  const targetLang = SUPPORTED_TARGET_LANGUAGES.find(
-    (language) => language.code === targetLanguage,
-  );
-
-  return {
-    nativeLangLabel: nativeLang?.nativeName ?? "Native",
-    targetLangLabel: targetLang?.nativeName ?? "English",
-  };
+export function getNativeLanguageLabel(
+  code: SupportedNativeLanguageCode,
+): string {
+  return SUPPORTED_NATIVE_LANGUAGES.find((l) => l.code === code)!.nativeName;
 }
 
 // English display names — used when addressing an AI model, which expects
