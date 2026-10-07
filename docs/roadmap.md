@@ -58,11 +58,11 @@ verisine göre yeniden belirlenmeli (ör. kullanıcılar kendi videolarını ço
 
 ## Faz 2 — Hafıza döngüsü (ürünün kalbi) · _5–7 hafta_
 
-- [ ] **Hata defteri:** AI `mistakes` çıktısı kategorilere ayrılır (zaman, artikel, edat, kelime sırası, kelime seçimi, yazım…); kullanıcı kategori bazlı hata geçmişini görür · _1–1,5 hafta_ (prompt değişikliği + eval'lerin yenilenmesi + eski cevapların migrasyonu)
+- [ ] **Hata defteri:** AI `mistakes` çıktısı kategorilere ayrılır (zaman, artikel, edat, kelime sırası, kelime seçimi, yazım…); kullanıcı kategori bazlı hata geçmişini görür · _1–1,5 hafta_ (prompt değişikliği + eval'lerin yenilenmesi + cevaplar saklanmadığı için yeni bir `mistakes` tablosu)
 - [ ] **Kelime/ifade bankası:** transkriptten kelime/ifade kaydet; kart, videodaki cümle ve zaman damgasıyla gelir · _~1,5 hafta_
 - [ ] **Aralıklı tekrar (SRS, ör. FSRS)** kelime kartları için · _~1 hafta_ (hazır kütüphaneyle; sıfırdan yazılmamalı)
 - [ ] **Practice sayfası = günlük kişisel oturum:** vadesi gelen kartlar + en zayıf hata kategorisinden 3–5 yeni cümle · _1,5–2 hafta_
-- [ ] **Tekrar deneme:** soru başına tek cevap yerine deneme geçmişi ("hatayı gör → tekrar dene") · _0,5–1 hafta_ (mevcut tekil cevap kısıtı değişir)
+- [x] **Tekrar deneme:** Duolingo modeli: yanlış cevaplanan soru kuyruğun sonuna eklenir, hepsi doğru cevaplanınca quiz biter ("hatayı gör → tekrar dene")
 
 ## Faz 3 — Alışkanlık · _3–4 hafta_
 
