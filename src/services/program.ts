@@ -8,16 +8,15 @@ import {
   getSectionProgress,
   getSections,
 } from "@/dal/program/queries";
-import {
-  saveVideoPositionSchema
-  
-  
-  
-  
-  
-  
+import { saveVideoPositionSchema } from "@/schemas/program";
+import type {
+  ProgramDetail,
+  ProgramListItem,
+  SaveVideoPositionInput,
+  Section,
+  SectionListItem,
+  SectionProgress,
 } from "@/schemas/program";
-import type {ProgramDetail, ProgramListItem, SaveVideoPositionInput, Section, SectionListItem, SectionProgress} from "@/schemas/program";
 import { getCurrentUserService } from "@/services/auth";
 
 export const getProgramsService = cache(

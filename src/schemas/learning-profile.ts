@@ -31,8 +31,6 @@ export type CreateLearningProfileInput = z.infer<
 
 // ── Service input schemas ──
 
-// optionIndex null = "I don't know". Answers are scored on the server, so the
-// client never asserts a placement level itself.
 const placementAnswerSchema = z.object({
   questionId: z.string().max(40),
   optionIndex: z.number().int().min(0).max(9).nullable(),
@@ -44,5 +42,7 @@ export const completeOnboardingSchema = createLearningProfileSchema
     updateUserSchema.pick({ name: true, nativeLanguage: true }).required()
       .shape,
   )
-  .extend({ placementAnswers: z.array(placementAnswerSchema).max(50).optional() });
+  .extend({
+    placementAnswers: z.array(placementAnswerSchema).max(50).optional(),
+  });
 export type CompleteOnboardingInput = z.infer<typeof completeOnboardingSchema>;
