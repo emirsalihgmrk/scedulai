@@ -4,7 +4,7 @@
 
 ## Teşhis
 
-Bugünkü akış: **Program (YouTube kanalı) → Bölüm (video) → Quiz (çeviri + boşluk doldurma) → AI geri bildirimi.**
+Bugünkü akış: **Program (YouTube kanalı) → Bölüm (video) → Quiz (çeviri) → AI geri bildirimi.**
 Tek seferlik ve lineer. Eksikler:
 
 1. **Hafıza döngüsü yok** — öğrenilen şey tekrar karşına çıkmıyor (Practice sayfası boş).

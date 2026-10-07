@@ -1,6 +1,5 @@
 import type { QuestionWithAnswer } from "@/schemas/quiz";
 
-import FillInTheBlankGraded from "./fill-in-the-blank-graded";
 import TranslationGraded from "./translation-graded";
 
 interface QuestionGradedProps {
@@ -19,16 +18,6 @@ export default function QuestionGraded({ question }: QuestionGradedProps) {
       if (payload.type !== "translation") return null;
       return (
         <TranslationGraded
-          question={question}
-          payload={payload}
-          result={result}
-          accuracy={accuracy}
-        />
-      );
-    case "fill-in-the-blank":
-      if (payload.type !== "fill-in-the-blank") return null;
-      return (
-        <FillInTheBlankGraded
           question={question}
           payload={payload}
           result={result}

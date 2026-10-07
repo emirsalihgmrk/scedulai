@@ -58,52 +58,15 @@ export const translationResultSchema = z.object({
 });
 export type TranslationResult = z.infer<typeof translationResultSchema>;
 
-// fill-in-the-blank
-
-export const fillInTheBlankPayloadSchema = z.object({
-  type: z.literal("fill-in-the-blank"),
-  segments: z.array(
-    z.discriminatedUnion("kind", [
-      z.object({ kind: z.literal("text"), value: z.string() }),
-      z.object({ kind: z.literal("blank"), answer: z.string() }),
-    ]),
-  ),
-  wordPool: z.array(z.string()),
-});
-export type FillInTheBlankPayload = z.infer<typeof fillInTheBlankPayloadSchema>;
-
-export const fillInTheBlankResponseSchema = z.object({
-  answers: z.array(z.string()),
-});
-export type FillInTheBlankResponse = z.infer<
-  typeof fillInTheBlankResponseSchema
->;
-
-export const fillInTheBlankAnalysisSchema = z.object({
-  blankResults: z.array(z.boolean()),
-});
-export type FillInTheBlankAnalysis = z.infer<
-  typeof fillInTheBlankAnalysisSchema
->;
-
-export const fillInTheBlankResultSchema = z.object({
-  type: z.literal("fill-in-the-blank"),
-  response: fillInTheBlankResponseSchema,
-  analysis: fillInTheBlankAnalysisSchema,
-});
-export type FillInTheBlankResult = z.infer<typeof fillInTheBlankResultSchema>;
-
 // column unions
 
 export const questionPayloadSchema = z.discriminatedUnion("type", [
   translationPayloadSchema,
-  fillInTheBlankPayloadSchema,
 ]);
 export type QuestionPayload = z.infer<typeof questionPayloadSchema>;
 
 export const answerResultSchema = z.discriminatedUnion("type", [
   translationResultSchema,
-  fillInTheBlankResultSchema,
 ]);
 export type AnswerResult = z.infer<typeof answerResultSchema>;
 

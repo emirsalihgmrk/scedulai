@@ -1,6 +1,5 @@
 import type { QuestionWithAnswer } from "@/schemas/quiz";
 
-import FillInTheBlankInput from "./fill-in-the-blank-input";
 import TranslationInput from "./translation-input";
 
 interface QuestionInputProps {
@@ -23,16 +22,6 @@ export default function QuestionInput({
     case "translation":
       return (
         <TranslationInput
-          question={question}
-          payload={payload}
-          value={value}
-          onChange={onChange}
-          onGraded={onGraded}
-        />
-      );
-    case "fill-in-the-blank":
-      return (
-        <FillInTheBlankInput
           question={question}
           payload={payload}
           value={value}

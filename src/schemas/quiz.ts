@@ -3,12 +3,9 @@ import type { z } from "zod";
 import {
   createAnswerRowSchema,
   createQuestionRowSchema,
-  createQuizRowSchema
-  
-  
-  
+  createQuizRowSchema,
 } from "@/db/rows";
-import type {AnswerRow, QuestionRow, QuizRow} from "@/db/rows";
+import type { AnswerRow, QuestionRow, QuizRow } from "@/db/rows";
 import { translationResponseSchema } from "@/schemas/column-types";
 
 // ── Re-exports (jsonb shapes owned by this module) ──
@@ -18,10 +15,6 @@ export {
   translationResponseSchema,
   translationAnalysisSchema,
   translationResultSchema,
-  fillInTheBlankPayloadSchema,
-  fillInTheBlankResponseSchema,
-  fillInTheBlankAnalysisSchema,
-  fillInTheBlankResultSchema,
   questionPayloadSchema,
   answerResultSchema,
 } from "@/schemas/column-types";
@@ -30,10 +23,6 @@ export type {
   TranslationResponse,
   TranslationAnalysis,
   TranslationResult,
-  FillInTheBlankPayload,
-  FillInTheBlankResponse,
-  FillInTheBlankAnalysis,
-  FillInTheBlankResult,
   QuestionPayload,
   AnswerResult,
 } from "@/schemas/column-types";
