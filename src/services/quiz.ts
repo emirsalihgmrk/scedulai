@@ -56,6 +56,7 @@ export const getQuestionService = cache(
   },
 );
 
+// Will be deleted - Temporary
 export async function generateQuizByAiService(
   sectionId: string,
 ): Promise<QuizWithQuestions> {
