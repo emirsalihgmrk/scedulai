@@ -1,44 +1,25 @@
-import type { z } from "zod";
+import { z } from "zod";
 
-import {
-  createAnswerRowSchema,
-  createQuestionRowSchema,
-  createQuizRowSchema,
-} from "@/db/rows";
-import type { AnswerRow, QuestionRow, QuizRow } from "@/db/rows";
-import { translationResponseSchema } from "@/schemas/column-types";
+import { createQuestionRowSchema, createQuizRowSchema } from "@/db/rows";
+import type { QuestionRow, QuizRow } from "@/db/rows";
 
 // ── Re-exports (jsonb shapes owned by this module) ──
 
 export {
   translationPayloadSchema,
-  translationResponseSchema,
-  translationAnalysisSchema,
-  translationResultSchema,
   questionPayloadSchema,
-  answerResultSchema,
 } from "@/schemas/column-types";
 export type {
   TranslationPayload,
-  TranslationResponse,
-  TranslationAnalysis,
-  TranslationResult,
   QuestionPayload,
-  AnswerResult,
 } from "@/schemas/column-types";
 
 // ── Query types ──
 
 export type Question = Omit<QuestionRow, "createdAt" | "updatedAt">;
 
-export type Answer = Pick<AnswerRow, "result" | "accuracy">;
-
-export type QuestionWithAnswer = Question & {
-  answer: Answer | null;
-};
-
 export type QuizWithQuestions = Pick<QuizRow, "id"> & {
-  questions: QuestionWithAnswer[];
+  questions: Question[];
 };
 
 // ── DAL input schemas ──
@@ -56,16 +37,25 @@ export const createQuestionSchema = createQuestionRowSchema.pick({
 });
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 
-export const upsertAnswerSchema = createAnswerRowSchema.pick({
-  result: true,
-  accuracy: true,
-});
-export type UpsertAnswerInput = z.infer<typeof upsertAnswerSchema>;
-
 // ── Service input schemas ──
 
-// A jsonb shape is aliased, never re-declared.
-export const submitTranslationAnswerSchema = translationResponseSchema;
-export type SubmitTranslationAnswerInput = z.infer<
-  typeof submitTranslationAnswerSchema
->;
+// Answers are graded, never stored, so this shape has no table to derive from.
+export const gradeTranslationSchema = z.object({
+  userTranslation: z.string().trim().min(1).max(200),
+});
+export type GradeTranslationInput = z.infer<typeof gradeTranslationSchema>;
+
+// ── Service result types ──
+
+export const translationAnalysisSchema = z.object({
+  description: z.string(),
+  meaningPreserved: z.enum(["yes", "partial", "no"]),
+  mistakes: z.array(z.string()),
+  alternatives: z.array(z.string()),
+});
+export type TranslationAnalysis = z.infer<typeof translationAnalysisSchema>;
+
+export type TranslationGrade = GradeTranslationInput & {
+  analysis: TranslationAnalysis;
+  isCorrect: boolean;
+};

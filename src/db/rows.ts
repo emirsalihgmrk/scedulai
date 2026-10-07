@@ -10,17 +10,13 @@ import type {
   verificationTable,
   videosTable} from "@/db/schema";
 import {
-  answersTable,
   learningProfilesTable,
   questionsTable,
   quizzesTable,
   sectionProgressTable,
   userTable
 } from "@/db/schema";
-import {
-  answerResultSchema,
-  questionPayloadSchema,
-} from "@/schemas/column-types";
+import { questionPayloadSchema } from "@/schemas/column-types";
 
 // Raw, generated shapes only — narrowing happens in schemas/<module>.ts.
 //   <Entity>Row             every table ($inferSelect)
@@ -69,7 +65,3 @@ export const createQuestionRowSchema = createInsertSchema(questionsTable, {
   payload: questionPayloadSchema,
 });
 
-export type AnswerRow = typeof answersTable.$inferSelect;
-export const createAnswerRowSchema = createInsertSchema(answersTable, {
-  result: answerResultSchema,
-});

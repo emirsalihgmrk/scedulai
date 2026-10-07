@@ -88,7 +88,7 @@ async function ProgramSectionsInfo({ program }: ProgramSectionsInfoProps) {
     0,
   );
   const completedCount = sections.filter(
-    (section) => section.progress?.quizStatus === "passed",
+    (section) => !!section.progress?.quizCompletedAt,
   ).length;
   const progressPercent =
     sections.length > 0

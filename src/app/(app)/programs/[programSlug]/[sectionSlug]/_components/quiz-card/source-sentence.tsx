@@ -1,9 +1,9 @@
 import { Sparkles } from "lucide-react";
 
-import type { QuestionWithAnswer } from "@/schemas/quiz";
+import type { Question } from "@/schemas/quiz";
 
 interface SourceSentenceProps {
-  question: QuestionWithAnswer;
+  question: Question;
 }
 
 export default function SourceSentence({ question }: SourceSentenceProps) {

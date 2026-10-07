@@ -27,7 +27,7 @@ else is enforced in review.
 | Variables, functions, parameters       | `camelCase`           | `sectionId`, `getQuizService`               |
 | Components, types, interfaces          | `PascalCase`          | `QuizCard`, `QuizWithQuestions`             |
 | Module-level constants and lookup maps | `SCREAMING_SNAKE`     | `QUESTION_COUNT`, `DIFFICULTY_CLASSES`      |
-| Zod schemas                            | `camelCase` + suffix  | `upsertAnswerSchema`                        |
+| Zod schemas                            | `camelCase` + suffix  | `createQuestionSchema`                      |
 
 **Acronyms are written as words:** `AiObjectResult`, `aiProvider`, `SendOtpInput`,
 `thumbnailUrl`, `useYoutubePlayer`. Never `AIProvider`, `OTP`, `URL`, `YouTube` inside identifiers.
@@ -38,8 +38,8 @@ else is enforced in review.
 - Booleans start with `is` / `has` / `can` / `should`: `isPending`, `hasRequestedRef`,
   `canContinue`, `shouldPrime`. This applies to state too: `const [isFlipped, setIsFlipped]`.
 - Event handlers defined in a component are `handle<Event>`; callback props are `on<Event>`:
-  `onClick={handleRetry}`, `onGraded={…}`.
-- Refs end in `Ref`: `containerRef`, `lastEvaluatedRef`.
+  `onClick={handleSubmit}`, `onContinue={…}`.
+- Refs end in `Ref`: `containerRef`, `hasRequestedRef`.
 
 ## Types
 
@@ -52,7 +52,7 @@ else is enforced in review.
 
   ```ts
   import { cn } from "@/lib/utils";
-  import type { QuizStatus } from "@/constants/progress";
+  import type { QuestionType } from "@/constants/question";
   ```
 
 ## Imports

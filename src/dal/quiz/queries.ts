@@ -12,9 +12,8 @@ export async function getQuiz(
   sectionId: string,
   nativeLanguage: SupportedNativeLanguageCode,
   targetLanguage: SupportedTargetLanguageCode,
-  userId: string,
 ): Promise<QuizWithQuestions | undefined> {
-  const row = await db.query.quizzesTable.findFirst({
+  return db.query.quizzesTable.findFirst({
     where: and(
       eq(quizzesTable.sectionId, sectionId),
       eq(quizzesTable.nativeLanguage, nativeLanguage),
@@ -25,28 +24,9 @@ export async function getQuiz(
       questions: {
         columns: { createdAt: false, updatedAt: false },
         orderBy: (questions, { asc }) => asc(questions.order),
-        with: {
-          answers: {
-            where: (answers, { eq }) => eq(answers.userId, userId),
-            columns: {
-              result: true,
-              accuracy: true,
-            },
-          },
-        },
       },
     },
   });
-
-  if (!row) return undefined;
-
-  return {
-    id: row.id,
-    questions: row.questions.map(({ answers, ...question }) => ({
-      ...question,
-      answer: answers[0] ?? null,
-    })),
-  };
 }
 
 export async function getQuestion(

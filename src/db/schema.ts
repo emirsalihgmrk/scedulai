@@ -22,14 +22,9 @@ import {
   LEVEL_SOURCES,
 } from "@/constants/learning";
 import { PLANS } from "@/constants/plan";
-import { QUIZ_STATUSES } from "@/constants/progress";
 import { QUESTION_DIRECTIONS, QUESTION_TYPES } from "@/constants/question";
 import { ROLES } from "@/constants/role";
-import type {
-  AnswerResult,
-  QuestionPayload,
-  TranscriptLine,
-} from "@/schemas/column-types";
+import type { QuestionPayload, TranscriptLine } from "@/schemas/column-types";
 
 const commonFields = {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -47,7 +42,6 @@ export const questionDirectionEnum = pgEnum(
   "question_direction",
   QUESTION_DIRECTIONS,
 );
-export const quizStatusEnum = pgEnum("quiz_status", QUIZ_STATUSES);
 export const nativeLanguageEnum = pgEnum(
   "native_language",
   SUPPORTED_NATIVE_LANGUAGE_CODES,
@@ -249,26 +243,6 @@ export const questionsTable = pgTable(
   ],
 );
 
-export const answersTable = pgTable(
-  "answers",
-  {
-    ...commonFields,
-    userId: text("user_id")
-      .references(() => userTable.id, { onDelete: "cascade" })
-      .notNull(),
-    questionId: uuid("question_id")
-      .references(() => questionsTable.id, { onDelete: "cascade" })
-      .notNull(),
-    result: jsonb("result").$type<AnswerResult>().notNull(),
-    accuracy: integer("accuracy").notNull(),
-  },
-  (table) => [
-    index("answers_user_id_idx").on(table.userId),
-    index("answers_question_id_idx").on(table.questionId),
-    unique("answers_user_question_unique").on(table.userId, table.questionId),
-  ],
-);
-
 export const sectionProgressTable = pgTable(
   "section_progress",
   {
@@ -282,7 +256,7 @@ export const sectionProgressTable = pgTable(
     videoPositionSeconds: integer("video_position_seconds")
       .default(0)
       .notNull(),
-    quizStatus: quizStatusEnum("quiz_status").default("in_progress").notNull(),
+    quizCompletedAt: timestamp("quiz_completed_at"),
   },
   (table) => [
     unique("section_progress_user_section_unique").on(
@@ -321,7 +295,6 @@ export const learningProfilesTable = pgTable(
 // Relations
 export const userRelations = relations(userTable, ({ many }) => ({
   learningProfiles: many(learningProfilesTable),
-  answers: many(answersTable),
   sectionProgress: many(sectionProgressTable),
   sessions: many(sessionTable),
   accounts: many(accountTable),
@@ -393,25 +366,10 @@ export const quizzesRelations = relations(quizzesTable, ({ one, many }) => ({
   questions: many(questionsTable),
 }));
 
-export const questionsRelations = relations(
-  questionsTable,
-  ({ one, many }) => ({
-    quiz: one(quizzesTable, {
-      fields: [questionsTable.quizId],
-      references: [quizzesTable.id],
-    }),
-    answers: many(answersTable),
-  }),
-);
-
-export const answersRelations = relations(answersTable, ({ one }) => ({
-  user: one(userTable, {
-    fields: [answersTable.userId],
-    references: [userTable.id],
-  }),
-  question: one(questionsTable, {
-    fields: [answersTable.questionId],
-    references: [questionsTable.id],
+export const questionsRelations = relations(questionsTable, ({ one }) => ({
+  quiz: one(quizzesTable, {
+    fields: [questionsTable.quizId],
+    references: [quizzesTable.id],
   }),
 }));
 

@@ -8,6 +8,11 @@
 skorlar ortalanıp `QUIZ_PASS_ACCURACY` eşiğiyle quiz "passed/failed" oluyor. Yani grader'daki
 her kalibrasyon hatası = yanlış geçme/kalma kararı.
 
+> **Güncel durum (2026-10-07):** `accuracy` ve pass-mark kaldırıldı. Grader artık
+> `isTranslationCorrect` ile ikili karar veriyor (`meaningPreserved === "yes"`); yanlış
+> cevaplanan soru kuyruğun sonuna eklenir. Kalibrasyon hatası artık "bir soruyu boşuna tekrar
+> sordurmak" ya da "yanlışı geçirmek" demek. Aşağıdaki plan tarihsel bağlam olarak duruyor.
+
 Gözlemlenen semptomlar grader'lar için klasik başarısızlık sınıfları:
 
 1. **Prompt injection / manipülasyon** — `userTranslation` prompt'a ham veri olarak giriyor;

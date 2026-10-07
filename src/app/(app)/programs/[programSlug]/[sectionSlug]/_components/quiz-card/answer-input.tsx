@@ -3,12 +3,12 @@ import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import type { QuestionWithAnswer } from "@/schemas/quiz";
+import type { Question } from "@/schemas/quiz";
 
 import SourceSentence from "./source-sentence";
 
 interface AnswerInputProps {
-  question: QuestionWithAnswer;
+  question: Question;
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;

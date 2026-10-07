@@ -14,18 +14,11 @@ import type { QuestionType } from "@/constants/question";
 // other layer takes these types from the owning module file (`@/schemas/quiz`,
 // `@/schemas/video`), which re-exports them.
 //
-// Only the object stored at a column's root carries the `type` discriminant;
-// nested parts (response, analysis) do not.
+// Only the object stored at a column's root carries the `type` discriminant.
 // ---------------------------------------------------------------------------
 
 // ===========================================================================
-// quiz — questions.payload / answers.result
-//
-// Each question type defines four parts:
-//   payload  — stored in `questions.payload`
-//   response — what the learner submits
-//   analysis — how the response was graded
-//   result   — stored in `answers.result`
+// quiz — questions.payload
 // ===========================================================================
 
 // translation
@@ -38,26 +31,6 @@ export const translationPayloadSchema = z.object({
 });
 export type TranslationPayload = z.infer<typeof translationPayloadSchema>;
 
-export const translationResponseSchema = z.object({
-  userTranslation: z.string().trim().min(1).max(200),
-});
-export type TranslationResponse = z.infer<typeof translationResponseSchema>;
-
-export const translationAnalysisSchema = z.object({
-  description: z.string(),
-  meaningPreserved: z.enum(["yes", "partial", "no"]),
-  mistakes: z.array(z.string()),
-  alternatives: z.array(z.string()),
-});
-export type TranslationAnalysis = z.infer<typeof translationAnalysisSchema>;
-
-export const translationResultSchema = z.object({
-  type: z.literal("translation"),
-  response: translationResponseSchema,
-  analysis: translationAnalysisSchema,
-});
-export type TranslationResult = z.infer<typeof translationResultSchema>;
-
 // column unions
 
 export const questionPayloadSchema = z.discriminatedUnion("type", [
@@ -65,19 +38,11 @@ export const questionPayloadSchema = z.discriminatedUnion("type", [
 ]);
 export type QuestionPayload = z.infer<typeof questionPayloadSchema>;
 
-export const answerResultSchema = z.discriminatedUnion("type", [
-  translationResultSchema,
-]);
-export type AnswerResult = z.infer<typeof answerResultSchema>;
-
-// Compile-time guard: every QUESTION_TYPES entry has a payload and a result
-// variant. Fails to compile when a type is added to constants/ but not here.
+// Compile-time guard: every QUESTION_TYPES entry has a payload variant.
+// Fails to compile when a type is added to constants/ but not here.
 type AssertTrue<T extends true> = T;
 export type QuestionTypeCoverage = AssertTrue<
-  [
-    Exclude<QuestionType, QuestionPayload["type"]>,
-    Exclude<QuestionType, AnswerResult["type"]>,
-  ] extends [never, never]
+  [Exclude<QuestionType, QuestionPayload["type"]>] extends [never]
     ? true
     : false
 >;

@@ -70,7 +70,7 @@ export async function getSections(
             // "" never matches a better-auth user id → anonymous stays neutral.
             where: (progress, { eq }) => eq(progress.userId, userId ?? ""),
             columns: {
-              quizStatus: true,
+              quizCompletedAt: true,
               videoPositionSeconds: true,
               updatedAt: true,
             },
@@ -97,7 +97,7 @@ export async function getSectionProgress(
       eq(sectionProgressTable.sectionId, sectionId),
     ),
     columns: {
-      quizStatus: true,
+      quizCompletedAt: true,
       videoPositionSeconds: true,
       updatedAt: true,
     },

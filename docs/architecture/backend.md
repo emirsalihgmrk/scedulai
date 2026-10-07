@@ -46,7 +46,7 @@ the layers it needs, e.g. `user` has no service and `auth` has no DAL.
 | `learning-profile` | `learning_profiles`                         | schemas, dal, services, actions          |
 | `program`          | `programs`, `sections`, `section_progress`  | schemas, dal, services, actions          |
 | `video`            | `channels`, `videos`, `transcripts`         | schemas, dal, services                   |
-| `quiz`             | `quizzes`, `questions`, `answers`           | schemas, dal, services, actions          |
+| `quiz`             | `quizzes`, `questions`                      | schemas, dal, services, actions          |
 
 A module's DAL **writes only its own tables**. Reads may follow relations into other modules' tables
 (e.g. `getSections` includes each section's `video` and `progress`).
@@ -59,13 +59,13 @@ A module's DAL **writes only its own tables**. Reads may follow relations into o
   lookups over those values:
 
   ```ts
-  export const QUIZ_STATUSES = ["in_progress", "passed", "failed"] as const;
-  export type QuizStatus = (typeof QUIZ_STATUSES)[number];
+  export const QUESTION_TYPES = ["translation"] as const;
+  export type QuestionType = (typeof QUESTION_TYPES)[number];
   ```
 
   It never holds UI: no class names, icons or JSX.
 - **DB enums** in `db/schema.ts` are always built from a `constants/` array
-  (`pgEnum("quiz_status", QUIZ_STATUSES)`). New enum values are added in `constants/`.
+  (`pgEnum("question_type", QUESTION_TYPES)`). New enum values are added in `constants/`.
 - **`db/schema.ts`** holds tables, relations and enums. It defines no domain types. JSONB columns take
   their shape with `import type` + `$type<>()` from `schemas/column-types.ts`.
 - **`db/index.ts`** exports `db` and the `Transaction` type.
@@ -93,13 +93,13 @@ one-file-per-module, because these shapes must sit *below* `db/schema.ts`.
 
 - **Leaf:** it imports only `zod` and `@/constants/*` **(lint)**.
 - **Internal:** only `db/` and `schemas/` import it. Each module re-exports its own shapes
-  (`schemas/quiz.ts` → question/answer shapes, `schemas/video.ts` → `TranscriptLine`), and every
+  (`schemas/quiz.ts` → question payloads, `schemas/video.ts` → `TranscriptLine`), and every
   other layer imports from the module **(lint)**.
-- **Discriminant:** only the object stored at a column's root carries `type` (`questions.payload`,
-  `answers.result`). Nested parts (`response`, `analysis`) do not.
-- **Per question type** there are four schemas: `<type>PayloadSchema`, `<type>ResponseSchema`,
-  `<type>AnalysisSchema` and `<type>ResultSchema`. The column unions are `questionPayloadSchema` and
-  `answerResultSchema`. A type added to `constants/question.ts` fails to compile until it is added here.
+- **Discriminant:** only the object stored at a column's root carries `type` (`questions.payload`).
+  Nested parts do not.
+- **Per question type** there is a `<type>PayloadSchema`. The column union is
+  `questionPayloadSchema`. A type added to `constants/question.ts` fails to compile until it is
+  added here.
 
 ---
 
@@ -115,6 +115,7 @@ derive from earlier ones.
 // ── Query types ──         what the DAL returns
 // ── DAL input schemas ──   what the DAL accepts
 // ── Service input schemas ── what callers send to a service
+// ── Service result types ──  what a service returns that no table stores
 ```
 
 ### Query types
@@ -129,8 +130,8 @@ derive from earlier ones.
 
 ### DAL input schemas
 
-- **Named after the DAL function they feed:** `upsertAnswer` → `upsertAnswerSchema` /
-  `UpsertAnswerInput`. The verb is one of `create`, `update`, `upsert`, `delete`. A bulk function
+- **Named after the DAL function they feed:** `createQuestions` → `createQuestionSchema` /
+  `CreateQuestionInput`. The verb is one of `create`, `update`, `upsert`, `delete`. A bulk function
   takes an array of the singular input (`createQuestions(quizId, CreateQuestionInput[])`).
 - **Derived from `create<Entity>RowSchema`:**
   - `create…` → `.pick(…)`
@@ -152,9 +153,15 @@ derive from earlier ones.
   `completeOnboardingSchema` / `CompleteOnboardingInput`.
 - **Derived only by narrowing** the DAL input schema(s): `.pick`, `.omit`, `.required`, `.extend`
   with another module's shape.
-- **Never include fields the server derives** (`levelSource`, `quizStatus`).
-- A service input over a JSONB shape is an **alias**, never a re-declaration:
-  `submitTranslationAnswerSchema = translationResponseSchema`.
+- **Never include fields the server derives** (`levelSource`, `quizCompletedAt`).
+- A service input over a JSONB shape is an **alias**, never a re-declaration.
+- Exception: input that is never stored has no table to derive from and is declared with `z.object`
+  (`gradeTranslationSchema`).
+
+### Service result types
+
+- Shapes a service returns without persisting them (`TranslationGrade`, `TranslationAnalysis`).
+  A shape an AI task also produces is a Zod schema here, so `ai/outputs/` can `.extend()` it.
 
 Every schema exports its `z.infer` type: `<Name>Schema` → `<Name>Input`.
 
@@ -176,15 +183,14 @@ Raw Drizzle, one statement per function, no business logic, no auth.
     its last parameter:
 
     ```ts
-    export async function upsertAnswer(
+    export async function upsertSectionProgress(
       userId: string,
-      questionId: string,
-      input: UpsertAnswerInput,
+      sectionId: string,
+      input: UpsertSectionProgressInput,
       tx?: Transaction,
-    ): Promise<Answer> {
+    ): Promise<void> {
       const executor = tx ?? db;
-      const [row] = await executor.insert(answersTable)…;
-      return row;
+      await executor.insert(sectionProgressTable)…;
     }
     ```
 
@@ -207,7 +213,7 @@ The module's public API. Pages call its read services; actions call its mutation
 - **Read services mirror the DAL 1:1:** `getX` → `getXService`. The current user is always implicit
   (a service resolves it itself), so names never say "Current": `getLearningProfileService()`.
 - Where the DAL verb is generic, the service verb is concrete: DAL `upsertSectionProgress` →
-  `saveVideoPositionService`, `evaluateQuizService`.
+  `saveVideoPositionService`, `completeQuizService`.
 - Private helpers are not exported and have no suffix (`getLearnerLanguages`).
 
 ### Reads go through services, writes go through the DAL
@@ -217,7 +223,7 @@ The module's public API. Pages call its read services; actions call its mutation
   and `cache()` apply every time. Importing another module's `dal/*/queries` is a lint error; the
   same-module case is checked in review.
 - **Writes call DAL mutations directly, from any module**, because they must be composed into one
-  transaction (`retryQuizService` → `deleteAnswers` + `upsertSectionProgress`).
+  transaction (`completeOnboardingService` → `updateUser` + `createLearningProfile`).
 
 ### Read services
 
@@ -280,16 +286,16 @@ no video"). Anything else is treated as an internal error and never shown to the
 ## 7. Actions (`actions/<module>.ts`)
 
 - `"use server"` at the top.
-- **One action per mutation service the client calls, named after it:** `retryQuizService` →
-  `retryQuizAction`, with the same parameters.
+- **One action per mutation service the client calls, named after it:** `completeQuizService` →
+  `completeQuizAction`, with the same parameters.
 - **No logic.** Every action has exactly this shape:
 
   ```ts
-  export async function retryQuizAction(
+  export async function completeQuizAction(
     sectionId: string,
   ): Promise<ActionResult> {
     try {
-      await retryQuizService(sectionId);
+      await completeQuizService(sectionId);
       return { ok: true, data: undefined };
     } catch (error) {
       return toActionFailure(error);
@@ -316,10 +322,10 @@ no video"). Anything else is treated as an internal error and never shown to the
 - `ai/tasks/<task>.ts`: one exported function per task. Each task pins its model in a
   `<TASK>_MODEL` constant (`ANALYZE_SENTENCE_MODEL`, `GENERATE_SENTENCES_MODEL`).
 - `ai/outputs/<task>.ts`: the Zod schema of a task's structured output.
-  - When the output is **persisted**, the domain schema owns the shape and the output only
-    `.extend()`s it with `.describe()` metadata. The task is typed with the domain type
-    (`TranslationAnalysis`); there is no `<Task>Output` alias.
-  - A **non-persisted** output keeps its own `<Task>Output` type in `ai/`.
+  - When the output **leaves the service** (persisted or returned to the client), the domain schema
+    owns the shape and the output only `.extend()`s it with `.describe()` metadata. The task is
+    typed with the domain type (`TranslationAnalysis`); there is no `<Task>Output` alias.
+  - An output used only inside the service keeps its own `<Task>Output` type in `ai/`.
 - AI tasks are pure: they never touch `db/` or the DAL **(lint)**. Services call them and persist the
   results.
 
@@ -330,7 +336,7 @@ no video"). Anything else is treated as an internal error and never shown to the
 | Layer         | Query                                   | Mutation                                               |
 | ------------- | --------------------------------------- | ------------------------------------------------------ |
 | `db/rows.ts`  | `QuizRow`, `userRowSchema`              | `createQuizRowSchema` (no update row schemas)          |
-| `schemas/`    | `QuizWithQuestions`                     | DAL `upsertAnswerSchema` · service `saveVideoPositionSchema` |
-| `dal/`        | `getQuiz` → `… \| undefined`            | `upsertAnswer(userId, questionId, input, tx?)`         |
-| `services/`   | `getQuizService` → `… \| null` (cached) | `retryQuizService` → `void \| <Type> \| null`          |
-| `actions/`    | —                                       | `retryQuizAction` → `ActionResult<T>`                  |
+| `schemas/`    | `QuizWithQuestions`                     | DAL `createQuestionSchema` · service `saveVideoPositionSchema` |
+| `dal/`        | `getQuiz` → `… \| undefined`            | `upsertSectionProgress(userId, sectionId, input, tx?)` |
+| `services/`   | `getQuizService` → `… \| null` (cached) | `completeQuizService` → `void \| <Type> \| null`       |
+| `actions/`    | —                                       | `completeQuizAction` → `ActionResult<T>`               |

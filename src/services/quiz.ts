@@ -3,26 +3,18 @@ import { cache } from "react";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getNativeLanguageEnglishName } from "@/constants/language";
-import { QUIZ_PASS_ACCURACY  } from "@/constants/progress";
-import type {QuizStatus} from "@/constants/progress";
 import { upsertSectionProgress } from "@/dal/program/mutations";
-import {
-  createQuestions,
-  createQuiz,
-  deleteAnswers,
-  upsertAnswer,
-} from "@/dal/quiz/mutations";
+import { createQuestions, createQuiz } from "@/dal/quiz/mutations";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
 import { db } from "@/db";
 import { AppError } from "@/lib/errors";
-import {
-  submitTranslationAnswerSchema
-  
-  
-  
-  
+import { gradeTranslationSchema } from "@/schemas/quiz";
+import type {
+  GradeTranslationInput,
+  Question,
+  QuizWithQuestions,
+  TranslationGrade,
 } from "@/schemas/quiz";
-import type {Question, QuestionWithAnswer, QuizWithQuestions, SubmitTranslationAnswerInput} from "@/schemas/quiz";
 import { getCurrentUserService } from "@/services/auth";
 import { getLearningProfileService } from "@/services/learning-profile";
 import { getTranscriptService, getVideoService } from "@/services/video";
@@ -52,7 +44,6 @@ export const getQuizService = cache(
       sectionId,
       learner.nativeLanguage,
       learner.targetLanguage,
-      learner.user.id,
     );
     return quiz ?? null;
   },
@@ -108,21 +99,20 @@ export async function generateQuizByAiService(
       tx,
     );
 
-    return {
-      id: quiz.id,
-      questions: questions.map((question) => ({ ...question, answer: null })),
-    };
+    return { id: quiz.id, questions };
   });
 }
 
-export async function submitTranslationAnswerService(
+// Grades without storing: the quiz card keeps the queue, so an answer only
+// lives until the learner moves on.
+export async function gradeTranslationService(
   questionId: string,
-  input: SubmitTranslationAnswerInput,
-): Promise<QuestionWithAnswer> {
+  input: GradeTranslationInput,
+): Promise<TranslationGrade> {
   const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
 
-  const response = submitTranslationAnswerSchema.parse(input);
+  const { userTranslation } = gradeTranslationSchema.parse(input);
 
   const question = await getQuestionService(questionId);
   if (!question) throw new AppError("Not found");
@@ -130,64 +120,25 @@ export async function submitTranslationAnswerService(
     throw new AppError("Invalid question type");
   }
 
-  const analyzeInput = {
+  const { output: analysis, isCorrect } = await analyzeSentence({
     sentence: question.payload.sourceSentence,
     originalSentence: question.payload.expectedTranslation,
-    userTranslation: response.userTranslation,
+    userTranslation,
     nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
-  };
-
-  const { output: analysis, accuracy } = await analyzeSentence(analyzeInput);
-
-  const answer = await upsertAnswer(user.id, questionId, {
-    result: { type: "translation", response, analysis },
-    accuracy: Math.round(accuracy),
   });
 
-  return { ...question, answer };
+  return { userTranslation, analysis, isCorrect };
 }
 
-// `null` until every question has been graded.
-export async function evaluateQuizService(
-  sectionId: string,
-): Promise<QuizStatus | null> {
+// Trusts the client: answers are not stored, so the server can't recount them.
+export async function completeQuizService(sectionId: string): Promise<void> {
   const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
 
   const quiz = await getQuizService(sectionId);
   if (!quiz) throw new AppError("Not found");
 
-  const answers = quiz.questions.flatMap((question) =>
-    question.answer ? [question.answer] : [],
-  );
-  if (answers.length === 0 || answers.length < quiz.questions.length) {
-    return null;
-  }
-
-  const avgAccuracy = Math.round(
-    answers.reduce((sum, answer) => sum + answer.accuracy, 0) / answers.length,
-  );
-  const quizStatus: QuizStatus =
-    avgAccuracy >= QUIZ_PASS_ACCURACY ? "passed" : "failed";
-
-  await upsertSectionProgress(user.id, sectionId, { quizStatus });
-  return quizStatus;
-}
-
-export async function retryQuizService(sectionId: string): Promise<void> {
-  const user = await getCurrentUserService();
-  if (!user) throw new AppError("Unauthorized");
-
-  const quiz = await getQuizService(sectionId);
-  if (!quiz) throw new AppError("Not found");
-
-  await db.transaction(async (tx) => {
-    await deleteAnswers(user.id, quiz.id, tx);
-    await upsertSectionProgress(
-      user.id,
-      sectionId,
-      { quizStatus: "in_progress" },
-      tx,
-    );
+  await upsertSectionProgress(user.id, sectionId, {
+    quizCompletedAt: new Date(),
   });
 }

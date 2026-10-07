@@ -1,6 +1,7 @@
 import {
   ChevronLeft,
   CircleCheck,
+  CircleX,
   Lightbulb,
   PencilLine,
   RotateCcw,
@@ -9,27 +10,31 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { QuestionWithAnswer } from "@/schemas/quiz";
+import type { Question, TranslationGrade } from "@/schemas/quiz";
 
 import SourceSentence from "./source-sentence";
-import { getAccuracyClasses } from "./utils";
+
+const VERDICT_CLASSES = {
+  correct: "bg-success/12 text-success",
+  incorrect: "bg-warning/12 text-warning-foreground",
+} as const;
 
 interface GradedQuestionProps {
-  question: QuestionWithAnswer;
+  question: Question;
+  grade: TranslationGrade;
   isFlipped: boolean;
   onFlip: (isFlipped: boolean) => void;
 }
 
 export default function GradedQuestion({
   question,
+  grade,
   isFlipped,
   onFlip,
 }: GradedQuestionProps) {
-  const { answer, payload } = question;
-  if (!answer) return null;
-
-  const { result, accuracy } = answer;
-  const userTranslation = result.response.userTranslation;
+  const { userTranslation, analysis, isCorrect } = grade;
+  const verdictClasses = VERDICT_CLASSES[isCorrect ? "correct" : "incorrect"];
+  const VerdictIcon = isCorrect ? CircleCheck : CircleX;
 
   return (
     <div className="relative min-h-0 flex-1 perspective-distant">
@@ -39,7 +44,7 @@ export default function GradedQuestion({
           isFlipped && "transform-[rotateY(180deg)]",
         )}
       >
-        {/* Front — kept question + answer + accuracy */}
+        {/* Front — question + answer + verdict */}
         <div className="absolute inset-0 flex flex-col gap-4 overflow-y-auto px-5 backface-hidden sm:px-6">
           <SourceSentence question={question} />
 
@@ -56,14 +61,12 @@ export default function GradedQuestion({
             <span
               className={cn(
                 "flex shrink-0 flex-col items-center rounded-xl px-3 py-2",
-                getAccuracyClasses(accuracy),
+                verdictClasses,
               )}
             >
-              <span className="font-display text-lg font-bold leading-none">
-                {accuracy}%
-              </span>
+              <VerdictIcon className="size-5" />
               <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                Accuracy
+                {isCorrect ? "Correct" : "Incorrect"}
               </span>
             </span>
           </div>
@@ -74,7 +77,7 @@ export default function GradedQuestion({
               Original Sentence
             </div>
             <p className="text-[15px] leading-relaxed text-foreground">
-              {payload.expectedTranslation}
+              {question.payload.expectedTranslation}
             </p>
           </div>
 
@@ -99,26 +102,26 @@ export default function GradedQuestion({
             <span
               className={cn(
                 "rounded-lg px-2.5 py-1 font-display text-sm font-bold",
-                getAccuracyClasses(accuracy),
+                verdictClasses,
               )}
             >
-              {accuracy}%
+              {isCorrect ? "Correct" : "Incorrect"}
             </span>
           </div>
 
-          {result.analysis.description && (
+          {analysis.description && (
             <p className="text-[13px] leading-relaxed text-foreground/90">
-              {result.analysis.description}
+              {analysis.description}
             </p>
           )}
 
-          {result.analysis.mistakes.length > 0 && (
+          {analysis.mistakes.length > 0 && (
             <div className="border-t border-border pt-3">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-destructive">
-                Mistakes ({result.analysis.mistakes.length})
+                Mistakes ({analysis.mistakes.length})
               </p>
               <ul className="space-y-1.5">
-                {result.analysis.mistakes.map((mistake, i) => (
+                {analysis.mistakes.map((mistake, i) => (
                   <li
                     key={i}
                     className="flex gap-2 text-[13px] leading-relaxed text-foreground/90"
@@ -131,14 +134,14 @@ export default function GradedQuestion({
             </div>
           )}
 
-          {result.analysis.alternatives.length > 0 && (
+          {analysis.alternatives.length > 0 && (
             <div className="border-t border-border pt-3">
               <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <Lightbulb className="size-3.5" />
                 Alternative phrasings
               </div>
               <ul className="space-y-1">
-                {result.analysis.alternatives.map((alt, i) => (
+                {analysis.alternatives.map((alt, i) => (
                   <li
                     key={i}
                     className="text-[13px] leading-relaxed text-foreground/90 before:mr-1.5 before:text-muted-foreground before:content-['·']"

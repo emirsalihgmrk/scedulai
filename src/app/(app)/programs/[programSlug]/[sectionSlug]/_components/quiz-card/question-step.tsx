@@ -1,69 +1,53 @@
 "use client";
 
-import {
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Gauge,
-  Languages,
-} from "lucide-react";
+import { ArrowRight, ChevronRight, Languages } from "lucide-react";
 import { useState, useTransition } from "react";
 
-import { submitTranslationAnswerAction } from "@/actions/quiz";
+import { gradeTranslationAction } from "@/actions/quiz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { QuestionWithAnswer } from "@/schemas/quiz";
+import { Progress } from "@/components/ui/progress";
+import type { Question, TranslationGrade } from "@/schemas/quiz";
 
 import AnswerInput from "./answer-input";
 import GradedQuestion from "./graded-question";
 
 interface QuestionStepProps {
-  question: QuestionWithAnswer;
-  index: number;
+  question: Question;
+  solved: number;
   total: number;
   nativeLangLabel: string;
   targetLangLabel: string;
-  value: string;
-  onChange: (value: string) => void;
-  onOverview: () => void;
-  onPrev: () => void;
-  onNext: () => void;
-  onGraded: (question: QuestionWithAnswer) => void;
+  onContinue: (isCorrect: boolean) => void;
 }
 
 export default function QuestionStep({
   question,
-  index,
+  solved,
   total,
   nativeLangLabel,
   targetLangLabel,
-  value,
-  onChange,
-  onOverview,
-  onPrev,
-  onNext,
-  onGraded,
+  onContinue,
 }: QuestionStepProps) {
   const [sourceLang, targetLang] =
     question.direction === "native-to-target"
       ? [nativeLangLabel, targetLangLabel]
       : [targetLangLabel, nativeLangLabel];
-  const isLast = index === total;
+  const [draft, setDraft] = useState("");
+  const [grade, setGrade] = useState<TranslationGrade | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
-
-  const isGraded = question.answer !== null;
 
   function handleSubmit() {
     setError(null);
     startTransition(async () => {
       try {
-        const result = await submitTranslationAnswerAction(question.id, {
-          userTranslation: value,
+        const result = await gradeTranslationAction(question.id, {
+          userTranslation: draft,
         });
         if (result.ok) {
-          onGraded(result.data);
+          setGrade(result.data);
         } else {
           setError(result.error);
         }
@@ -75,72 +59,61 @@ export default function QuestionStep({
 
   return (
     <>
-      <div className="flex shrink-0 items-center justify-between px-5 pb-4 pt-6 sm:px-6">
-        <div className="flex items-center gap-2">
+      <div className="flex shrink-0 flex-col gap-3 px-5 pb-4 pt-6 sm:px-6">
+        <div className="flex items-center justify-between">
           <Badge className="gap-1.5 bg-primary/10 text-primary">
             <span className="size-1.5 animate-pulse rounded-full bg-primary" />
-            Question {index} / {total}
+            {solved} / {total} correct
           </Badge>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <Languages className="size-3.5" />
+            {sourceLang}
+            <ArrowRight className="size-3" />
+            {targetLang}
+          </span>
         </div>
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <Languages className="size-3.5" />
-          {sourceLang}
-          <ArrowRight className="size-3" />
-          {targetLang}
-        </span>
+        <Progress
+          value={total === 0 ? 0 : (solved / total) * 100}
+          aria-label="Quiz progress"
+          className="**:data-[slot=progress-indicator]:bg-linear-to-r **:data-[slot=progress-indicator]:from-primary **:data-[slot=progress-indicator]:to-chart-5 **:data-[slot=progress-track]:h-2"
+        />
       </div>
 
-      {isGraded ? (
+      {grade ? (
         <GradedQuestion
           question={question}
+          grade={grade}
           isFlipped={isFlipped}
           onFlip={setIsFlipped}
         />
       ) : (
         <AnswerInput
           question={question}
-          value={value}
-          onChange={onChange}
+          value={draft}
+          onChange={setDraft}
           onSubmit={handleSubmit}
           isPending={isPending}
           error={error}
         />
       )}
 
-      {/* Navigation between questions on the same card */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border p-5 sm:p-6">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onOverview}
-          className="gap-1.5"
-        >
-          <Gauge data-icon="inline-start" />
-          Overview
-        </Button>
-        <div className="flex gap-2">
+      {grade && (
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border p-5 sm:p-6">
+          <p className="text-sm text-muted-foreground">
+            {grade.isCorrect
+              ? "Nice work, on to the next one."
+              : "This sentence will come back at the end."}
+          </p>
           <Button
             type="button"
-            variant="outline"
-            onClick={onPrev}
-            disabled={index === 1}
+            onClick={() => onContinue(grade.isCorrect)}
             className="gap-1.5"
           >
-            <ChevronLeft data-icon="inline-start" />
-            Prev
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onNext}
-            disabled={isLast}
-            className="gap-1.5"
-          >
-            Next
+            Continue
             <ChevronRight data-icon="inline-end" />
           </Button>
         </div>
-      </div>
+      )}
     </>
   );
 }

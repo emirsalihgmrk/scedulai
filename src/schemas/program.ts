@@ -38,7 +38,7 @@ export type ProgramDetail = Pick<
 
 export type SectionProgress = Pick<
   SectionProgressRow,
-  "quizStatus" | "videoPositionSeconds" | "updatedAt"
+  "quizCompletedAt" | "videoPositionSeconds" | "updatedAt"
 >;
 
 export type SectionListItem = Pick<SectionRow, "id" | "title" | "order"> & {
@@ -52,7 +52,7 @@ export type SectionListItem = Pick<SectionRow, "id" | "title" | "order"> & {
 // ── DAL input schemas ──
 
 export const upsertSectionProgressSchema = createSectionProgressRowSchema
-  .pick({ videoPositionSeconds: true, quizStatus: true })
+  .pick({ videoPositionSeconds: true, quizCompletedAt: true })
   .partial();
 export type UpsertSectionProgressInput = z.infer<
   typeof upsertSectionProgressSchema
@@ -60,7 +60,7 @@ export type UpsertSectionProgressInput = z.infer<
 
 // ── Service input schemas ──
 
-// `quizStatus` is derived server-side, so only the position is user input.
+// `quizCompletedAt` is set server-side, so only the position is user input.
 export const saveVideoPositionSchema = upsertSectionProgressSchema
   .pick({ videoPositionSeconds: true })
   .required();

@@ -1,8 +1,7 @@
-import { ArrowRight, Check, CirclePlay, Clock, Play, X } from "lucide-react";
+import { ArrowRight, Check, CirclePlay, Clock, Play } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import type { QuizStatus } from "@/constants/progress";
 import { cn, formatDuration } from "@/lib/utils";
 import type { SectionListItem } from "@/schemas/program";
 import { getSectionsService } from "@/services/program";
@@ -37,7 +36,7 @@ export default async function SectionTimeline({
             key={section.id}
             section={section}
             programSlug={programSlug}
-            quizStatus={section.progress?.quizStatus}
+            isCompleted={!!section.progress?.quizCompletedAt}
             isCurrent={section.id === currentId}
             isLast={index === sections.length - 1}
           />
@@ -50,7 +49,7 @@ export default async function SectionTimeline({
 interface SectionRowProps {
   section: SectionListItem;
   programSlug: string;
-  quizStatus: QuizStatus | undefined;
+  isCompleted: boolean;
   isCurrent: boolean;
   isLast: boolean;
 }
@@ -58,20 +57,15 @@ interface SectionRowProps {
 function SectionRow({
   section,
   programSlug,
-  quizStatus,
+  isCompleted,
   isCurrent,
   isLast,
 }: SectionRowProps) {
-  const isCompleted = quizStatus === "passed";
-  const isFailed = quizStatus === "failed";
-
   const nodeClass = isCompleted
     ? "bg-success text-success-foreground ring-success/30"
-    : isFailed
-      ? "bg-destructive text-white ring-destructive/30"
-      : isCurrent
-        ? "bg-primary text-primary-foreground ring-primary/30"
-        : "bg-secondary text-secondary-foreground ring-border";
+    : isCurrent
+      ? "bg-primary text-primary-foreground ring-primary/30"
+      : "bg-secondary text-secondary-foreground ring-border";
 
   const statusLabel = isCompleted
     ? "Completed"
@@ -104,13 +98,7 @@ function SectionRow({
           nodeClass,
         )}
       >
-        {isCompleted ? (
-          <Check className="size-5" />
-        ) : isFailed ? (
-          <X className="size-5" />
-        ) : (
-          section.order
-        )}
+        {isCompleted ? <Check className="size-5" /> : section.order}
       </div>
 
       {/* Content */}

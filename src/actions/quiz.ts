@@ -1,18 +1,16 @@
 "use server";
 
-import type { QuizStatus } from "@/constants/progress";
 import { toActionFailure  } from "@/lib/action";
 import type {ActionResult} from "@/lib/action";
 import type {
-  QuestionWithAnswer,
+  GradeTranslationInput,
   QuizWithQuestions,
-  SubmitTranslationAnswerInput,
+  TranslationGrade,
 } from "@/schemas/quiz";
 import {
-  evaluateQuizService,
+  completeQuizService,
   generateQuizByAiService,
-  retryQuizService,
-  submitTranslationAnswerService,
+  gradeTranslationService,
 } from "@/services/quiz";
 
 export async function generateQuizByAiAction(
@@ -26,34 +24,23 @@ export async function generateQuizByAiAction(
   }
 }
 
-export async function submitTranslationAnswerAction(
+export async function gradeTranslationAction(
   questionId: string,
-  input: SubmitTranslationAnswerInput,
-): Promise<ActionResult<QuestionWithAnswer>> {
+  input: GradeTranslationInput,
+): Promise<ActionResult<TranslationGrade>> {
   try {
-    const data = await submitTranslationAnswerService(questionId, input);
+    const data = await gradeTranslationService(questionId, input);
     return { ok: true, data };
   } catch (error) {
     return toActionFailure(error);
   }
 }
 
-export async function evaluateQuizAction(
-  sectionId: string,
-): Promise<ActionResult<QuizStatus | null>> {
-  try {
-    const data = await evaluateQuizService(sectionId);
-    return { ok: true, data };
-  } catch (error) {
-    return toActionFailure(error);
-  }
-}
-
-export async function retryQuizAction(
+export async function completeQuizAction(
   sectionId: string,
 ): Promise<ActionResult> {
   try {
-    await retryQuizService(sectionId);
+    await completeQuizService(sectionId);
     return { ok: true, data: undefined };
   } catch (error) {
     return toActionFailure(error);

@@ -16,20 +16,12 @@ export interface AnalyzeSentenceArgs {
 }
 
 export type AnalyzeSentenceResult = AiObjectResult<TranslationAnalysis> & {
-  accuracy: number;
+  isCorrect: boolean;
 };
 
-const MEANING_BASE: Record<TranslationAnalysis["meaningPreserved"], number> = {
-  yes: 100,
-  partial: 55,
-  no: 10,
-};
-const GRAMMAR_PENALTY = 6;
-
-export function computeAccuracy(o: TranslationAnalysis): number {
-  const score =
-    MEANING_BASE[o.meaningPreserved] - GRAMMAR_PENALTY * o.mistakes.length;
-  return Math.max(0, Math.min(100, Math.round(score)));
+// Grammar mistakes are shown to the learner but never fail a translation.
+export function isTranslationCorrect(o: TranslationAnalysis): boolean {
+  return o.meaningPreserved === "yes";
 }
 
 function buildSystemPrompt(nativeLanguage: string): string {
@@ -88,7 +80,7 @@ export async function analyzeSentence({
         mistakes: [],
         alternatives: [],
       },
-      accuracy: 0,
+      isCorrect: false,
     };
   }
 
@@ -111,6 +103,6 @@ export async function analyzeSentence({
 
   return {
     ...result,
-    accuracy: computeAccuracy(result.output),
+    isCorrect: isTranslationCorrect(result.output),
   };
 }

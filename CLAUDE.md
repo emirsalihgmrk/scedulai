@@ -56,8 +56,10 @@ src/
 
 Auth tables (`user`, `session`, `account`, `verification`) are owned by better-auth. Domain tables:
 `programs` → `sections`, with `channels` → `videos` → `transcripts` on the content side, and
-`quizzes` → `questions` → `answers` on the exercise side. `section_progress` tracks per-user
-progress. Quizzes are keyed per user language pair, so questions can be generated on demand.
+`quizzes` → `questions` on the exercise side. `section_progress` tracks per-user progress
+(video position, `quizCompletedAt`). Quizzes are keyed per user language pair, so questions can be
+generated on demand. Answers are graded but never stored: the quiz card re-queues a wrong answer at
+the end and the quiz is complete once every question is answered correctly.
 
 `user.nativeLanguage` is a property of the person; everything about *what* they learn (target
 language, CEFR level, goal, daily minutes) lives in `learning_profiles`, one row per
