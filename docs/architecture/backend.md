@@ -47,6 +47,7 @@ the layers it needs, e.g. `user` has no service and `auth` has no DAL.
 | `program`          | `programs`, `sections`, `section_progress`  | schemas, dal, services, actions          |
 | `video`            | `channels`, `videos`, `transcripts`         | schemas, dal, services                   |
 | `quiz`             | `quizzes`, `questions`                      | schemas, dal, services, actions          |
+| `mistake`          | `mistakes`                                  | schemas, dal                             |
 
 A module's DAL **writes only its own tables**. Reads may follow relations into other modules' tables
 (e.g. `getSections` includes each section's `video` and `progress`).

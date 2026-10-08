@@ -1,15 +1,22 @@
-import {
-  cases
-  
-  
-} from "@/ai/eval/analyze-sentence-cases";
-import type {EvalCase, Expectation} from "@/ai/eval/analyze-sentence-cases";
+import { cases } from "@/ai/eval/analyze-sentence-cases";
+import type { EvalCase, Expectation } from "@/ai/eval/analyze-sentence-cases";
 import {
   analyzeSentence,
   ANALYZE_SENTENCE_MODEL,
 } from "@/ai/tasks/analyze-sentence";
+import type { MistakeCategory } from "@/constants/mistake";
 import type { TranslationAnalysis } from "@/schemas/quiz";
 
+// Exact counts compare as a multiset, ranges as a set of distinct categories.
+function categoriesMatch(
+  actual: MistakeCategory[],
+  expected: MistakeCategory[],
+  exact: boolean,
+): boolean {
+  const normalize = (list: MistakeCategory[]) =>
+    (exact ? [...list] : [...new Set(list)]).sort().join(",");
+  return normalize(actual) === normalize(expected);
+}
 
 function check(output: TranslationAnalysis, expected: Expectation): string[] {
   const reasons: string[] = [];
@@ -26,6 +33,15 @@ function check(output: TranslationAnalysis, expected: Expectation): string[] {
     const want = min === max ? `${min}` : `${min}-${max}`;
     reasons.push(`mistakes ${mistakes} !== ${want}`);
   }
+
+  if (expected.categories) {
+    const actual = output.mistakes.map((mistake) => mistake.category);
+    if (!categoriesMatch(actual, expected.categories, min === max)) {
+      reasons.push(
+        `categories [${actual.join(",")}] !== [${expected.categories.join(",")}]`,
+      );
+    }
+  }
   return reasons;
 }
 
@@ -35,6 +51,7 @@ async function main() {
   );
 
   const byCategory = new Map<string, { pass: number; total: number }>();
+  const categoryAccuracy = { pass: 0, total: 0 };
   let passed = 0;
 
   for (const [i, c] of cases.entries()) {
@@ -55,9 +72,17 @@ async function main() {
     if (ok) cat.pass++;
     byCategory.set(c.category, cat);
 
+    if (c.expected.categories) {
+      categoryAccuracy.total++;
+      if (!reasons.some((reason) => reason.startsWith("categories"))) {
+        categoryAccuracy.pass++;
+      }
+    }
+
     const tag = ok ? "PASS" : "FAIL";
     const detail = ok ? "" : `  <- ${reasons.join("; ")}`;
-    const rubric = `meaning=${output.meaningPreserved} m=${output.mistakes.length} correct=${isCorrect}`;
+    const categories = output.mistakes.map((mistake) => mistake.category);
+    const rubric = `meaning=${output.meaningPreserved} m=${output.mistakes.length} [${categories.join(",")}] correct=${isCorrect}`;
     console.log(
       `[${String(i + 1).padStart(2)}/${cases.length}] ${tag}  ${c.category} — ${c.note} (${rubric})${detail}`,
     );
@@ -65,8 +90,11 @@ async function main() {
 
   console.log(`\nScorecard (${passed}/${cases.length} passed):`);
   for (const [cat, { pass, total }] of byCategory) {
-    console.log(`  ${cat.padEnd(14)} ${pass}/${total}`);
+    console.log(`  ${cat.padEnd(16)} ${pass}/${total}`);
   }
+  console.log(
+    `\nCategory accuracy: ${categoryAccuracy.pass}/${categoryAccuracy.total}`,
+  );
 
   process.exit(passed === cases.length ? 0 : 1);
 }

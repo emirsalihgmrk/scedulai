@@ -1,8 +1,10 @@
+import { after } from "next/server";
 import { cache } from "react";
 
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getNativeLanguageEnglishName } from "@/constants/language";
+import { createMistakes } from "@/dal/mistake/mutations";
 import { upsertSectionProgress } from "@/dal/program/mutations";
 import { createQuestions, createQuiz } from "@/dal/quiz/mutations";
 import { getQuestion, getQuiz } from "@/dal/quiz/queries";
@@ -92,13 +94,14 @@ export async function generateQuizByAiService(
   });
 }
 
-// Grades without storing: the quiz card keeps the queue, so an answer only
-// lives until the learner moves on.
+// The answer itself is not stored (the quiz card keeps the queue), but every
+// mistake found in it is, once per attempt, so a retry adds new rows. A "no"
+// verdict has no mistakes and writes nothing.
 export async function gradeTranslationService(
   questionId: string,
   input: GradeTranslationInput,
 ): Promise<TranslationGrade> {
-  const user = await getCurrentUserService();
+  const user = await getOnboardedUser();
   if (!user) throw new AppError("Unauthorized");
 
   const { userTranslation } = gradeTranslationSchema.parse(input);
@@ -115,6 +118,21 @@ export async function gradeTranslationService(
     userTranslation,
     nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
   });
+
+  if (analysis.mistakes.length > 0) {
+    const { sourceSentence } = question.payload;
+    after(() =>
+      createMistakes(
+        user.id,
+        question.id,
+        analysis.mistakes.map((mistake) => ({
+          ...mistake,
+          sourceSentence,
+          userTranslation,
+        })),
+      ),
+    );
+  }
 
   return { userTranslation, analysis, isCorrect };
 }

@@ -26,9 +26,26 @@ function buildSystemPrompt(nativeLanguage: string): string {
 
 OUTPUT FIELDS
 - meaningPreserved: "yes" | "partial" | "no".
-- mistakes: list of grammar / word-choice errors, each written in ${nativeLanguage}. Never include meaning or punctuation errors.
+- mistakes: list of grammar / word-choice errors. Never include meaning or punctuation errors. Each item:
+  - category: one value from MISTAKE CATEGORIES below.
+  - incorrect: the shortest wrong fragment, copied exactly from the learner's text. For a missing word, use the neighbouring word(s) it should attach to.
+  - correction: the same fragment, corrected.
+  - explanation: a short explanation in ${nativeLanguage}.
 - description: 1-2 short sentences in ${nativeLanguage} (what was right, key nuance). Do not repeat the mistakes here.
 - alternatives: a few other correct English translations.
+
+MISTAKE CATEGORIES
+- tense: wrong time/tense ("Yesterday I go" → "went").
+- verb-form: wrong form of a verb that is not about tense or agreement — infinitive/gerund, missing or extra "to", missing auxiliary ("want going" → "want to go", "should to go" → "should go", "This city very crowded" → "is very crowded"). A "to" before a noun ("go to bed", "go to school") is a preposition, not verb-form.
+- agreement: subject-verb agreement ("He drink" → "drinks", "This food are" → "is").
+- article: missing, extra or wrong a/an/the ("Teacher explained" → "The teacher").
+- preposition: wrong, missing or extra preposition ("interested on" → "interested in").
+- word-order: right words, wrong order ("I like very much coffee" → "I like coffee very much").
+- word-choice: understandable but wrong or unnatural word or collocation ("make a photo" → "take a photo"), or wrong word class ("very deliciously" → "very delicious").
+- plural: wrong singular/plural noun form ("two book" → "two books").
+- pronoun: wrong pronoun form or case ("me went", "him car"). Never for choosing he/she/they, his/her/their, or "you"/"you all" where the source allows it (see TURKISH IS AMBIGUOUS); singular "they" is correct English.
+- spelling: misspelled word whose intended word is clear ("scool" → "school"). Never for capitalization or a missing apostrophe ("dont" is not a spelling mistake).
+- other: a real grammar mistake that fits none of the above.
 
 SET meaningPreserved
 - "yes": matches ANY valid reading of the source. Judge against the source sentence, not word-for-word against the reference English (the reference is only one valid answer).
@@ -42,7 +59,8 @@ WHERE EACH ERROR GOES
 - Wrong content word / wrong subject / added or removed negation / opposite meaning → meaningPreserved "no". Do NOT list in mistakes.
 - One differing detail, rest correct (wrong number, wrong tense) → "partial" AND list in mistakes.
 - Meaning clear, only form wrong (missing/extra article, subject-verb agreement, missing auxiliary, wrong verb form, wrong preposition) → "yes" AND list in mistakes.
-- If meaningPreserved is "no", mistakes MUST be empty.
+- Misspelled word whose intended word is clear → "yes" AND list in mistakes as spelling.
+- If meaningPreserved is "no", mistakes MUST be empty — even if the text also has grammar errors.
 - One mistake per wrong word; do not merge or split.
 
 TURKISH IS AMBIGUOUS — the source carries every reading below, so each is "yes" with empty mistakes (the differing pronoun/person/number is NOT a mistake):
@@ -92,8 +110,16 @@ export async function analyzeSentence({
     },
   });
 
+  // The prompt already asks for this; enforced here because mistakes are
+  // stored, and a broken answer must not fill the learner's mistake history.
+  const output =
+    result.output.meaningPreserved === "no"
+      ? { ...result.output, mistakes: [] }
+      : result.output;
+
   return {
     ...result,
-    isCorrect: isTranslationCorrect(result.output),
+    output,
+    isCorrect: isTranslationCorrect(output),
   };
 }

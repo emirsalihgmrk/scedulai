@@ -18,6 +18,7 @@ import {
   LEARNING_GOALS,
   LEVEL_SOURCES,
 } from "@/constants/learning";
+import { MISTAKE_CATEGORIES } from "@/constants/mistake";
 import { PLANS } from "@/constants/plan";
 import { QUESTION_DIRECTIONS, QUESTION_TYPES } from "@/constants/question";
 import { ROLES } from "@/constants/role";
@@ -46,6 +47,10 @@ export const nativeLanguageEnum = pgEnum(
 export const cefrLevelEnum = pgEnum("cefr_level", CEFR_LEVELS);
 export const levelSourceEnum = pgEnum("level_source", LEVEL_SOURCES);
 export const learningGoalEnum = pgEnum("learning_goal", LEARNING_GOALS);
+export const mistakeCategoryEnum = pgEnum(
+  "mistake_category",
+  MISTAKE_CATEGORIES,
+);
 
 // better-auth managed tables
 export const userTable = pgTable("user", {
@@ -269,10 +274,36 @@ export const learningProfilesTable = pgTable(
   (table) => [unique("learning_profiles_user_unique").on(table.userId)],
 );
 
+// One row per mistake found in a graded answer; every attempt is kept. The
+// sentence and answer are snapshotted so the history survives the question.
+export const mistakesTable = pgTable(
+  "mistakes",
+  {
+    ...commonFields,
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    questionId: uuid("question_id").references(() => questionsTable.id, {
+      onDelete: "set null",
+    }),
+    category: mistakeCategoryEnum("category").notNull(),
+    incorrect: text("incorrect").notNull(),
+    correction: text("correction").notNull(),
+    explanation: text("explanation").notNull(),
+    sourceSentence: text("source_sentence").notNull(),
+    userTranslation: text("user_translation").notNull(),
+  },
+  (table) => [
+    index("mistakes_user_id_created_at_idx").on(table.userId, table.createdAt),
+    index("mistakes_user_id_category_idx").on(table.userId, table.category),
+  ],
+);
+
 // Relations
 export const userRelations = relations(userTable, ({ many }) => ({
   learningProfiles: many(learningProfilesTable),
   sectionProgress: many(sectionProgressTable),
+  mistakes: many(mistakesTable),
   sessions: many(sessionTable),
   accounts: many(accountTable),
 }));
@@ -343,10 +374,25 @@ export const quizzesRelations = relations(quizzesTable, ({ one, many }) => ({
   questions: many(questionsTable),
 }));
 
-export const questionsRelations = relations(questionsTable, ({ one }) => ({
-  quiz: one(quizzesTable, {
-    fields: [questionsTable.quizId],
-    references: [quizzesTable.id],
+export const questionsRelations = relations(
+  questionsTable,
+  ({ one, many }) => ({
+    quiz: one(quizzesTable, {
+      fields: [questionsTable.quizId],
+      references: [quizzesTable.id],
+    }),
+    mistakes: many(mistakesTable),
+  }),
+);
+
+export const mistakesRelations = relations(mistakesTable, ({ one }) => ({
+  user: one(userTable, {
+    fields: [mistakesTable.userId],
+    references: [userTable.id],
+  }),
+  question: one(questionsTable, {
+    fields: [mistakesTable.questionId],
+    references: [questionsTable.id],
   }),
 }));
 

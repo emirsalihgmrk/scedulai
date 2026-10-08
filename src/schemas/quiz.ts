@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { createQuestionRowSchema, createQuizRowSchema } from "@/db/rows";
 import type { QuestionRow, QuizRow } from "@/db/rows";
+import { translationMistakeSchema } from "@/schemas/mistake";
 
 // ── Re-exports (jsonb shapes owned by this module) ──
 
@@ -38,7 +39,8 @@ export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 
 // ── Service input schemas ──
 
-// Answers are graded, never stored, so this shape has no table to derive from.
+// Answers are graded, never stored (only the mistakes found in them are), so
+// this shape has no table to derive from.
 export const gradeTranslationSchema = z.object({
   userTranslation: z.string().trim().min(1).max(200),
 });
@@ -49,7 +51,7 @@ export type GradeTranslationInput = z.infer<typeof gradeTranslationSchema>;
 export const translationAnalysisSchema = z.object({
   description: z.string(),
   meaningPreserved: z.enum(["yes", "partial", "no"]),
-  mistakes: z.array(z.string()),
+  mistakes: z.array(translationMistakeSchema),
   alternatives: z.array(z.string()),
 });
 export type TranslationAnalysis = z.infer<typeof translationAnalysisSchema>;

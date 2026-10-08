@@ -11,6 +11,7 @@ import type {
   videosTable} from "@/db/schema";
 import {
   learningProfilesTable,
+  mistakesTable,
   questionsTable,
   quizzesTable,
   sectionProgressTable,
@@ -64,4 +65,7 @@ export type QuestionRow = typeof questionsTable.$inferSelect;
 export const createQuestionRowSchema = createInsertSchema(questionsTable, {
   payload: questionPayloadSchema,
 });
+
+export type MistakeRow = typeof mistakesTable.$inferSelect;
+export const createMistakeRowSchema = createInsertSchema(mistakesTable);
 

@@ -59,7 +59,9 @@ Auth tables (`user`, `session`, `account`, `verification`) are owned by better-a
 `quizzes` → `questions` on the exercise side. `section_progress` tracks per-user progress
 (video position, `quizCompletedAt`). Quizzes are keyed per native language, so questions can be
 generated on demand. Answers are graded but never stored: the quiz card re-queues a wrong answer at
-the end and the quiz is complete once every question is answered correctly.
+the end and the quiz is complete once every question is answered correctly. The mistakes found in
+each graded answer are stored, though: one `mistakes` row per mistake per attempt (categorized by the
+AI, with the sentence and answer snapshotted).
 
 The learned language is always English; there is no target-language setting anywhere.
 `user.nativeLanguage` is a property of the person; how they learn (CEFR level, goal, daily minutes)

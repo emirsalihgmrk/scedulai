@@ -1,4 +1,5 @@
 import type { AnalyzeSentenceArgs } from "@/ai/tasks/analyze-sentence";
+import type { MistakeCategory } from "@/constants/mistake";
 import type { TranslationAnalysis } from "@/schemas/quiz";
 
 export type Verdict = TranslationAnalysis["meaningPreserved"];
@@ -8,6 +9,7 @@ export type MistakeCount = number | [min: number, max: number];
 export interface Expectation {
   meaning: Verdict;
   mistakes: MistakeCount;
+  categories?: MistakeCategory[];
 }
 
 export interface EvalCase extends AnalyzeSentenceArgs {
@@ -17,7 +19,8 @@ export interface EvalCase extends AnalyzeSentenceArgs {
     | "punctuation"
     | "garbage"
     | "injection"
-    | "grammar";
+    | "grammar"
+    | "mistake-category";
   note: string;
   expected: Expectation;
 }
@@ -283,7 +286,7 @@ export const cases: EvalCase[] = [
   {
     category: "grammar",
     note: "two missing articles",
-    expected: { meaning: "yes", mistakes: [1, 2] },
+    expected: { meaning: "yes", mistakes: [1, 2], categories: ["article"] },
     nativeLanguage: TR,
     sentence: "Öğretmen soruyu açıkladı.",
     originalSentence: "The teacher explained the question.",
@@ -292,7 +295,7 @@ export const cases: EvalCase[] = [
   {
     category: "grammar",
     note: "subject-verb agreement",
-    expected: { meaning: "yes", mistakes: 1 },
+    expected: { meaning: "yes", mistakes: 1, categories: ["agreement"] },
     nativeLanguage: TR,
     sentence: "O, her sabah kahve içer.",
     originalSentence: "He drinks coffee every morning.",
@@ -301,7 +304,11 @@ export const cases: EvalCase[] = [
   {
     category: "grammar",
     note: "two grammar errors (agreement + adjective form)",
-    expected: { meaning: "yes", mistakes: 2 },
+    expected: {
+      meaning: "yes",
+      mistakes: 2,
+      categories: ["agreement", "word-choice"],
+    },
     nativeLanguage: TR,
     sentence: "Bu yemek çok lezzetli.",
     originalSentence: "This food is very delicious.",
@@ -310,7 +317,7 @@ export const cases: EvalCase[] = [
   {
     category: "grammar",
     note: "missing auxiliary (is)",
-    expected: { meaning: "yes", mistakes: 1 },
+    expected: { meaning: "yes", mistakes: 1, categories: ["verb-form"] },
     nativeLanguage: TR,
     sentence: "Bu şehir çok kalabalık.",
     originalSentence: "This city is very crowded.",
@@ -319,10 +326,79 @@ export const cases: EvalCase[] = [
   {
     category: "grammar",
     note: "wrong verb form after 'to' (two errors)",
-    expected: { meaning: "yes", mistakes: [1, 2] },
+    expected: {
+      meaning: "yes",
+      mistakes: [1, 2],
+      categories: ["verb-form", "preposition"],
+    },
     nativeLanguage: TR,
     sentence: "Erken yatmalısın.",
     originalSentence: "You should go to bed early.",
     userTranslation: "You should to go bed early.",
+  },
+
+  // ── mistake-category: one case per category the grammar group misses ───────
+  {
+    category: "mistake-category",
+    note: "preposition (interested on)",
+    expected: { meaning: "yes", mistakes: 1, categories: ["preposition"] },
+    nativeLanguage: TR,
+    sentence: "Tarihle çok ilgileniyorum.",
+    originalSentence: "I am very interested in history.",
+    userTranslation: "I am very interested on history.",
+  },
+  {
+    category: "mistake-category",
+    note: "word order (like very much coffee)",
+    expected: { meaning: "yes", mistakes: 1, categories: ["word-order"] },
+    nativeLanguage: TR,
+    sentence: "Kahveyi çok severim.",
+    originalSentence: "I like coffee very much.",
+    userTranslation: "I like very much coffee.",
+  },
+  {
+    category: "mistake-category",
+    note: "tense (Yesterday I go) is a wrong detail",
+    expected: { meaning: "partial", mistakes: 1, categories: ["tense"] },
+    nativeLanguage: TR,
+    sentence: "Dün sinemaya gittim.",
+    originalSentence: "I went to the cinema yesterday.",
+    userTranslation: "Yesterday I go to the cinema.",
+  },
+  {
+    category: "mistake-category",
+    note: "spelling with a clear intended word (scool)",
+    expected: { meaning: "yes", mistakes: 1, categories: ["spelling"] },
+    nativeLanguage: TR,
+    sentence: "Yarın okula gitmek istemiyorum.",
+    originalSentence: "I don't want to go to school tomorrow.",
+    userTranslation: "I don't want to go to scool tomorrow.",
+  },
+  {
+    category: "mistake-category",
+    note: "word choice / collocation (make a photo)",
+    expected: { meaning: "yes", mistakes: 1, categories: ["word-choice"] },
+    nativeLanguage: TR,
+    sentence: "Köprünün fotoğrafını çektim.",
+    originalSentence: "I took a photo of the bridge.",
+    userTranslation: "I made a photo of the bridge.",
+  },
+  {
+    category: "mistake-category",
+    note: "plural noun (two book)",
+    expected: { meaning: "yes", mistakes: 1, categories: ["plural"] },
+    nativeLanguage: TR,
+    sentence: "Dün iki kitap aldım.",
+    originalSentence: "I bought two books yesterday.",
+    userTranslation: "I bought two book yesterday.",
+  },
+  {
+    category: "mistake-category",
+    note: "verb form after want (want going)",
+    expected: { meaning: "yes", mistakes: [1, 2], categories: ["verb-form"] },
+    nativeLanguage: TR,
+    sentence: "Eve gitmek istiyorum.",
+    originalSentence: "I want to go home.",
+    userTranslation: "I want going home.",
   },
 ];

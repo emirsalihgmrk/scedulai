@@ -127,7 +127,7 @@ export default function GradedQuestion({
                     className="flex gap-2 text-[13px] leading-relaxed text-foreground/90"
                   >
                     <span className="mt-1 size-1.5 shrink-0 rounded-full bg-destructive" />
-                    {mistake}
+                    {mistake.explanation}
                   </li>
                 ))}
               </ul>
