@@ -1,9 +1,20 @@
-import { CircleCheck, Dumbbell, LogIn, NotebookPen } from "lucide-react";
+import {
+  ChevronRight,
+  CircleCheck,
+  Dumbbell,
+  LogIn,
+  NotebookPen,
+} from "lucide-react";
 import Link from "next/link";
 
 import EmptyState from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { MISTAKE_CATEGORY_LABELS } from "@/constants/mistake";
 import { formatDate } from "@/lib/utils";
 import type { MistakeListItem } from "@/schemas/mistake";
@@ -38,23 +49,69 @@ export default async function MistakeList() {
     );
   }
 
+  // The list is a to-do list: a practiced mistake moves out of it, but stays
+  // reachable for another round.
+  const pending = mistakes.filter((mistake) => !mistake.practice?.completedAt);
+  const practiced = mistakes.filter((mistake) => mistake.practice?.completedAt);
+
   return (
     <section aria-label="Your mistakes" className="flex flex-col gap-5">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="font-display text-xl font-bold text-foreground">
-          Your mistakes
+          To practice
         </h2>
         <span className="text-sm text-muted-foreground">
-          {mistakes.length} mistakes
+          {pending.length} mistakes
         </span>
       </div>
 
-      <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {mistakes.map((mistake) => (
-          <MistakeItem key={mistake.id} mistake={mistake} />
-        ))}
-      </ul>
+      {pending.length > 0 ? (
+        <MistakeGrid mistakes={pending} />
+      ) : (
+        <EmptyState
+          icon={CircleCheck}
+          title="All caught up"
+          description="Every mistake has been practiced. New ones from your quizzes will show up here."
+        />
+      )}
+
+      {practiced.length > 0 && (
+        <Collapsible className="flex flex-col gap-4">
+          <CollapsibleTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="sm"
+                className="group/practiced self-start"
+              />
+            }
+          >
+            <ChevronRight
+              data-icon="inline-start"
+              className="transition-transform group-data-panel-open/practiced:rotate-90"
+            />
+            Practiced ({practiced.length})
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <MistakeGrid mistakes={practiced} />
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </section>
+  );
+}
+
+interface MistakeGridProps {
+  mistakes: MistakeListItem[];
+}
+
+function MistakeGrid({ mistakes }: MistakeGridProps) {
+  return (
+    <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {mistakes.map((mistake) => (
+        <MistakeItem key={mistake.id} mistake={mistake} />
+      ))}
+    </ul>
   );
 }
 
