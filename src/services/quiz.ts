@@ -121,12 +121,14 @@ export async function gradeTranslationService(
 
   if (analysis.mistakes.length > 0) {
     const { sourceSentence } = question.payload;
+    const source = question.practiceId ? "practice" : "section";
     after(() =>
       createMistakes(
         user.id,
         question.id,
         analysis.mistakes.map((mistake) => ({
           ...mistake,
+          source,
           sourceSentence,
           userTranslation,
         })),

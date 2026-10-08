@@ -24,6 +24,7 @@ export type MistakeListItem = Mistake &
 // ── DAL input schemas ──
 
 export const createMistakeSchema = createMistakeRowSchema.pick({
+  source: true,
   category: true,
   incorrect: true,
   correction: true,

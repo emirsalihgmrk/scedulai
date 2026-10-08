@@ -20,7 +20,7 @@ import {
   LEARNING_GOALS,
   LEVEL_SOURCES,
 } from "@/constants/learning";
-import { MISTAKE_CATEGORIES } from "@/constants/mistake";
+import { MISTAKE_CATEGORIES, MISTAKE_SOURCES } from "@/constants/mistake";
 import { PLANS } from "@/constants/plan";
 import { QUESTION_DIRECTIONS, QUESTION_TYPES } from "@/constants/question";
 import { ROLES } from "@/constants/role";
@@ -53,6 +53,7 @@ export const mistakeCategoryEnum = pgEnum(
   "mistake_category",
   MISTAKE_CATEGORIES,
 );
+export const mistakeSourceEnum = pgEnum("mistake_source", MISTAKE_SOURCES);
 
 // better-auth managed tables
 export const userTable = pgTable("user", {
@@ -293,7 +294,8 @@ export const learningProfilesTable = pgTable(
 );
 
 // One row per mistake found in a graded answer; every attempt is kept. The
-// sentence and answer are snapshotted so the history survives the question.
+// sentence, answer and source are snapshotted so the history survives the
+// question.
 export const mistakesTable = pgTable(
   "mistakes",
   {
@@ -304,6 +306,7 @@ export const mistakesTable = pgTable(
     questionId: uuid("question_id").references(() => questionsTable.id, {
       onDelete: "set null",
     }),
+    source: mistakeSourceEnum("source").notNull(),
     category: mistakeCategoryEnum("category").notNull(),
     incorrect: text("incorrect").notNull(),
     correction: text("correction").notNull(),

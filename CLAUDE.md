@@ -66,7 +66,8 @@ AI, with the sentence and answer snapshotted).
 A mistake can be drilled on `/practice`: its `practices` row (one per mistake, owned by the user,
 `completedAt` once finished) holds AI-generated `questions` that run through the same quiz card and
 grading. A question belongs to exactly one owner, a section quiz (shared) or a practice (one user's);
-a check constraint enforces it.
+a check constraint enforces it. Each mistake records its `source` (`section` | `practice`); only
+section mistakes are listed, practice mistakes are kept for statistics.
 
 The learned language is always English; there is no target-language setting anywhere.
 `user.nativeLanguage` is a property of the person; how they learn (CEFR level, goal, daily minutes)
