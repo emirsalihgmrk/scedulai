@@ -116,7 +116,7 @@ derive from earlier ones.
 // ── Query types ──         what the DAL returns
 // ── DAL input schemas ──   what the DAL accepts
 // ── Service input schemas ── what callers send to a service
-// ── Service result types ──  what a service returns that no table stores
+// ── Service result types ──  what a service returns that the DAL doesn't read
 ```
 
 ### Query types
@@ -161,7 +161,7 @@ derive from earlier ones.
 
 ### Service result types
 
-- Shapes a service returns without persisting them (`TranslationGrade`, `TranslationAnalysis`).
+- Shapes a service returns that don't come from a DAL read (`TranslationGrade`, `TranslationAnalysis`).
   A shape an AI task also produces is a Zod schema here, so `ai/outputs/` can `.extend()` it.
 
 Every schema exports its `z.infer` type: `<Name>Schema` → `<Name>Input`.
