@@ -1,6 +1,14 @@
 import { Sparkles } from "lucide-react";
 
-export default function GeneratingStep() {
+interface GeneratingStepProps {
+  title: string;
+  description: string;
+}
+
+export default function GeneratingStep({
+  title,
+  description,
+}: GeneratingStepProps) {
   return (
     <div className="sticky top-20">
       <div className="flex h-[80vh] flex-col items-center justify-center gap-5 rounded-xl border border-border p-6 text-center">
@@ -14,12 +22,9 @@ export default function GeneratingStep() {
 
         <div className="flex flex-col gap-1.5">
           <p className="bg-linear-to-r from-primary to-chart-5 bg-clip-text font-display text-lg font-semibold text-transparent">
-            Quiz is being prepared with AI
+            {title}
           </p>
-          <p className="text-sm text-muted-foreground">
-            Personalized translation sentences are being generated from your
-            transcript...
-          </p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
 
         {/* Bouncing dots */}

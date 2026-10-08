@@ -12,3 +12,17 @@ export const MISTAKE_CATEGORIES = [
   "other",
 ] as const;
 export type MistakeCategory = (typeof MISTAKE_CATEGORIES)[number];
+
+export const MISTAKE_CATEGORY_LABELS: Record<MistakeCategory, string> = {
+  tense: "Tense",
+  "verb-form": "Verb form",
+  agreement: "Agreement",
+  article: "Article",
+  preposition: "Preposition",
+  "word-order": "Word order",
+  "word-choice": "Word choice",
+  plural: "Plural",
+  pronoun: "Pronoun",
+  spelling: "Spelling",
+  other: "Other",
+};

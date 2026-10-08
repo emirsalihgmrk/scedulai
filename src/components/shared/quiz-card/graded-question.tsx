@@ -8,11 +8,10 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import SourceSentence from "@/components/shared/quiz-card/source-sentence";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Question, TranslationGrade } from "@/schemas/quiz";
-
-import SourceSentence from "./source-sentence";
 
 const VERDICT_CLASSES = {
   correct: "bg-success/12 text-success",
@@ -21,6 +20,7 @@ const VERDICT_CLASSES = {
 
 interface GradedQuestionProps {
   question: Question;
+  sourceLabel: string;
   grade: TranslationGrade;
   isFlipped: boolean;
   onFlip: (isFlipped: boolean) => void;
@@ -28,6 +28,7 @@ interface GradedQuestionProps {
 
 export default function GradedQuestion({
   question,
+  sourceLabel,
   grade,
   isFlipped,
   onFlip,
@@ -46,7 +47,7 @@ export default function GradedQuestion({
       >
         {/* Front — question + answer + verdict */}
         <div className="absolute inset-0 flex flex-col gap-4 overflow-y-auto px-5 backface-hidden sm:px-6">
-          <SourceSentence question={question} />
+          <SourceSentence question={question} label={sourceLabel} />
 
           <div className="flex items-start justify-between gap-3 rounded-xl border border-border bg-background p-4">
             <div className="min-w-0">

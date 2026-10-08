@@ -12,6 +12,7 @@ import type {
 import {
   learningProfilesTable,
   mistakesTable,
+  practicesTable,
   questionsTable,
   quizzesTable,
   sectionProgressTable,
@@ -68,4 +69,7 @@ export const createQuestionRowSchema = createInsertSchema(questionsTable, {
 
 export type MistakeRow = typeof mistakesTable.$inferSelect;
 export const createMistakeRowSchema = createInsertSchema(mistakesTable);
+
+export type PracticeRow = typeof practicesTable.$inferSelect;
+export const createPracticeRowSchema = createInsertSchema(practicesTable);
 

@@ -4,32 +4,51 @@ import { FileQuestion, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useRef, useState, useTransition } from "react";
 
+import { completePracticeAction, generatePracticeByAiAction } from "@/actions/practice";
 import { completeQuizAction, generateQuizByAiAction } from "@/actions/quiz";
 import EmptyState from "@/components/shared/empty-state";
+import CompletedStep from "@/components/shared/quiz-card/completed-step";
+import { QUIZ_CARD_COPY } from "@/components/shared/quiz-card/copy";
+import GeneratingStep from "@/components/shared/quiz-card/generating-step";
+import QuestionStep from "@/components/shared/quiz-card/question-step";
 import { Card } from "@/components/ui/card";
 import { getNativeLanguageLabel } from "@/constants/language";
+import type { PracticeWithQuestions } from "@/schemas/practice";
 import type { QuizWithQuestions } from "@/schemas/quiz";
 import type { User } from "@/schemas/user";
 
-import CompletedStep from "./completed-step";
-import GeneratingStep from "./generating-step";
-import QuestionStep from "./question-step";
+// Where the questions come from. Both kinds share the question flow and the
+// grading; they differ only in how the set is generated and completed.
+type QuizSource =
+  | { kind: "section"; sectionId: string }
+  | { kind: "practice"; mistakeId: string };
+
+type QuestionSet = QuizWithQuestions | PracticeWithQuestions;
 
 interface QuizCardProps {
   user: User | null;
-  sectionId: string;
-  quizPromise: Promise<QuizWithQuestions | null>;
+  source: QuizSource;
+  quizPromise: Promise<QuestionSet | null>;
 }
 
-function getQuestionIds(quiz: QuizWithQuestions | null): string[] {
+function getQuestionIds(quiz: QuestionSet | null): string[] {
   return quiz?.questions.map((question) => question.id) ?? [];
 }
 
-export default function QuizCard({
-  user,
-  sectionId,
-  quizPromise,
-}: QuizCardProps) {
+function generateQuestionSet(source: QuizSource) {
+  return source.kind === "section"
+    ? generateQuizByAiAction(source.sectionId)
+    : generatePracticeByAiAction(source.mistakeId);
+}
+
+function completeQuestionSet(source: QuizSource) {
+  return source.kind === "section"
+    ? completeQuizAction(source.sectionId)
+    : completePracticeAction(source.mistakeId);
+}
+
+export default function QuizCard({ user, source, quizPromise }: QuizCardProps) {
+  const copy = QUIZ_CARD_COPY[source.kind];
   const initialQuiz = use(quizPromise);
   const [quiz, setQuiz] = useState(initialQuiz);
   // Question ids still to be answered correctly; a miss moves its id to the end.
@@ -46,7 +65,7 @@ export default function QuizCard({
     hasRequestedRef.current = true;
     startTransition(async () => {
       try {
-        const result = await generateQuizByAiAction(sectionId);
+        const result = await generateQuestionSet(source);
         if (result.ok) {
           setQuiz(result.data);
           setQueue(getQuestionIds(result.data));
@@ -56,11 +75,11 @@ export default function QuizCard({
           hasRequestedRef.current = false;
         }
       } catch {
-        setError("An unexpected error occurred while generating the quiz.");
+        setError("An unexpected error occurred while generating the questions.");
         hasRequestedRef.current = false;
       }
     });
-  }, [user, quiz, sectionId]);
+  }, [user, quiz, source]);
 
   const handleContinue = (isCorrect: boolean) => {
     const [head, ...rest] = queue;
@@ -68,7 +87,7 @@ export default function QuizCard({
     setQueue(next);
     setAttempt((value) => value + 1);
     if (next.length === 0) {
-      void completeQuizAction(sectionId).then((result) => {
+      void completeQuestionSet(source).then((result) => {
         if (result.ok) router.refresh();
       });
     }
@@ -79,7 +98,7 @@ export default function QuizCard({
       <div className="sticky top-20">
         <EmptyState
           icon={FileQuestion}
-          title="Quiz could not be prepared"
+          title={copy.errorTitle}
           description={error}
           className="h-[80vh]"
         />
@@ -100,7 +119,14 @@ export default function QuizCard({
     );
   }
 
-  if (isPending || !quiz) return <GeneratingStep />;
+  if (isPending || !quiz) {
+    return (
+      <GeneratingStep
+        title={copy.generatingTitle}
+        description={copy.generatingDescription}
+      />
+    );
+  }
 
   const total = quiz.questions.length;
   const question = quiz.questions.find(({ id }) => id === queue[0]);
@@ -108,7 +134,7 @@ export default function QuizCard({
   return (
     <div className="sticky top-20">
       <Card
-        aria-label="Translation quiz"
+        aria-label={copy.cardLabel}
         className="relative flex h-[80vh] flex-col gap-0 overflow-hidden py-0"
       >
         <div className="absolute inset-x-0 top-0 z-10 h-1 bg-linear-to-r from-primary to-chart-5" />
@@ -120,10 +146,12 @@ export default function QuizCard({
             solved={total - queue.length}
             total={total}
             nativeLangLabel={getNativeLanguageLabel(user.nativeLanguage)}
+            sourceLabel={copy.sourceLabel}
             onContinue={handleContinue}
           />
         ) : (
           <CompletedStep
+            title={copy.completedTitle}
             total={total}
             onRestart={() => setQueue(getQuestionIds(quiz))}
           />

@@ -1,6 +1,7 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -11,6 +12,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 import { SUPPORTED_NATIVE_LANGUAGE_CODES } from "@/constants/language";
 import {
@@ -212,13 +214,21 @@ export const quizzesTable = pgTable(
   ],
 );
 
+// A question belongs to exactly one owner: a section quiz (shared) or a
+// practice (one learner's).
 export const questionsTable = pgTable(
   "questions",
   {
     ...commonFields,
-    quizId: uuid("quiz_id")
-      .references(() => quizzesTable.id, { onDelete: "cascade" })
-      .notNull(),
+    quizId: uuid("quiz_id").references(() => quizzesTable.id, {
+      onDelete: "cascade",
+    }),
+    // Annotated to break the questions → practices → mistakes → questions
+    // type cycle.
+    practiceId: uuid("practice_id").references(
+      (): AnyPgColumn => practicesTable.id,
+      { onDelete: "cascade" },
+    ),
     order: integer("order").notNull(),
     type: questionTypeEnum("type").default("translation").notNull(),
     direction: questionDirectionEnum("direction")
@@ -229,6 +239,14 @@ export const questionsTable = pgTable(
   (table) => [
     index("questions_quiz_id_idx").on(table.quizId),
     index("questions_quiz_id_order_idx").on(table.quizId, table.order),
+    index("questions_practice_id_order_idx").on(
+      table.practiceId,
+      table.order,
+    ),
+    check(
+      "questions_single_owner_check",
+      sql`num_nonnulls(${table.quizId}, ${table.practiceId}) = 1`,
+    ),
   ],
 );
 
@@ -299,11 +317,30 @@ export const mistakesTable = pgTable(
   ],
 );
 
+// One per mistake practiced. Owned by a single learner, unlike section quizzes,
+// so completion lives here instead of in a progress table.
+export const practicesTable = pgTable(
+  "practices",
+  {
+    ...commonFields,
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    mistakeId: uuid("mistake_id")
+      .references(() => mistakesTable.id, { onDelete: "cascade" })
+      .notNull(),
+    // null = not finished yet; set again on every later completion.
+    completedAt: timestamp("completed_at"),
+  },
+  (table) => [unique("practices_mistake_unique").on(table.mistakeId)],
+);
+
 // Relations
 export const userRelations = relations(userTable, ({ many }) => ({
   learningProfiles: many(learningProfilesTable),
   sectionProgress: many(sectionProgressTable),
   mistakes: many(mistakesTable),
+  practices: many(practicesTable),
   sessions: many(sessionTable),
   accounts: many(accountTable),
 }));
@@ -381,6 +418,10 @@ export const questionsRelations = relations(
       fields: [questionsTable.quizId],
       references: [quizzesTable.id],
     }),
+    practice: one(practicesTable, {
+      fields: [questionsTable.practiceId],
+      references: [practicesTable.id],
+    }),
     mistakes: many(mistakesTable),
   }),
 );
@@ -394,7 +435,23 @@ export const mistakesRelations = relations(mistakesTable, ({ one }) => ({
     fields: [mistakesTable.questionId],
     references: [questionsTable.id],
   }),
+  practice: one(practicesTable),
 }));
+
+export const practicesRelations = relations(
+  practicesTable,
+  ({ one, many }) => ({
+    user: one(userTable, {
+      fields: [practicesTable.userId],
+      references: [userTable.id],
+    }),
+    mistake: one(mistakesTable, {
+      fields: [practicesTable.mistakeId],
+      references: [mistakesTable.id],
+    }),
+    questions: many(questionsTable),
+  }),
+);
 
 export const transcriptsRelations = relations(transcriptsTable, ({ one }) => ({
   video: one(videosTable, {

@@ -4,13 +4,12 @@ import { ArrowRight, ChevronRight, Languages } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { gradeTranslationAction } from "@/actions/quiz";
+import AnswerInput from "@/components/shared/quiz-card/answer-input";
+import GradedQuestion from "@/components/shared/quiz-card/graded-question";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import type { Question, TranslationGrade } from "@/schemas/quiz";
-
-import AnswerInput from "./answer-input";
-import GradedQuestion from "./graded-question";
 
 // Every quiz teaches English.
 const LEARNED_LANGUAGE_LABEL = "English";
@@ -20,6 +19,7 @@ interface QuestionStepProps {
   solved: number;
   total: number;
   nativeLangLabel: string;
+  sourceLabel: string;
   onContinue: (isCorrect: boolean) => void;
 }
 
@@ -28,6 +28,7 @@ export default function QuestionStep({
   solved,
   total,
   nativeLangLabel,
+  sourceLabel,
   onContinue,
 }: QuestionStepProps) {
   const [fromLang, toLang] =
@@ -83,6 +84,7 @@ export default function QuestionStep({
       {grade ? (
         <GradedQuestion
           question={question}
+          sourceLabel={sourceLabel}
           grade={grade}
           isFlipped={isFlipped}
           onFlip={setIsFlipped}
@@ -90,6 +92,7 @@ export default function QuestionStep({
       ) : (
         <AnswerInput
           question={question}
+          sourceLabel={sourceLabel}
           value={draft}
           onChange={setDraft}
           onSubmit={handleSubmit}

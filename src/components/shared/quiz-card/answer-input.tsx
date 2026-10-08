@@ -1,14 +1,14 @@
 import { Loader2, Sparkles } from "lucide-react";
 
+import SourceSentence from "@/components/shared/quiz-card/source-sentence";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import type { Question } from "@/schemas/quiz";
 
-import SourceSentence from "./source-sentence";
-
 interface AnswerInputProps {
   question: Question;
+  sourceLabel: string;
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
@@ -18,6 +18,7 @@ interface AnswerInputProps {
 
 export default function AnswerInput({
   question,
+  sourceLabel,
   value,
   onChange,
   onSubmit,
@@ -26,7 +27,7 @@ export default function AnswerInput({
 }: AnswerInputProps) {
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-5 sm:px-6">
-      <SourceSentence question={question} />
+      <SourceSentence question={question} label={sourceLabel} />
 
       <Field>
         <FieldLabel htmlFor={`translation-${question.id}`}>
