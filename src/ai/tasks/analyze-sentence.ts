@@ -1,9 +1,7 @@
-import { getAiObjectResponse  } from "@/ai";
-import type {AiObjectResult} from "@/ai";
+import { getAiObjectResponse } from "@/ai";
+import type { AiObjectResult } from "@/ai";
 import { analyzeSentenceOutputSchema } from "@/ai/outputs/analyze-sentence";
 import type { TranslationAnalysis } from "@/schemas/quiz";
-
-export const ANALYZE_SENTENCE_MODEL = "google/gemini-2.5-flash-lite";
 
 export interface AnalyzeSentenceArgs {
   sentence: string;
@@ -94,7 +92,6 @@ export async function analyzeSentence({
   }
 
   const result = await getAiObjectResponse<TranslationAnalysis>({
-    model: ANALYZE_SENTENCE_MODEL,
     temperature: 0,
     system: buildSystemPrompt(nativeLanguage),
     messages: [

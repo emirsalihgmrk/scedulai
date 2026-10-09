@@ -1,9 +1,7 @@
+import { DEFAULT_MODEL } from "@/ai";
 import { cases } from "@/ai/eval/analyze-sentence-cases";
 import type { EvalCase, Expectation } from "@/ai/eval/analyze-sentence-cases";
-import {
-  analyzeSentence,
-  ANALYZE_SENTENCE_MODEL,
-} from "@/ai/tasks/analyze-sentence";
+import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import type { MistakeCategory } from "@/constants/mistake";
 import type { TranslationAnalysis } from "@/schemas/quiz";
 
@@ -47,7 +45,7 @@ function check(output: TranslationAnalysis, expected: Expectation): string[] {
 
 async function main() {
   console.log(
-    `analyze-sentence scorer — model=${ANALYZE_SENTENCE_MODEL}\n`,
+    `analyze-sentence scorer — model=${DEFAULT_MODEL}\n`,
   );
 
   const byCategory = new Map<string, { pass: number; total: number }>();

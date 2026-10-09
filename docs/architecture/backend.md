@@ -320,9 +320,8 @@ no video"). Anything else is treated as an internal error and never shown to the
 ## 9. AI layer (`ai/`)
 
 - `ai/index.ts`: `getAiObjectResponse()`, a single structured-output call over OpenRouter with retry
-  and backoff.
-- `ai/tasks/<task>.ts`: one exported function per task. Each task pins its model in a
-  `<TASK>_MODEL` constant (`ANALYZE_SENTENCE_MODEL`, `GENERATE_SENTENCES_MODEL`).
+  and backoff. Every task runs on its `DEFAULT_MODEL`; a task passes `model` only when it needs a different one.
+- `ai/tasks/<task>.ts`: one exported function per task.
 - `ai/outputs/<task>.ts`: the Zod schema of a task's structured output.
   - When the output **leaves the service** (persisted or returned to the client), the domain schema
     owns the shape and the output only `.extend()`s it with `.describe()` metadata. The task is
