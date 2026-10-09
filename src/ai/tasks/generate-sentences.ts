@@ -3,12 +3,18 @@ import { z } from "zod";
 import { getAiObjectResponse } from "@/ai";
 import {
   generateSentencesOutputSchema,
-  sentencePairSchema
-  
+  sentencePairSchema,
 } from "@/ai/outputs/generate-sentences";
-import type {GenerateSentencesOutput} from "@/ai/outputs/generate-sentences";
+import type { GenerateSentencesOutput } from "@/ai/outputs/generate-sentences";
 
-export const GENERATE_SENTENCES_MODEL = "google/gemini-2.5-flash";
+// Shared with the practice task. A meaning in dictionary form gives away the
+// word, never the grammar the learner is meant to produce.
+export function buildGlossRules(nativeLanguage: string): string {
+  return `For each pair, also list glosses: vocabulary hints the learner can open while translating.
+- Gloss every content word or fixed expression of the ${nativeLanguage} sentence (nouns, verbs, adjectives, adverbs, idioms). Skip names, numbers and words whose English is identical.
+- phrase: copied exactly, character for character, from the ${nativeLanguage} sentence. A multi-word expression is one gloss.
+- meaning: its English meaning in dictionary form: base verb ("go", never "went" or "is going"), singular noun, no article. Never reveal tense, agreement, articles or prepositions the translation needs.`;
+}
 
 export interface GenerateSentencesArgs {
   transcript: string;
@@ -33,10 +39,11 @@ export async function generateSentences({
 
   Given a transcript, analyze its sentence patterns, vocabulary, and expressions, then generate exactly ${count} new practice sentence pairs. For each pair:
   - Write the sentence in ${nativeLanguage}.
-  - Provide its correct English translation.`;
+  - Provide its correct English translation.
+
+${buildGlossRules(nativeLanguage)}`;
 
   const { output } = await getAiObjectResponse<GenerateSentencesOutput>({
-    model: GENERATE_SENTENCES_MODEL,
     system,
     messages: [
       {

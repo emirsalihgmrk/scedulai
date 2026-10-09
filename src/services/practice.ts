@@ -59,6 +59,7 @@ export async function generatePracticeByAiService(
           type: "translation",
           sourceSentence: sentence.native,
           expectedTranslation: sentence.english,
+          glosses: sentence.glosses,
         },
       })),
       tx,

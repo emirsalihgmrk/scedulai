@@ -85,6 +85,7 @@ export async function generateQuizByAiService(
           type: "translation",
           sourceSentence: sentence.native,
           expectedTranslation: sentence.english,
+          glosses: sentence.glosses,
         },
       })),
       tx,

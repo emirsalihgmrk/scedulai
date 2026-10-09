@@ -7,10 +7,12 @@ import { translationMistakeSchema } from "@/schemas/mistake";
 // ── Re-exports (jsonb shapes owned by this module) ──
 
 export {
+  glossSchema,
   translationPayloadSchema,
   questionPayloadSchema,
 } from "@/schemas/column-types";
 export type {
+  Gloss,
   TranslationPayload,
   QuestionPayload,
 } from "@/schemas/column-types";

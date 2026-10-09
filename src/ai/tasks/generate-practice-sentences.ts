@@ -4,10 +4,9 @@ import { getAiObjectResponse } from "@/ai";
 import { generatePracticeSentencesOutputSchema } from "@/ai/outputs/generate-practice-sentences";
 import type { GeneratePracticeSentencesOutput } from "@/ai/outputs/generate-practice-sentences";
 import { sentencePairSchema } from "@/ai/outputs/generate-sentences";
+import { buildGlossRules } from "@/ai/tasks/generate-sentences";
 import type { CefrLevel } from "@/constants/learning";
 import type { Mistake } from "@/schemas/mistake";
-
-export const GENERATE_PRACTICE_SENTENCES_MODEL = "google/gemini-2.5-flash";
 
 export interface GeneratePracticeSentencesArgs {
   mistake: Mistake;
@@ -30,8 +29,11 @@ Write exactly ${count} new sentence pairs. For each pair:
 - Write a sentence in ${nativeLanguage} and give its correct, natural English translation.
 - Translating the sentence into English MUST require the same structure the learner got wrong, so the learner cannot avoid it. A sentence that drills a different point is useless.
 - Use a new topic and new vocabulary; never reuse or lightly rephrase the learner's sentence.
-- Keep it short (5-12 words) and everyday${level ? `, at ${level} level` : ""}.
-- The ${nativeLanguage} sentence must have one clear reading, so the expected English translation is unambiguous.`;
+- Keep it short (5-12 words) and everyday${level ? `, at ${level} level` : ""}. Prefer common, simple vocabulary so the drilled structure is the only real challenge.
+- The ${nativeLanguage} sentence must have one clear reading, so the expected English translation is unambiguous.
+
+${buildGlossRules(nativeLanguage)}
+- Never gloss the word or words that carry the drilled structure (e.g. the verb for a tense mistake, the phrase needing the preposition for a preposition mistake); the learner must produce that part unaided.`;
 }
 
 export async function generatePracticeSentences({
@@ -51,7 +53,6 @@ export async function generatePracticeSentences({
 
   const { output } = await getAiObjectResponse<GeneratePracticeSentencesOutput>(
     {
-      model: GENERATE_PRACTICE_SENTENCES_MODEL,
       system: buildSystemPrompt(nativeLanguage, level, count),
       messages: [
         {
