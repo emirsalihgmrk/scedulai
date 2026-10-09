@@ -63,7 +63,7 @@ export default function SourceSentence({ question, label }: SourceSentenceProps)
               <PopoverTrigger
                 openOnHover
                 delay={150}
-                className="cursor-help underline decoration-muted-foreground/60 decoration-dotted decoration-2 underline-offset-4 transition-colors hover:decoration-primary data-popup-open:decoration-primary"
+                className="cursor-help underline decoration-muted-foreground/60 decoration-dotted decoration-2 underline-offset-[0.35em] transition-colors [text-decoration-skip-ink:none] hover:decoration-primary data-popup-open:decoration-primary"
               >
                 {segment.text}
               </PopoverTrigger>
