@@ -18,6 +18,14 @@ const VERDICT_CLASSES = {
   incorrect: "bg-warning/12 text-warning-foreground",
 } as const;
 
+// Only for correct answers: grammar mistakes never fail a translation, so a
+// correct answer can still have some.
+function getMeaningPreservedMessage(mistakeCount: number): string {
+  if (mistakeCount === 0) return "Meaning preserved with no mistakes. Well done!";
+  const noun = mistakeCount === 1 ? "mistake" : "mistakes";
+  return `Meaning preserved, but you have ${mistakeCount} ${noun}.`;
+}
+
 interface GradedQuestionProps {
   question: Question;
   sourceLabel: string;
@@ -36,6 +44,7 @@ export default function GradedQuestion({
   const { userTranslation, analysis, isCorrect } = grade;
   const verdictClasses = VERDICT_CLASSES[isCorrect ? "correct" : "incorrect"];
   const VerdictIcon = isCorrect ? CircleCheck : CircleX;
+  const mistakeCount = analysis.mistakes.length;
 
   return (
     <div className="relative min-h-0 flex-1 perspective-distant">
@@ -58,6 +67,16 @@ export default function GradedQuestion({
               <p className="text-[15px] leading-relaxed text-foreground">
                 {userTranslation}
               </p>
+              {isCorrect && (
+                <p
+                  className={cn(
+                    "mt-2 text-[13px] font-medium",
+                    mistakeCount > 0 ? "text-warning-foreground" : "text-success",
+                  )}
+                >
+                  {getMeaningPreservedMessage(mistakeCount)}
+                </p>
+              )}
             </div>
             <span
               className={cn(
