@@ -1,6 +1,6 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText, Output  } from "ai";
-import type {ModelMessage} from "ai";
+import { generateText, Output } from "ai";
+import type { ModelMessage } from "ai";
 import type { z } from "zod";
 
 if (!process.env.OPENROUTER_API_KEY) {
