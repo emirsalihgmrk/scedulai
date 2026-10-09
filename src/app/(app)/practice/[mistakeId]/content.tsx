@@ -64,6 +64,9 @@ export default async function Content({ params }: ContentProps) {
             user={user}
             source={{ kind: "practice", mistakeId: mistake.id }}
             quizPromise={practicePromise}
+            isCompletedPromise={practicePromise.then(
+              (practice) => !!practice?.completedAt,
+            )}
           />
         </Suspense>
       </section>

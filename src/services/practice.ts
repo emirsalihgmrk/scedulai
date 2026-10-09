@@ -65,7 +65,7 @@ export async function generatePracticeByAiService(
       tx,
     );
 
-    return { id: created.id, questions };
+    return { id: created.id, completedAt: null, questions };
   });
 }
 

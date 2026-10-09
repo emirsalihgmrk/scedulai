@@ -6,7 +6,7 @@ import type { Question } from "@/schemas/quiz";
 
 // ── Query types ──
 
-export type PracticeWithQuestions = Pick<PracticeRow, "id"> & {
+export type PracticeWithQuestions = Pick<PracticeRow, "id" | "completedAt"> & {
   questions: Question[];
 };
 

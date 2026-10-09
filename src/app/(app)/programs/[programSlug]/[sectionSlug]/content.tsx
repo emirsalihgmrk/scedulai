@@ -3,7 +3,10 @@ import { Suspense } from "react";
 
 import QuizCard, { QuizCardFallback } from "@/components/shared/quiz-card";
 import { getCurrentUserService } from "@/services/auth";
-import { getSectionByOrderService } from "@/services/program";
+import {
+  getSectionByOrderService,
+  getSectionProgressService,
+} from "@/services/program";
 import { getQuizService } from "@/services/quiz";
 import { getTranscriptService, getVideoService } from "@/services/video";
 
@@ -36,6 +39,9 @@ export default async function Content({ params }: ContentProps) {
   if (!section) notFound();
 
   const quizPromise = getQuizService(section.id);
+  const isQuizCompletedPromise = getSectionProgressService(section.id).then(
+    (progress) => !!progress?.quizCompletedAt,
+  );
   const transcriptPromise = getVideoService(section.id).then((video) =>
     video ? getTranscriptService(video.id) : [],
   );
@@ -61,6 +67,7 @@ export default async function Content({ params }: ContentProps) {
             user={user}
             source={{ kind: "section", sectionId: section.id }}
             quizPromise={quizPromise}
+            isCompletedPromise={isQuizCompletedPromise}
           />
         </Suspense>
       </section>

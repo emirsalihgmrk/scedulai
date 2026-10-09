@@ -29,6 +29,7 @@ interface QuizCardProps {
   user: User | null;
   source: QuizSource;
   quizPromise: Promise<QuestionSet | null>;
+  isCompletedPromise: Promise<boolean>;
 }
 
 function getQuestionIds(quiz: QuestionSet | null): string[] {
@@ -47,12 +48,22 @@ function completeQuestionSet(source: QuizSource) {
     : completePracticeAction(source.mistakeId);
 }
 
-export default function QuizCard({ user, source, quizPromise }: QuizCardProps) {
+export default function QuizCard({
+  user,
+  source,
+  quizPromise,
+  isCompletedPromise,
+}: QuizCardProps) {
   const copy = QUIZ_CARD_COPY[source.kind];
   const initialQuiz = use(quizPromise);
+  const isCompleted = use(isCompletedPromise);
   const [quiz, setQuiz] = useState(initialQuiz);
   // Question ids still to be answered correctly; a miss moves its id to the end.
-  const [queue, setQueue] = useState(() => getQuestionIds(initialQuiz));
+  // Answers aren't stored, so a completed set reopens on its completed step
+  // and an unfinished one starts over.
+  const [queue, setQueue] = useState(() =>
+    isCompleted ? [] : getQuestionIds(initialQuiz),
+  );
   // Bumped on every advance so a re-asked question remounts with a fresh draft.
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState<string | null>(null);

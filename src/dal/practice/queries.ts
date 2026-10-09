@@ -13,7 +13,7 @@ export async function getPractice(
       eq(practicesTable.mistakeId, mistakeId),
       eq(practicesTable.userId, userId),
     ),
-    columns: { id: true },
+    columns: { id: true, completedAt: true },
     with: {
       questions: {
         columns: { createdAt: false, updatedAt: false },
