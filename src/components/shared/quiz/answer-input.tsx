@@ -1,6 +1,6 @@
 import { Loader2, Sparkles } from "lucide-react";
 
-import SourceSentence from "@/components/shared/quiz-card/source-sentence";
+import SourceSentence from "@/components/shared/quiz/source-sentence";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";

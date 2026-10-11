@@ -4,8 +4,8 @@ import { ArrowRight, ChevronRight, Languages } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { gradeTranslationAction } from "@/actions/quiz";
-import AnswerInput from "@/components/shared/quiz-card/answer-input";
-import GradedQuestion from "@/components/shared/quiz-card/graded-question";
+import AnswerInput from "@/components/shared/quiz/answer-input";
+import GradedQuestion from "@/components/shared/quiz/graded-question";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";

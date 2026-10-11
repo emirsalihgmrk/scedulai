@@ -8,7 +8,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import SourceSentence from "@/components/shared/quiz-card/source-sentence";
+import SourceSentence from "@/components/shared/quiz/source-sentence";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Question, TranslationGrade } from "@/schemas/quiz";

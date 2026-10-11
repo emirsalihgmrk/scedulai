@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import QuizCard, { QuizCardFallback } from "@/components/shared/quiz-card";
 import { getCurrentUserService } from "@/services/auth";
 import {
   getSectionByOrderService,
@@ -11,6 +10,7 @@ import { getQuizService } from "@/services/quiz";
 import { getTranscriptService, getVideoService } from "@/services/video";
 
 import { PlayerProvider } from "./_components/player-context";
+import QuizCard, { QuizCardFallback } from "./_components/quiz-card";
 import TranscriptCard, {
   TranscriptCardFallback,
 } from "./_components/transcript-card";
@@ -65,7 +65,7 @@ export default async function Content({ params }: ContentProps) {
         <Suspense fallback={<QuizCardFallback />}>
           <QuizCard
             user={user}
-            source={{ kind: "section", sectionId: section.id }}
+            sectionId={section.id}
             quizPromise={quizPromise}
             isCompletedPromise={isQuizCompletedPromise}
           />

@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import QuizCard, { QuizCardFallback } from "@/components/shared/quiz-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MISTAKE_CATEGORY_LABELS } from "@/constants/mistake";
@@ -13,6 +12,7 @@ import { getMistakeService } from "@/services/mistake";
 import { getPracticeService } from "@/services/practice";
 
 import MistakeSummary from "../_components/mistake-summary";
+import PracticeCard, { PracticeCardFallback } from "./_components/practice-card";
 
 interface ContentProps {
   params: Promise<{ mistakeId: string }>;
@@ -28,7 +28,8 @@ export default async function Content({ params }: ContentProps) {
     getCurrentUserService(),
     getMistakeService(mistakeId),
   ]);
-  if (!mistake) notFound();
+  // A guest has no mistakes, so this also covers the signed-out case.
+  if (!user || !mistake) notFound();
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] xl:gap-8">
@@ -59,11 +60,11 @@ export default async function Content({ params }: ContentProps) {
       </section>
 
       <section aria-label="Mistake practice" className="min-w-0">
-        <Suspense fallback={<QuizCardFallback />}>
-          <QuizCard
+        <Suspense fallback={<PracticeCardFallback />}>
+          <PracticeCard
             user={user}
-            source={{ kind: "practice", mistakeId: mistake.id }}
-            quizPromise={practicePromise}
+            mistakeId={mistake.id}
+            practicePromise={practicePromise}
             isCompletedPromise={practicePromise.then(
               (practice) => !!practice?.completedAt,
             )}
@@ -92,7 +93,7 @@ export function ContentFallback() {
         </div>
       </section>
       <section aria-label="Mistake practice" className="min-w-0">
-        <QuizCardFallback />
+        <PracticeCardFallback />
       </section>
     </div>
   );

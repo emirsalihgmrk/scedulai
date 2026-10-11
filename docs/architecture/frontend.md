@@ -143,7 +143,7 @@ export default async function Content({ params }: ContentProps) {
 
 - **One component per file**, exported as `export default function <Name>`.
   - `<Name>` is the file name in PascalCase: `program-hero.tsx` → `ProgramHero`.
-  - A folder entry `index.tsx` is named after its folder: `quiz-card/index.tsx` → `QuizCard`.
+  - A folder entry `index.tsx` is named after its folder: `video-section/index.tsx` → `VideoSection`.
   - Special files are named after their role: `page.tsx` → `Page`, `layout.tsx` → `Layout`,
     `content.tsx` → `Content`, `error.tsx` → `ErrorBoundary`.
 - **A section's fallback** is a named export `<Name>Fallback` in the same entry file. It is the only
