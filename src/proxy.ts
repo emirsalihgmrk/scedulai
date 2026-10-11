@@ -1,6 +1,6 @@
 import { getSessionCookie } from "better-auth/cookies";
-import { NextResponse  } from "next/server";
-import type {NextRequest} from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 import { auth } from "@/lib/auth";
 
@@ -12,6 +12,7 @@ const PUBLIC_ROUTES = [
   "/programs/**",
   "/practice/**",
   "/account/**",
+  "/vocabulary/**",
 ];
 
 const GUEST_ONLY_ROUTES = ["/auth/**"];

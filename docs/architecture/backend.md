@@ -49,6 +49,7 @@ the layers it needs, e.g. `user` has no service and `auth` has no DAL.
 | `quiz`             | `quizzes`, `questions`                      | schemas, dal, services, actions          |
 | `mistake`          | `mistakes`                                  | schemas, dal, services                   |
 | `practice`         | `practices`                                 | schemas, dal, services, actions          |
+| `vocabulary`       | `vocabulary_items`                          | schemas, dal, services, actions          |
 
 A module's DAL **writes only its own tables**. Reads may follow relations into other modules' tables
 (e.g. `getSections` includes each section's `video` and `progress`).

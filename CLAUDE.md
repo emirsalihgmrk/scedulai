@@ -69,6 +69,13 @@ grading. A question belongs to exactly one owner, a section quiz (shared) or a p
 a check constraint enforces it. Each mistake records its `source` (`section` | `practice`); only
 section mistakes are listed, practice mistakes are kept for statistics.
 
+Saved words live in `vocabulary_items` (one per user and phrase, listed on `/vocabulary`): `phrase`
+is English in dictionary form, `meaning` is in the learner's native language and `context` is the
+English sentence it came from. A phrase picked from a transcript line is defined by the AI and keeps
+the video and the line's timestamp; saving it again from a transcript replaces its context. A quiz
+or practice gloss already carries its translation (no AI call), keeps the section's video (quiz
+only) and never replaces an existing item.
+
 The learned language is always English; there is no target-language setting anywhere.
 `user.nativeLanguage` is a property of the person; how they learn (CEFR level, goal, daily minutes)
 lives in `learning_profiles`, one row per user. Having a profile **is** "onboarded"; there is no flag. Signed-in users
