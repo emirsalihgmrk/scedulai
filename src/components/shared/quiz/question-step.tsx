@@ -9,7 +9,7 @@ import GradedQuestion from "@/components/shared/quiz/graded-question";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import type { Question, TranslationGrade } from "@/schemas/quiz";
+import type { Gloss, Question, TranslationGrade } from "@/schemas/quiz";
 
 // Every quiz teaches English.
 const LEARNED_LANGUAGE_LABEL = "English";
@@ -21,6 +21,7 @@ interface QuestionStepProps {
   nativeLangLabel: string;
   sourceLabel: string;
   onContinue: (isCorrect: boolean) => void;
+  onSaveGloss?: (gloss: Gloss) => Promise<boolean>;
 }
 
 export default function QuestionStep({
@@ -30,6 +31,7 @@ export default function QuestionStep({
   nativeLangLabel,
   sourceLabel,
   onContinue,
+  onSaveGloss,
 }: QuestionStepProps) {
   const [fromLang, toLang] =
     question.direction === "native-to-target"
@@ -88,6 +90,7 @@ export default function QuestionStep({
           grade={grade}
           isFlipped={isFlipped}
           onFlip={setIsFlipped}
+          onSaveGloss={onSaveGloss}
         />
       ) : (
         <AnswerInput
@@ -98,6 +101,7 @@ export default function QuestionStep({
           onSubmit={handleSubmit}
           isPending={isPending}
           error={error}
+          onSaveGloss={onSaveGloss}
         />
       )}
 

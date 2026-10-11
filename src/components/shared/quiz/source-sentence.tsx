@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { Fragment } from "react";
 
+import SaveGlossButton from "@/components/shared/quiz/save-gloss-button";
 import {
   Popover,
   PopoverContent,
@@ -11,6 +12,7 @@ import type { Gloss, Question } from "@/schemas/quiz";
 interface SourceSentenceProps {
   question: Question;
   label: string;
+  onSaveGloss?: (gloss: Gloss) => Promise<boolean>;
 }
 
 interface SentenceSegment {
@@ -46,7 +48,11 @@ function splitByGlosses(sentence: string, glosses: Gloss[]): SentenceSegment[] {
   return segments;
 }
 
-export default function SourceSentence({ question, label }: SourceSentenceProps) {
+export default function SourceSentence({
+  question,
+  label,
+  onSaveGloss,
+}: SourceSentenceProps) {
   const { sourceSentence, glosses = [] } = question.payload;
   const segments = splitByGlosses(sourceSentence, glosses);
 
@@ -57,22 +63,28 @@ export default function SourceSentence({ question, label }: SourceSentenceProps)
         {label}
       </div>
       <p className="text-pretty font-display text-lg font-medium leading-snug text-foreground sm:text-xl">
-        {segments.map((segment, index) =>
-          segment.gloss ? (
+        {segments.map(({ text, gloss }, index) =>
+          gloss ? (
             <Popover key={index}>
               <PopoverTrigger
                 openOnHover
                 delay={150}
                 className="cursor-help underline decoration-muted-foreground/60 decoration-dotted decoration-2 underline-offset-[0.35em] transition-colors [text-decoration-skip-ink:none] hover:decoration-primary data-popup-open:decoration-primary"
               >
-                {segment.text}
+                {text}
               </PopoverTrigger>
-              <PopoverContent side="top" className="w-auto max-w-64 px-3 py-2">
-                <span className="font-medium">{segment.gloss.meaning}</span>
+              <PopoverContent
+                side="top"
+                className="w-auto max-w-64 gap-2 px-3 py-2"
+              >
+                <span className="font-medium">{gloss.meaning}</span>
+                {onSaveGloss && (
+                  <SaveGlossButton onSave={() => onSaveGloss(gloss)} />
+                )}
               </PopoverContent>
             </Popover>
           ) : (
-            <Fragment key={index}>{segment.text}</Fragment>
+            <Fragment key={index}>{text}</Fragment>
           ),
         )}
       </p>

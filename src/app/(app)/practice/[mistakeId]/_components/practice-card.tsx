@@ -8,6 +8,7 @@ import {
   completePracticeAction,
   generatePracticeByAiAction,
 } from "@/actions/practice";
+import { savePracticeGlossAction } from "@/actions/vocabulary";
 import EmptyState from "@/components/shared/empty-state";
 import CompletedStep from "@/components/shared/quiz/completed-step";
 import GeneratingStep from "@/components/shared/quiz/generating-step";
@@ -126,6 +127,11 @@ export default function PracticeCard({
             nativeLangLabel={getNativeLanguageLabel(user.nativeLanguage)}
             sourceLabel="AI-generated for your mistake"
             onContinue={handleContinue}
+            onSaveGloss={(gloss) =>
+              savePracticeGlossAction(mistakeId, question.id, {
+                phrase: gloss.phrase,
+              }).then((result) => result.ok)
+            }
           />
         ) : (
           <CompletedStep

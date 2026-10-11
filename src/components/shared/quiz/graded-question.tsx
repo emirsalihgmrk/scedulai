@@ -11,7 +11,7 @@ import {
 import SourceSentence from "@/components/shared/quiz/source-sentence";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Question, TranslationGrade } from "@/schemas/quiz";
+import type { Gloss, Question, TranslationGrade } from "@/schemas/quiz";
 
 const VERDICT_CLASSES = {
   correct: "bg-success/12 text-success",
@@ -32,6 +32,7 @@ interface GradedQuestionProps {
   grade: TranslationGrade;
   isFlipped: boolean;
   onFlip: (isFlipped: boolean) => void;
+  onSaveGloss?: (gloss: Gloss) => Promise<boolean>;
 }
 
 export default function GradedQuestion({
@@ -40,6 +41,7 @@ export default function GradedQuestion({
   grade,
   isFlipped,
   onFlip,
+  onSaveGloss,
 }: GradedQuestionProps) {
   const { userTranslation, analysis, isCorrect } = grade;
   const verdictClasses = VERDICT_CLASSES[isCorrect ? "correct" : "incorrect"];
@@ -56,7 +58,11 @@ export default function GradedQuestion({
       >
         {/* Front — question + answer + verdict */}
         <div className="absolute inset-0 flex flex-col gap-4 overflow-y-auto px-5 backface-hidden sm:px-6">
-          <SourceSentence question={question} label={sourceLabel} />
+          <SourceSentence
+            question={question}
+            label={sourceLabel}
+            onSaveGloss={onSaveGloss}
+          />
 
           <div className="flex items-start justify-between gap-3 rounded-xl border border-border bg-background p-4">
             <div className="min-w-0">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { use, useEffect, useRef, useState, useTransition } from "react";
 
 import { completeQuizAction, generateQuizByAiAction } from "@/actions/quiz";
+import { saveQuizGlossAction } from "@/actions/vocabulary";
 import EmptyState from "@/components/shared/empty-state";
 import CompletedStep from "@/components/shared/quiz/completed-step";
 import GeneratingStep from "@/components/shared/quiz/generating-step";
@@ -136,6 +137,11 @@ export default function QuizCard({
             nativeLangLabel={getNativeLanguageLabel(user.nativeLanguage)}
             sourceLabel="AI-generated from transcript"
             onContinue={handleContinue}
+            onSaveGloss={(gloss) =>
+              saveQuizGlossAction(sectionId, question.id, {
+                phrase: gloss.phrase,
+              }).then((result) => result.ok)
+            }
           />
         ) : (
           <CompletedStep

@@ -4,7 +4,7 @@ import SourceSentence from "@/components/shared/quiz/source-sentence";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import type { Question } from "@/schemas/quiz";
+import type { Gloss, Question } from "@/schemas/quiz";
 
 interface AnswerInputProps {
   question: Question;
@@ -14,6 +14,7 @@ interface AnswerInputProps {
   onSubmit: () => void;
   isPending: boolean;
   error: string | null;
+  onSaveGloss?: (gloss: Gloss) => Promise<boolean>;
 }
 
 export default function AnswerInput({
@@ -24,10 +25,15 @@ export default function AnswerInput({
   onSubmit,
   isPending,
   error,
+  onSaveGloss,
 }: AnswerInputProps) {
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-5 sm:px-6">
-      <SourceSentence question={question} label={sourceLabel} />
+      <SourceSentence
+        question={question}
+        label={sourceLabel}
+        onSaveGloss={onSaveGloss}
+      />
 
       <Field>
         <FieldLabel htmlFor={`translation-${question.id}`}>
