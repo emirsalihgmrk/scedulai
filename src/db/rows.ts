@@ -16,7 +16,8 @@ import {
   questionsTable,
   quizzesTable,
   sectionProgressTable,
-  userTable
+  userTable,
+  vocabularyItemsTable
 } from "@/db/schema";
 import { questionPayloadSchema } from "@/schemas/column-types";
 
@@ -72,4 +73,8 @@ export const createMistakeRowSchema = createInsertSchema(mistakesTable);
 
 export type PracticeRow = typeof practicesTable.$inferSelect;
 export const createPracticeRowSchema = createInsertSchema(practicesTable);
+
+export type VocabularyItemRow = typeof vocabularyItemsTable.$inferSelect;
+export const createVocabularyItemRowSchema =
+  createInsertSchema(vocabularyItemsTable);
 

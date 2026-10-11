@@ -338,12 +338,49 @@ export const practicesTable = pgTable(
   (table) => [unique("practices_mistake_unique").on(table.mistakeId)],
 );
 
+// One row per phrase a learner saved. `phrase` is English in dictionary form,
+// `meaning` is in the learner's native language and `context` is the English
+// sentence it was saved from. Saved from a transcript, it has the video and the
+// line's timestamp; from a section quiz's gloss, only the video; from a
+// practice's gloss, neither.
+export const vocabularyItemsTable = pgTable(
+  "vocabulary_items",
+  {
+    ...commonFields,
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    phrase: text("phrase").notNull(),
+    meaning: text("meaning").notNull(),
+    context: text("context").notNull(),
+    videoId: uuid("video_id").references(() => videosTable.id, {
+      onDelete: "set null",
+    }),
+    timeSeconds: integer("time_seconds"),
+  },
+  (table) => [
+    unique("vocabulary_items_user_phrase_unique").on(
+      table.userId,
+      table.phrase,
+    ),
+    index("vocabulary_items_user_id_created_at_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+    check(
+      "vocabulary_items_time_needs_video_check",
+      sql`${table.timeSeconds} is null or ${table.videoId} is not null`,
+    ),
+  ],
+);
+
 // Relations
 export const userRelations = relations(userTable, ({ many }) => ({
   learningProfiles: many(learningProfilesTable),
   sectionProgress: many(sectionProgressTable),
   mistakes: many(mistakesTable),
   practices: many(practicesTable),
+  vocabularyItems: many(vocabularyItemsTable),
   sessions: many(sessionTable),
   accounts: many(accountTable),
 }));
@@ -453,6 +490,20 @@ export const practicesRelations = relations(
       references: [mistakesTable.id],
     }),
     questions: many(questionsTable),
+  }),
+);
+
+export const vocabularyItemsRelations = relations(
+  vocabularyItemsTable,
+  ({ one }) => ({
+    user: one(userTable, {
+      fields: [vocabularyItemsTable.userId],
+      references: [userTable.id],
+    }),
+    video: one(videosTable, {
+      fields: [vocabularyItemsTable.videoId],
+      references: [videosTable.id],
+    }),
   }),
 );
 
