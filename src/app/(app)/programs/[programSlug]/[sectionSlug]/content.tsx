@@ -57,7 +57,11 @@ export default async function Content({ params }: ContentProps) {
             <VideoSection sectionId={section.id} />
           </Suspense>
           <Suspense fallback={<TranscriptCardFallback />}>
-            <TranscriptCard transcriptPromise={transcriptPromise} />
+            <TranscriptCard
+              sectionId={section.id}
+              transcriptPromise={transcriptPromise}
+              canSavePhrases={!!user}
+            />
           </Suspense>
         </section>
       </PlayerProvider>

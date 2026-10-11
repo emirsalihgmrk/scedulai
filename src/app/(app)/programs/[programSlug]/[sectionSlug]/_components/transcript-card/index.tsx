@@ -13,17 +13,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { cn, parseTimestamp } from "@/lib/utils";
 import type { TranscriptLine } from "@/schemas/video";
 
-import { usePlaybackTime, usePlayerControls } from "./player-context";
+import { usePlaybackTime, usePlayerControls } from "../player-context";
+import SavePhrasePopover from "./save-phrase-popover";
 
 const RESUME_FOLLOW_DELAY_MS = 4000;
-
-// Transcript timestamps are "MM:SS" (or "HH:MM:SS" for long videos).
-function parseTimeToSeconds(time: string): number {
-  return time.split(":").reduce((acc, part) => acc * 60 + Number(part), 0);
-}
 
 // Keep the active line parked ~35% down the viewport as playback advances,
 // nudging only the viewport's scrollTop (never scrollIntoView, which could
@@ -42,18 +38,22 @@ function scrollLineToComfortablePosition(
 }
 
 interface TranscriptCardProps {
+  sectionId: string;
   transcriptPromise: Promise<TranscriptLine[]>;
+  canSavePhrases: boolean;
 }
 
 export default function TranscriptCard({
+  sectionId,
   transcriptPromise,
+  canSavePhrases,
 }: TranscriptCardProps) {
   const lines = use(transcriptPromise);
   const { seek } = usePlayerControls();
   const currentTimeSeconds = usePlaybackTime();
 
   const startSeconds = useMemo(
-    () => lines.map((line) => parseTimeToSeconds(line.time)),
+    () => lines.map((line) => parseTimestamp(line.time)),
     [lines],
   );
 
@@ -117,7 +117,7 @@ export default function TranscriptCard({
             const isActive = index === activeIndex;
             const isPast = index < activeIndex;
             return (
-              <li key={index}>
+              <li key={index} className="group/line relative">
                 <button
                   type="button"
                   ref={isActive ? activeLineRef : undefined}
@@ -139,6 +139,7 @@ export default function TranscriptCard({
                   className={cn(
                     "group flex w-full gap-3 rounded-xl px-3 py-3 text-left transition-colors",
                     isActive ? "bg-primary/10" : "hover:bg-muted",
+                    canSavePhrases && "pr-11",
                   )}
                 >
                   <Badge
@@ -168,6 +169,15 @@ export default function TranscriptCard({
                     </span>
                   </span>
                 </button>
+                {/* A sibling, not a child: the line itself is the seek button. */}
+                {canSavePhrases && (
+                  <SavePhrasePopover
+                    sectionId={sectionId}
+                    lineIndex={index}
+                    text={line.text}
+                    className="absolute right-2 top-2.5"
+                  />
+                )}
               </li>
             );
           })}
