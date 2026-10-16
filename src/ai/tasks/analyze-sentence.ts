@@ -92,6 +92,7 @@ export async function analyzeSentence({
   }
 
   const result = await getAiObjectResponse<TranslationAnalysis>({
+    model: "google/gemini-2.5-flash-lite",
     temperature: 0,
     system: buildSystemPrompt(nativeLanguage),
     messages: [
