@@ -2,10 +2,16 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import type { Transaction } from "@/db";
-import { vocabularyItemsTable } from "@/db/schema";
+import {
+  vocabularyCardsTable,
+  vocabularyItemsTable,
+  vocabularyReviewsTable,
+} from "@/db/schema";
 import type {
   CreateVocabularyItemInput,
+  CreateVocabularyReviewInput,
   UpdateVocabularyItemInput,
+  UpsertVocabularyCardInput,
 } from "@/schemas/vocabulary";
 
 // `undefined` when the user already saved the phrase.
@@ -41,6 +47,34 @@ export async function updateVocabularyItem(
         eq(vocabularyItemsTable.phrase, phrase),
       ),
     );
+}
+
+export async function upsertVocabularyCard(
+  userId: string,
+  vocabularyItemId: string,
+  input: UpsertVocabularyCardInput,
+  tx?: Transaction,
+): Promise<void> {
+  const executor = tx ?? db;
+  await executor
+    .insert(vocabularyCardsTable)
+    .values({ userId, vocabularyItemId, ...input })
+    .onConflictDoUpdate({
+      target: vocabularyCardsTable.vocabularyItemId,
+      set: input,
+    });
+}
+
+export async function createVocabularyReview(
+  userId: string,
+  vocabularyItemId: string,
+  input: CreateVocabularyReviewInput,
+  tx?: Transaction,
+): Promise<void> {
+  const executor = tx ?? db;
+  await executor
+    .insert(vocabularyReviewsTable)
+    .values({ userId, vocabularyItemId, ...input });
 }
 
 export async function deleteVocabularyItem(

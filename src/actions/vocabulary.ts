@@ -4,11 +4,13 @@ import { toActionFailure } from "@/lib/action";
 import type { ActionResult } from "@/lib/action";
 import type {
   PhraseDefinition,
+  ReviewVocabularyItemInput,
   SaveGlossInput,
   SaveTranscriptPhraseInput,
 } from "@/schemas/vocabulary";
 import {
   deleteVocabularyItemService,
+  reviewVocabularyItemService,
   savePracticeGlossService,
   saveQuizGlossService,
   saveTranscriptPhraseService,
@@ -46,6 +48,18 @@ export async function savePracticeGlossAction(
 ): Promise<ActionResult> {
   try {
     await savePracticeGlossService(mistakeId, questionId, input);
+    return { ok: true, data: undefined };
+  } catch (error) {
+    return toActionFailure(error);
+  }
+}
+
+export async function reviewVocabularyItemAction(
+  vocabularyItemId: string,
+  input: ReviewVocabularyItemInput,
+): Promise<ActionResult> {
+  try {
+    await reviewVocabularyItemService(vocabularyItemId, input);
     return { ok: true, data: undefined };
   } catch (error) {
     return toActionFailure(error);

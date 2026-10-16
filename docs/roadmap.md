@@ -60,7 +60,7 @@ verisine göre yeniden belirlenmeli (ör. kullanıcılar kendi videolarını ço
 
 - [x] **Hata defteri:** AI `mistakes` çıktısı kategorilere ayrılır (zaman, artikel, edat, kelime sırası, kelime seçimi, yazım…); kullanıcı kategori bazlı hata geçmişini görür · _1–1,5 hafta_ (prompt değişikliği + eval'lerin yenilenmesi + cevaplar saklanmadığı için yeni bir `mistakes` tablosu)
 - [x] **Kelime/ifade bankası:** transkriptten kelime/ifade kaydet; kart, videodaki cümle ve zaman damgasıyla gelir · _~1,5 hafta_
-- [ ] **Aralıklı tekrar (SRS, ör. FSRS)** kelime kartları için · _~1 hafta_ (hazır kütüphaneyle; sıfırdan yazılmamalı)
+- [x] **Aralıklı tekrar (SRS, ör. FSRS)** kelime kartları için · _~1 hafta_ (hazır kütüphaneyle; sıfırdan yazılmamalı)
 - [ ] **Practice sayfası = günlük kişisel oturum:** vadesi gelen kartlar + en zayıf hata kategorisinden 3–5 yeni cümle · _1,5–2 hafta_
 - [x] **Tekrar deneme:** Duolingo modeli: yanlış cevaplanan soru kuyruğun sonuna eklenir, hepsi doğru cevaplanınca quiz biter ("hatayı gör → tekrar dene")
 

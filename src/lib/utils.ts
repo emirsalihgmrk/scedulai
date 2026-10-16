@@ -27,6 +27,23 @@ export function parseTimestamp(time: string): number {
   return time.split(":").reduce((acc, part) => acc * 60 + Number(part), 0);
 }
 
+// Whole words only, with any whitespace between them. Lookarounds instead of
+// `\b`, which treats non-ASCII letters ("café") as word boundaries.
+export function matchPhrase(
+  text: string,
+  phrase: string,
+): RegExpExecArray | null {
+  const pattern = phrase
+    .trim()
+    .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    .split(/\s+/)
+    .join("\\s+");
+  return new RegExp(
+    `(?<![\\p{L}\\p{N}])${pattern}(?![\\p{L}\\p{N}])`,
+    "iu",
+  ).exec(text);
+}
+
 export function formatDuration(totalSeconds: number | null | undefined) {
   if (totalSeconds == null || Number.isNaN(totalSeconds) || totalSeconds < 0) {
     return "00:00";

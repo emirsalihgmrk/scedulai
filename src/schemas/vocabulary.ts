@@ -1,27 +1,61 @@
 import { z } from "zod";
 
-import { createVocabularyItemRowSchema } from "@/db/rows";
-import type { VideoRow, VocabularyItemRow } from "@/db/rows";
+import {
+  createVocabularyCardRowSchema,
+  createVocabularyItemRowSchema,
+  createVocabularyReviewRowSchema,
+} from "@/db/rows";
+import type { VideoRow, VocabularyCardRow, VocabularyItemRow } from "@/db/rows";
 import { glossSchema } from "@/schemas/quiz";
 
 // ── Query types ──
 
 export type VocabularyItemListItem = Pick<
   VocabularyItemRow,
-  "id" | "phrase" | "meaning" | "context" | "timeSeconds" | "createdAt"
+  | "id"
+  | "phrase"
+  | "meaning"
+  | "context"
+  | "contextPhrase"
+  | "timeSeconds"
+  | "createdAt"
 > & {
   video: Pick<VideoRow, "title"> | null;
+};
+
+export type VocabularyCard = Pick<
+  VocabularyCardRow,
+  | "state"
+  | "due"
+  | "stability"
+  | "difficulty"
+  | "scheduledDays"
+  | "learningSteps"
+  | "reps"
+  | "lapses"
+  | "lastReviewedAt"
+>;
+
+export type VocabularyItemWithCard = Pick<VocabularyItemRow, "id"> & {
+  card: VocabularyCard | null;
 };
 
 // ── DAL input schemas ──
 
 // Lowercased so the same phrase saved twice hits the (user, phrase) unique key.
 export const createVocabularyItemSchema = createVocabularyItemRowSchema
-  .pick({ phrase: true, meaning: true, context: true, timeSeconds: true })
+  .pick({
+    phrase: true,
+    meaning: true,
+    context: true,
+    contextPhrase: true,
+    timeSeconds: true,
+  })
   .extend({
     phrase: z.string().trim().toLowerCase().min(1).max(80),
     meaning: z.string().trim().min(1).max(120),
     context: z.string().trim().min(1).max(500),
+    contextPhrase: z.string().trim().toLowerCase().min(1).max(80).nullish(),
     timeSeconds: z.int().min(0).nullish(),
   });
 export type CreateVocabularyItemInput = z.infer<
@@ -29,16 +63,40 @@ export type CreateVocabularyItemInput = z.infer<
 >;
 
 export const updateVocabularyItemSchema = createVocabularyItemSchema
-  .pick({ meaning: true, context: true, timeSeconds: true })
+  .pick({
+    meaning: true,
+    context: true,
+    contextPhrase: true,
+    timeSeconds: true,
+  })
   .partial();
 export type UpdateVocabularyItemInput = z.infer<
   typeof updateVocabularyItemSchema
 >;
 
+export const upsertVocabularyCardSchema = createVocabularyCardRowSchema.pick({
+  state: true,
+  due: true,
+  stability: true,
+  difficulty: true,
+  scheduledDays: true,
+  learningSteps: true,
+  reps: true,
+  lapses: true,
+  lastReviewedAt: true,
+});
+export type UpsertVocabularyCardInput = z.infer<
+  typeof upsertVocabularyCardSchema
+>;
+
+export const createVocabularyReviewSchema =
+  createVocabularyReviewRowSchema.pick({ rating: true, state: true });
+export type CreateVocabularyReviewInput = z.infer<
+  typeof createVocabularyReviewSchema
+>;
+
 // ── Service input schemas ──
 
-// The server reads the line itself, so the client sends only which line and
-// the words picked from it.
 export const saveTranscriptPhraseSchema = createVocabularyItemSchema
   .pick({ phrase: true })
   .extend({ lineIndex: z.int().min(0) });
@@ -46,9 +104,15 @@ export type SaveTranscriptPhraseInput = z.infer<
   typeof saveTranscriptPhraseSchema
 >;
 
-// The gloss is looked up on the question by its native phrase.
 export const saveGlossSchema = glossSchema.pick({ phrase: true });
 export type SaveGlossInput = z.infer<typeof saveGlossSchema>;
+
+export const reviewVocabularyItemSchema = createVocabularyReviewSchema
+  .pick({ rating: true })
+  .extend({ rating: z.enum(["again", "good"]) });
+export type ReviewVocabularyItemInput = z.infer<
+  typeof reviewVocabularyItemSchema
+>;
 
 // ── Service result types ──
 

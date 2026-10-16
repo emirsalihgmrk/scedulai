@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -24,6 +25,7 @@ import { MISTAKE_CATEGORIES, MISTAKE_SOURCES } from "@/constants/mistake";
 import { PLANS } from "@/constants/plan";
 import { QUESTION_DIRECTIONS, QUESTION_TYPES } from "@/constants/question";
 import { ROLES } from "@/constants/role";
+import { CARD_STATES, REVIEW_RATINGS } from "@/constants/vocabulary";
 import type { QuestionPayload, TranscriptLine } from "@/schemas/column-types";
 
 const commonFields = {
@@ -54,6 +56,8 @@ export const mistakeCategoryEnum = pgEnum(
   MISTAKE_CATEGORIES,
 );
 export const mistakeSourceEnum = pgEnum("mistake_source", MISTAKE_SOURCES);
+export const cardStateEnum = pgEnum("card_state", CARD_STATES);
+export const reviewRatingEnum = pgEnum("review_rating", REVIEW_RATINGS);
 
 // better-auth managed tables
 export const userTable = pgTable("user", {
@@ -340,9 +344,10 @@ export const practicesTable = pgTable(
 
 // One row per phrase a learner saved. `phrase` is English in dictionary form,
 // `meaning` is in the learner's native language and `context` is the English
-// sentence it was saved from. Saved from a transcript, it has the video and the
-// line's timestamp; from a section quiz's gloss, only the video; from a
-// practice's gloss, neither.
+// sentence it was saved from. `contextPhrase` is the phrase as it appears in
+// that sentence ("gave up" for "give up"), null when it can't be located.
+// Saved from a transcript, it has the video and the line's timestamp; from a
+// section quiz's gloss, only the video; from a practice's gloss, neither.
 export const vocabularyItemsTable = pgTable(
   "vocabulary_items",
   {
@@ -353,6 +358,7 @@ export const vocabularyItemsTable = pgTable(
     phrase: text("phrase").notNull(),
     meaning: text("meaning").notNull(),
     context: text("context").notNull(),
+    contextPhrase: text("context_phrase"),
     videoId: uuid("video_id").references(() => videosTable.id, {
       onDelete: "set null",
     }),
@@ -374,6 +380,59 @@ export const vocabularyItemsTable = pgTable(
   ],
 );
 
+// A saved word's FSRS schedule, created by its first review: a word without a
+// card is new. Kept apart from the item so saving the word again never resets
+// its schedule.
+export const vocabularyCardsTable = pgTable(
+  "vocabulary_cards",
+  {
+    ...commonFields,
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    vocabularyItemId: uuid("vocabulary_item_id")
+      .references(() => vocabularyItemsTable.id, { onDelete: "cascade" })
+      .notNull(),
+    state: cardStateEnum("state").notNull(),
+    due: timestamp("due").notNull(),
+    stability: doublePrecision("stability").notNull(),
+    difficulty: doublePrecision("difficulty").notNull(),
+    scheduledDays: integer("scheduled_days").notNull(),
+    learningSteps: integer("learning_steps").notNull(),
+    reps: integer("reps").notNull(),
+    lapses: integer("lapses").notNull(),
+    lastReviewedAt: timestamp("last_reviewed_at").notNull(),
+  },
+  (table) => [
+    unique("vocabulary_cards_item_unique").on(table.vocabularyItemId),
+    index("vocabulary_cards_user_id_due_idx").on(table.userId, table.due),
+  ],
+);
+
+// One row per scheduled review, for statistics and for fitting FSRS later.
+// `state` is the card's state before the review. Answers are not stored.
+export const vocabularyReviewsTable = pgTable(
+  "vocabulary_reviews",
+  {
+    ...commonFields,
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    vocabularyItemId: uuid("vocabulary_item_id")
+      .references(() => vocabularyItemsTable.id, { onDelete: "cascade" })
+      .notNull(),
+    rating: reviewRatingEnum("rating").notNull(),
+    state: cardStateEnum("state").notNull(),
+  },
+  (table) => [
+    index("vocabulary_reviews_user_id_created_at_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+    index("vocabulary_reviews_item_id_idx").on(table.vocabularyItemId),
+  ],
+);
+
 // Relations
 export const userRelations = relations(userTable, ({ many }) => ({
   learningProfiles: many(learningProfilesTable),
@@ -381,6 +440,8 @@ export const userRelations = relations(userTable, ({ many }) => ({
   mistakes: many(mistakesTable),
   practices: many(practicesTable),
   vocabularyItems: many(vocabularyItemsTable),
+  vocabularyCards: many(vocabularyCardsTable),
+  vocabularyReviews: many(vocabularyReviewsTable),
   sessions: many(sessionTable),
   accounts: many(accountTable),
 }));
@@ -495,7 +556,7 @@ export const practicesRelations = relations(
 
 export const vocabularyItemsRelations = relations(
   vocabularyItemsTable,
-  ({ one }) => ({
+  ({ one, many }) => ({
     user: one(userTable, {
       fields: [vocabularyItemsTable.userId],
       references: [userTable.id],
@@ -503,6 +564,36 @@ export const vocabularyItemsRelations = relations(
     video: one(videosTable, {
       fields: [vocabularyItemsTable.videoId],
       references: [videosTable.id],
+    }),
+    card: one(vocabularyCardsTable),
+    reviews: many(vocabularyReviewsTable),
+  }),
+);
+
+export const vocabularyCardsRelations = relations(
+  vocabularyCardsTable,
+  ({ one }) => ({
+    user: one(userTable, {
+      fields: [vocabularyCardsTable.userId],
+      references: [userTable.id],
+    }),
+    vocabularyItem: one(vocabularyItemsTable, {
+      fields: [vocabularyCardsTable.vocabularyItemId],
+      references: [vocabularyItemsTable.id],
+    }),
+  }),
+);
+
+export const vocabularyReviewsRelations = relations(
+  vocabularyReviewsTable,
+  ({ one }) => ({
+    user: one(userTable, {
+      fields: [vocabularyReviewsTable.userId],
+      references: [userTable.id],
+    }),
+    vocabularyItem: one(vocabularyItemsTable, {
+      fields: [vocabularyReviewsTable.vocabularyItemId],
+      references: [vocabularyItemsTable.id],
     }),
   }),
 );

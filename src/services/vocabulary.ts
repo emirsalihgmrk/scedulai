@@ -4,29 +4,45 @@ import { definePhrase } from "@/ai/tasks/define-phrase";
 import { getNativeLanguageEnglishName } from "@/constants/language";
 import {
   createVocabularyItem,
+  createVocabularyReview,
   deleteVocabularyItem,
   updateVocabularyItem,
+  upsertVocabularyCard,
 } from "@/dal/vocabulary/mutations";
-import { getVocabularyItems } from "@/dal/vocabulary/queries";
+import {
+  getDueVocabularyItems,
+  getNewVocabularyItems,
+  getVocabularyItem,
+  getVocabularyItems,
+} from "@/dal/vocabulary/queries";
 import { db } from "@/db";
 import { AppError } from "@/lib/errors";
-import { parseTimestamp } from "@/lib/utils";
+import { scheduleReview } from "@/lib/fsrs";
+import { matchPhrase, parseTimestamp } from "@/lib/utils";
 import type { Question } from "@/schemas/quiz";
 import {
   createVocabularyItemSchema,
+  reviewVocabularyItemSchema,
   saveGlossSchema,
   saveTranscriptPhraseSchema,
 } from "@/schemas/vocabulary";
 import type {
   PhraseDefinition,
+  ReviewVocabularyItemInput,
   SaveGlossInput,
   SaveTranscriptPhraseInput,
   VocabularyItemListItem,
+  VocabularyItemWithCard,
 } from "@/schemas/vocabulary";
 import { getCurrentUserService } from "@/services/auth";
 import { getPracticeService } from "@/services/practice";
 import { getQuizService } from "@/services/quiz";
 import { getTranscriptService, getVideoService } from "@/services/video";
+
+// One review session's size. New words are capped per session, not per day,
+// because a daily cap needs the learner's time zone (Phase 3).
+const DUE_CARD_LIMIT = 50;
+const NEW_CARD_LIMIT = 10;
 
 export const getVocabularyItemsService = cache(
   async (): Promise<VocabularyItemListItem[]> => {
@@ -36,9 +52,30 @@ export const getVocabularyItemsService = cache(
   },
 );
 
-function collapseWhitespace(text: string): string {
-  return text.replace(/\s+/g, " ");
-}
+export const getDueVocabularyItemsService = cache(
+  async (): Promise<VocabularyItemListItem[]> => {
+    const user = await getCurrentUserService();
+    if (!user) return [];
+    return getDueVocabularyItems(user.id, new Date(), DUE_CARD_LIMIT);
+  },
+);
+
+export const getNewVocabularyItemsService = cache(
+  async (): Promise<VocabularyItemListItem[]> => {
+    const user = await getCurrentUserService();
+    if (!user) return [];
+    return getNewVocabularyItems(user.id, NEW_CARD_LIMIT);
+  },
+);
+
+export const getVocabularyItemService = cache(
+  async (vocabularyItemId: string): Promise<VocabularyItemWithCard | null> => {
+    const user = await getCurrentUserService();
+    if (!user) return null;
+    const item = await getVocabularyItem(vocabularyItemId, user.id);
+    return item ?? null;
+  },
+);
 
 // A phrase saved again from a transcript takes the new line as its context, so
 // the card always shows the latest place it was seen in a video.
@@ -57,7 +94,7 @@ export async function saveTranscriptPhraseService(
   const lines = await getTranscriptService(video.id);
   const line = lines.at(lineIndex);
   if (!line) throw new AppError("Not found");
-  if (!collapseWhitespace(line.text).toLowerCase().includes(phrase)) {
+  if (!matchPhrase(line.text, phrase)) {
     throw new AppError("Those words are not in this line");
   }
 
@@ -66,21 +103,24 @@ export async function saveTranscriptPhraseService(
     sentence: line.text,
     nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
   });
+  // The picked words are the phrase as the line says it, even when the model
+  // turns it into dictionary form.
   const item = createVocabularyItemSchema.parse({
     ...definition,
     context: line.text,
+    contextPhrase: phrase,
     timeSeconds: parseTimestamp(line.time),
   });
 
   await db.transaction(async (tx) => {
     const created = await createVocabularyItem(user.id, video.id, item, tx);
     if (created) return;
-    const { meaning, context, timeSeconds } = item;
+    const { meaning, context, contextPhrase, timeSeconds } = item;
     await updateVocabularyItem(
       user.id,
       item.phrase,
       video.id,
-      { meaning, context, timeSeconds },
+      { meaning, context, contextPhrase, timeSeconds },
       tx,
     );
   });
@@ -104,13 +144,19 @@ async function saveGloss(
   const gloss = payload.glosses?.find(({ phrase }) => phrase === glossPhrase);
   if (!gloss) throw new AppError("Not found");
 
+  const { expectedTranslation } = payload;
   await createVocabularyItem(
     userId,
     videoId,
     createVocabularyItemSchema.parse({
       phrase: gloss.meaning,
       meaning: gloss.phrase,
-      context: payload.expectedTranslation,
+      context: expectedTranslation,
+      // A gloss's English is in dictionary form, so the sentence holds it only
+      // when it uses that form too ("meeting", but not "gave up").
+      contextPhrase: matchPhrase(expectedTranslation, gloss.meaning)
+        ? gloss.meaning
+        : null,
       timeSeconds: null,
     }),
   );
@@ -151,6 +197,31 @@ export async function savePracticeGlossService(
   if (!question) throw new AppError("Not found");
 
   await saveGloss(user.id, question, phrase, null);
+}
+
+export async function reviewVocabularyItemService(
+  vocabularyItemId: string,
+  input: ReviewVocabularyItemInput,
+): Promise<void> {
+  const user = await getCurrentUserService();
+  if (!user) throw new AppError("Unauthorized");
+
+  const { rating } = reviewVocabularyItemSchema.parse(input);
+
+  const item = await getVocabularyItemService(vocabularyItemId);
+  if (!item) throw new AppError("Not found");
+
+  const card = scheduleReview(item.card, rating, new Date());
+
+  await db.transaction(async (tx) => {
+    await upsertVocabularyCard(user.id, item.id, card, tx);
+    await createVocabularyReview(
+      user.id,
+      item.id,
+      { rating, state: item.card?.state ?? "new" },
+      tx,
+    );
+  });
 }
 
 export async function deleteVocabularyItemService(

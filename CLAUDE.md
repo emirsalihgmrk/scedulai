@@ -47,7 +47,7 @@ src/
   schemas/      # Zod DTOs per module; column-types.ts = JSONB shapes (below db/)
   constants/    # value arrays + literal types; source of the DB enums
   ai/           # LLM tasks and output schemas
-  lib/          # auth.ts, auth-client.ts, action.ts (ActionResult), errors.ts (AppError), utils.ts, youtube.ts
+  lib/          # auth.ts, auth-client.ts, action.ts (ActionResult), errors.ts (AppError), utils.ts, youtube.ts, fsrs.ts
   db/           # schema.ts, rows.ts (generated row types/schemas), index.ts (db, Transaction), seed/reset
   components/   # shared/ (app-wide) and ui/ (shadcn)
 ```
@@ -74,7 +74,16 @@ is English in dictionary form, `meaning` is in the learner's native language and
 English sentence it came from. A phrase picked from a transcript line is defined by the AI and keeps
 the video and the line's timestamp; saving it again from a transcript replaces its context. A quiz
 or practice gloss already carries its translation (no AI call), keeps the section's video (quiz
-only) and never replaces an existing item.
+only) and never replaces an existing item. `contextPhrase` is the phrase as the context sentence
+says it ("gave up" for "give up"), null when it can't be located.
+
+Saved words are reviewed with spaced repetition (FSRS via `ts-fsrs`) on `/practice/review`: the card
+shows the meaning and the context with the phrase masked, the learner types the English and the
+answer is checked on the client (a miss is `again`, a hit or an overruled miss is `good`). A word's
+schedule lives in `vocabulary_cards`, created by its first review; having no card **is** "new".
+Scheduling is long-term only (one review per word per session); a miss is re-asked at the end of
+the session without another review. Every review is logged in `vocabulary_reviews` (rating and the
+state before it, never the answer).
 
 The learned language is always English; there is no target-language setting anywhere.
 `user.nativeLanguage` is a property of the person; how they learn (CEFR level, goal, daily minutes)
