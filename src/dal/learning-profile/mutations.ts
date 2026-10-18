@@ -1,9 +1,8 @@
-import { db  } from "@/db";
-import type {Transaction} from "@/db";
+import { db } from "@/db";
+import type { Transaction } from "@/db";
 import { learningProfilesTable } from "@/db/schema";
 import type { CreateLearningProfileInput } from "@/schemas/learning-profile";
 
-// `undefined` when the user already has a profile.
 export async function createLearningProfile(
   userId: string,
   input: CreateLearningProfileInput,

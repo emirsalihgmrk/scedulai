@@ -23,7 +23,8 @@ import { getTranscriptService, getVideoService } from "@/services/video";
 
 const QUESTION_COUNT = 5;
 
-// Quizzes are keyed per native language and only served to onboarded users.
+// Quizzes are keyed per native language, so they are only served to onboarded
+// users: no profile means no language to key them by.
 async function getOnboardedUser() {
   const [user, profile] = await Promise.all([
     getCurrentUserService(),
@@ -49,7 +50,7 @@ export const getQuestionService = cache(
   },
 );
 
-// Will be deleted - Temporary
+// TODO: temporary — quizzes will be generated ahead of time, not on request.
 export async function generateQuizByAiService(
   sectionId: string,
 ): Promise<QuizWithQuestions> {

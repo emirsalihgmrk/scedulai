@@ -14,7 +14,6 @@ import type {
   UpsertVocabularyCardInput,
 } from "@/schemas/vocabulary";
 
-// `undefined` when the user already saved the phrase.
 export async function createVocabularyItem(
   userId: string,
   videoId: string | null,

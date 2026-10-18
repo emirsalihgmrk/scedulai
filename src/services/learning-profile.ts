@@ -38,7 +38,9 @@ function estimatePlacementLevel(
 
   let estimate: CefrLevel = "A1";
   for (const level of PLACEMENT_LEVELS) {
-    const atLevel = PLACEMENT_QUESTIONS.filter((question) => question.level === level);
+    const atLevel = PLACEMENT_QUESTIONS.filter(
+      (question) => question.level === level,
+    );
     const correct = atLevel.filter(
       (question) => chosen.get(question.id) === question.correctIndex,
     ).length;
@@ -54,14 +56,8 @@ export async function completeOnboardingService(
   const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
 
-  const {
-    name,
-    nativeLanguage,
-    level,
-    goal,
-    dailyMinutes,
-    placementAnswers,
-  } = completeOnboardingSchema.parse(input);
+  const { name, nativeLanguage, level, goal, dailyMinutes, placementAnswers } =
+    completeOnboardingSchema.parse(input);
 
   const profile = await getLearningProfileService();
   if (profile) return;

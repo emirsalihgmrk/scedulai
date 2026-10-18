@@ -103,6 +103,7 @@ export async function saveTranscriptPhraseService(
     sentence: line.text,
     nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
   });
+
   // The picked words are the phrase as the line says it, even when the model
   // turns it into dictionary form.
   const item = createVocabularyItemSchema.parse({

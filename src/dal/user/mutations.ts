@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
-import { db  } from "@/db";
-import type {Transaction} from "@/db";
+import { db } from "@/db";
+import type { Transaction } from "@/db";
 import { userTable } from "@/db/schema";
 import type { UpdateUserInput } from "@/schemas/user";
 

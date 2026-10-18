@@ -1,5 +1,5 @@
-import { db  } from "@/db";
-import type {Transaction} from "@/db";
+import { db } from "@/db";
+import type { Transaction } from "@/db";
 import { questionsTable, quizzesTable } from "@/db/schema";
 import type {
   CreateQuestionInput,
@@ -17,7 +17,6 @@ const questionColumns = {
   payload: questionsTable.payload,
 };
 
-// `undefined` when a quiz for this section and language pair already exists.
 export async function createQuiz(
   sectionId: string,
   input: CreateQuizInput,

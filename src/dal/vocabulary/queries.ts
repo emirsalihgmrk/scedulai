@@ -30,7 +30,6 @@ export async function getVocabularyItems(
   });
 }
 
-// Items whose card is due by `now`, the most overdue first.
 export async function getDueVocabularyItems(
   userId: string,
   now: Date,
@@ -56,7 +55,6 @@ export async function getDueVocabularyItems(
   return rows.map(({ vocabularyItem }) => vocabularyItem);
 }
 
-// Items never reviewed (they have no card yet), the oldest saved first.
 export async function getNewVocabularyItems(
   userId: string,
   limit: number,

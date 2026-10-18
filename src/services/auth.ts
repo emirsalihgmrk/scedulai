@@ -2,8 +2,8 @@ import { headers } from "next/headers";
 import { cache } from "react";
 
 import { auth } from "@/lib/auth";
-import { userSchema  } from "@/schemas/user";
-import type {User} from "@/schemas/user";
+import { userSchema } from "@/schemas/user";
+import type { User } from "@/schemas/user";
 
 // better-auth owns sessions and the auth tables, so this module wraps its API
 // instead of a DAL.

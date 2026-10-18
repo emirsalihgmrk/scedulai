@@ -5,7 +5,6 @@ import type { Transaction } from "@/db";
 import { practicesTable } from "@/db/schema";
 import type { UpdatePracticeInput } from "@/schemas/practice";
 
-// `undefined` when the mistake already has a practice.
 export async function createPractice(
   userId: string,
   mistakeId: string,

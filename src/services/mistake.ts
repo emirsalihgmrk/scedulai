@@ -4,8 +4,8 @@ import { getMistake, getMistakes } from "@/dal/mistake/queries";
 import type { Mistake, MistakeListItem } from "@/schemas/mistake";
 import { getCurrentUserService } from "@/services/auth";
 
-// Only section mistakes are listed; practice mistakes are re-asked by the
-// practice queue itself and kept for statistics.
+// Practice mistakes are left out: they are re-asked by the practice queue
+// itself and only kept for statistics.
 export const getMistakesService = cache(
   async (): Promise<MistakeListItem[]> => {
     const user = await getCurrentUserService();
