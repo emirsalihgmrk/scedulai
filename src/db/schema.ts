@@ -13,7 +13,6 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 import { SUPPORTED_NATIVE_LANGUAGE_CODES } from "@/constants/language";
 import {
@@ -228,12 +227,9 @@ export const questionsTable = pgTable(
     quizId: uuid("quiz_id").references(() => quizzesTable.id, {
       onDelete: "cascade",
     }),
-    // Annotated to break the questions → practices → mistakes → questions
-    // type cycle.
-    practiceId: uuid("practice_id").references(
-      (): AnyPgColumn => practicesTable.id,
-      { onDelete: "cascade" },
-    ),
+    practiceId: uuid("practice_id").references(() => practicesTable.id, {
+      onDelete: "cascade",
+    }),
     order: integer("order").notNull(),
     type: questionTypeEnum("type").default("translation").notNull(),
     direction: questionDirectionEnum("direction")
@@ -244,10 +240,7 @@ export const questionsTable = pgTable(
   (table) => [
     index("questions_quiz_id_idx").on(table.quizId),
     index("questions_quiz_id_order_idx").on(table.quizId, table.order),
-    index("questions_practice_id_order_idx").on(
-      table.practiceId,
-      table.order,
-    ),
+    index("questions_practice_id_order_idx").on(table.practiceId, table.order),
     check(
       "questions_single_owner_check",
       sql`num_nonnulls(${table.quizId}, ${table.practiceId}) = 1`,
@@ -324,8 +317,10 @@ export const mistakesTable = pgTable(
   ],
 );
 
-// One per mistake practiced. Owned by a single learner, unlike section quizzes,
-// so completion lives here instead of in a progress table.
+// One learner's daily sentence set, drilling their weakest mistake category.
+// Owned by a single learner, unlike section quizzes, so completion lives here
+// instead of in a progress table. Once finished, it also resets the category's
+// weakness: only mistakes made after its creation count against it again.
 export const practicesTable = pgTable(
   "practices",
   {
@@ -333,13 +328,12 @@ export const practicesTable = pgTable(
     userId: text("user_id")
       .references(() => userTable.id, { onDelete: "cascade" })
       .notNull(),
-    mistakeId: uuid("mistake_id")
-      .references(() => mistakesTable.id, { onDelete: "cascade" })
-      .notNull(),
-    // null = not finished yet; set again on every later completion.
+    category: mistakeCategoryEnum("category").notNull(),
     completedAt: timestamp("completed_at"),
   },
-  (table) => [unique("practices_mistake_unique").on(table.mistakeId)],
+  (table) => [
+    index("practices_user_id_created_at_idx").on(table.userId, table.createdAt),
+  ],
 );
 
 // One row per phrase a learner saved. `phrase` is English in dictionary form,
@@ -536,7 +530,6 @@ export const mistakesRelations = relations(mistakesTable, ({ one }) => ({
     fields: [mistakesTable.questionId],
     references: [questionsTable.id],
   }),
-  practice: one(practicesTable),
 }));
 
 export const practicesRelations = relations(
@@ -545,10 +538,6 @@ export const practicesRelations = relations(
     user: one(userTable, {
       fields: [practicesTable.userId],
       references: [userTable.id],
-    }),
-    mistake: one(mistakesTable, {
-      fields: [practicesTable.mistakeId],
-      references: [mistakesTable.id],
     }),
     questions: many(questionsTable),
   }),

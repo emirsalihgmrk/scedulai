@@ -1,64 +1,82 @@
-import { BookMarked, ChevronRight, CircleCheck } from "lucide-react";
+import { ChevronRight, CircleCheck, Dumbbell } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { MISTAKE_CATEGORY_LABELS } from "@/constants/mistake";
+import { pluralize } from "@/lib/utils";
 import { getCurrentUserService } from "@/services/auth";
+import {
+  getPracticeService,
+  getPracticeTargetService,
+} from "@/services/practice";
 import {
   getDueVocabularyItemsService,
   getNewVocabularyItemsService,
 } from "@/services/vocabulary";
 
-function pluralizeWords(count: number): string {
-  return `${count} ${count === 1 ? "word" : "words"}`;
-}
-
-export default async function ReviewSummary() {
-  const [user, dueItems, newItems] = await Promise.all([
+export default async function SessionSummary() {
+  const [user, dueItems, newItems, practice, target] = await Promise.all([
     getCurrentUserService(),
     getDueVocabularyItemsService(),
     getNewVocabularyItemsService(),
+    getPracticeService(),
+    getPracticeTargetService(),
   ]);
 
-  // The mistake list below already asks guests to sign in.
+  // The mistake notebook below already asks guests to sign in.
   if (!user) return null;
 
-  const total = dueItems.length + newItems.length;
+  const wordCount = dueItems.length + newItems.length;
+  // Today's set if there is one, otherwise the one the session would make.
+  const sentences = practice
+    ? !practice.completedAt && {
+        label: pluralize(practice.questions.length, "sentence"),
+        category: practice.category,
+      }
+    : target && { label: "New sentences", category: target.category };
+  const hasWork = wordCount > 0 || !!sentences;
+
   const details = [
-    dueItems.length > 0 && `${pluralizeWords(dueItems.length)} due`,
-    newItems.length > 0 && `${pluralizeWords(newItems.length)} new`,
+    wordCount > 0 && pluralize(wordCount, "word"),
+    sentences && sentences.label,
+    sentences && MISTAKE_CATEGORY_LABELS[sentences.category],
   ].filter(Boolean);
 
   return (
     <section
-      aria-label="Word review"
+      aria-label="Today's session"
       className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10 sm:flex-row sm:items-center sm:justify-between sm:p-5"
     >
       <div className="flex items-center gap-4">
         <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          {total > 0 ? (
-            <BookMarked className="size-6" />
+          {hasWork ? (
+            <Dumbbell className="size-6" />
           ) : (
             <CircleCheck className="size-6" />
           )}
         </span>
         <div className="flex flex-col gap-0.5">
           <h2 className="font-display text-lg font-bold text-foreground">
-            {total > 0
-              ? `${pluralizeWords(total)} to review`
-              : "No words to review"}
+            {hasWork
+              ? "Today's session"
+              : practice
+                ? "Done for today"
+                : "Nothing to practice yet"}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {total > 0
+            {hasWork
               ? details.join(" · ")
-              : "Saved words come back here when they're due."}
+              : practice
+                ? "Come back tomorrow for new sentences."
+                : "Save words and take section quizzes; they come back here."}
           </p>
         </div>
       </div>
 
-      {total > 0 && (
+      {hasWork && (
         <Button asChild className="self-start sm:self-auto">
-          <Link href="/practice/review">
-            Start review
+          <Link href="/practice/session">
+            Start session
             <ChevronRight data-icon="inline-end" />
           </Link>
         </Button>
@@ -67,7 +85,7 @@ export default async function ReviewSummary() {
   );
 }
 
-export function ReviewSummaryFallback() {
+export function SessionSummaryFallback() {
   return (
     <div className="flex items-center gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10 sm:p-5">
       <div className="size-12 shrink-0 animate-pulse rounded-xl bg-muted" />

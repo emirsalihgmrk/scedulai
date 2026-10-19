@@ -3,18 +3,20 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import type { Transaction } from "@/db";
 import { practicesTable } from "@/db/schema";
-import type { UpdatePracticeInput } from "@/schemas/practice";
+import type {
+  CreatePracticeInput,
+  UpdatePracticeInput,
+} from "@/schemas/practice";
 
 export async function createPractice(
   userId: string,
-  mistakeId: string,
+  input: CreatePracticeInput,
   tx?: Transaction,
-): Promise<{ id: string } | undefined> {
+): Promise<{ id: string }> {
   const executor = tx ?? db;
   const [row] = await executor
     .insert(practicesTable)
-    .values({ userId, mistakeId })
-    .onConflictDoNothing()
+    .values({ userId, ...input })
     .returning({ id: practicesTable.id });
   return row;
 }

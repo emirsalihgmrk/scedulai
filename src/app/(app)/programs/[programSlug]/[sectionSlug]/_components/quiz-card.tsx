@@ -147,6 +147,7 @@ export default function QuizCard({
           <CompletedStep
             title="Quiz completed"
             total={total}
+            note="Any mistakes you made come back in your daily practice."
             onRestart={() => setQueue(getQuestionIds(quiz))}
           />
         )}

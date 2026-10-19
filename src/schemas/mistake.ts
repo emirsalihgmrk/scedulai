@@ -1,7 +1,7 @@
 import type { z } from "zod";
 
 import { createMistakeRowSchema } from "@/db/rows";
-import type { MistakeRow, PracticeRow } from "@/db/rows";
+import type { MistakeRow } from "@/db/rows";
 
 // ── Query types ──
 
@@ -16,10 +16,7 @@ export type Mistake = Pick<
   | "userTranslation"
 >;
 
-export type MistakeListItem = Mistake &
-  Pick<MistakeRow, "createdAt"> & {
-    practice: Pick<PracticeRow, "completedAt"> | null;
-  };
+export type MistakeListItem = Mistake & Pick<MistakeRow, "createdAt">;
 
 // ── DAL input schemas ──
 

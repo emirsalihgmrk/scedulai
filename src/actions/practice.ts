@@ -8,22 +8,20 @@ import {
   generatePracticeByAiService,
 } from "@/services/practice";
 
-export async function generatePracticeByAiAction(
-  mistakeId: string,
-): Promise<ActionResult<PracticeWithQuestions>> {
+export async function generatePracticeByAiAction(): Promise<
+  ActionResult<PracticeWithQuestions>
+> {
   try {
-    const data = await generatePracticeByAiService(mistakeId);
+    const data = await generatePracticeByAiService();
     return { ok: true, data };
   } catch (error) {
     return toActionFailure(error);
   }
 }
 
-export async function completePracticeAction(
-  mistakeId: string,
-): Promise<ActionResult> {
+export async function completePracticeAction(): Promise<ActionResult> {
   try {
-    await completePracticeService(mistakeId);
+    await completePracticeService();
     return { ok: true, data: undefined };
   } catch (error) {
     return toActionFailure(error);

@@ -3,51 +3,61 @@ import { CircleCheck, LogIn } from "lucide-react";
 import EmptyState from "@/components/shared/empty-state";
 import { getCurrentUserService } from "@/services/auth";
 import {
+  getPracticeService,
+  getPracticeTargetService,
+} from "@/services/practice";
+import {
   getDueVocabularyItemsService,
   getNewVocabularyItemsService,
 } from "@/services/vocabulary";
 
-import ReviewCard from "./review-card";
+import SessionCard from "./session-card";
 
-export default async function ReviewSession() {
-  const [user, dueItems, newItems] = await Promise.all([
+export default async function DailySession() {
+  const [user, dueItems, newItems, practice, target] = await Promise.all([
     getCurrentUserService(),
     getDueVocabularyItemsService(),
     getNewVocabularyItemsService(),
+    getPracticeService(),
+    getPracticeTargetService(),
   ]);
 
   if (!user) {
     return (
       <EmptyState
         icon={LogIn}
-        title="Sign in to review your words"
-        description="Words you save from transcripts and quizzes come back here to review."
+        title="Sign in for your daily session"
+        description="Your saved words and the mistakes from your quizzes come back here every day."
       />
     );
   }
 
-  if (dueItems.length === 0 && newItems.length === 0) {
+  const hasSentences = practice ? !practice.completedAt : target !== null;
+  if (dueItems.length === 0 && newItems.length === 0 && !hasSentences) {
     return (
       <EmptyState
         icon={CircleCheck}
         title="All caught up"
-        description="No words are due right now. Each saved word comes back here when it's time to review it."
+        description="No words are due and there are no new mistakes to drill. Take a section quiz, or come back tomorrow."
       />
     );
   }
 
   // Due words first: they are the ones being forgotten.
   return (
-    <ReviewCard
+    <SessionCard
+      user={user}
       items={[...dueItems, ...newItems]}
       newItemIds={newItems.map(({ id }) => id)}
+      initialPractice={practice}
+      targetCategory={target?.category ?? null}
     />
   );
 }
 
-export function ReviewSessionFallback() {
+export function DailySessionFallback() {
   return (
-    <div className="flex min-h-[32rem] flex-col gap-5 rounded-xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
+    <div className="flex h-[80vh] min-h-[32rem] flex-col gap-5 rounded-xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
       <div className="flex items-center justify-between">
         <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
         <div className="h-5 w-24 animate-pulse rounded-full bg-muted" />

@@ -1,9 +1,9 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 
 import type { MistakeSource } from "@/constants/mistake";
 import { db } from "@/db";
 import { mistakesTable } from "@/db/schema";
-import type { Mistake, MistakeListItem } from "@/schemas/mistake";
+import type { MistakeListItem } from "@/schemas/mistake";
 
 const mistakeColumns = {
   id: true,
@@ -25,22 +25,21 @@ export async function getMistakes(
       eq(mistakesTable.source, source),
     ),
     columns: { ...mistakeColumns, createdAt: true },
-    with: {
-      practice: { columns: { completedAt: true } },
-    },
     orderBy: (mistakes, { desc }) => desc(mistakes.createdAt),
   });
 }
 
-export async function getMistake(
-  mistakeId: string,
+// Mistakes from every source made since `since`, the newest first.
+export async function getRecentMistakes(
   userId: string,
-): Promise<Mistake | undefined> {
-  return db.query.mistakesTable.findFirst({
+  since: Date,
+): Promise<MistakeListItem[]> {
+  return db.query.mistakesTable.findMany({
     where: and(
-      eq(mistakesTable.id, mistakeId),
       eq(mistakesTable.userId, userId),
+      gte(mistakesTable.createdAt, since),
     ),
-    columns: mistakeColumns,
+    columns: { ...mistakeColumns, createdAt: true },
+    orderBy: (mistakes, { desc }) => desc(mistakes.createdAt),
   });
 }

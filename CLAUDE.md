@@ -63,11 +63,18 @@ the end and the quiz is complete once every question is answered correctly. The 
 each graded answer are stored, though: one `mistakes` row per mistake per attempt (categorized by the
 AI, with the sentence and answer snapshotted).
 
-A mistake can be drilled on `/practice`: its `practices` row (one per mistake, owned by the user,
-`completedAt` once finished) holds AI-generated `questions` that run through the same quiz card and
-grading. A question belongs to exactly one owner, a section quiz (shared) or a practice (one user's);
-a check constraint enforces it. Each mistake records its `source` (`section` | `practice`); only
-section mistakes are listed, practice mistakes are kept for statistics.
+Mistakes are not practiced one by one. `/practice` lists section mistakes read-only, grouped by
+category (the mistake notebook), and `/practice/session` is the daily session: the due and new
+words first, then a `practices` row, one learner's daily set of 5 AI-generated `questions` drilling
+their weakest category (graded like the quiz, `completedAt` once finished). "Today" is a 20-hour
+window until the learner's time zone is known: a set created within it is today's, and none is made
+again. A category is as weak as its mistakes made since its last finished set was created (within
+30 days if it was never drilled), so a set answered without a mistake moves the session on and an
+abandoned one changes nothing; `other` is never drilled. The
+set is written around that category's most recent distinct mistakes. A question belongs to exactly
+one owner, a section quiz (shared) or a practice (one user's); a check constraint enforces it. Each
+mistake records its `source` (`section` | `practice`); both count towards weakness, but only section
+mistakes are listed.
 
 Saved words live in `vocabulary_items` (one per user and phrase, listed on `/vocabulary`): `phrase`
 is English in dictionary form, `meaning` is in the learner's native language and `context` is the
@@ -77,7 +84,7 @@ or practice gloss already carries its translation (no AI call), keeps the sectio
 only) and never replaces an existing item. `contextPhrase` is the phrase as the context sentence
 says it ("gave up" for "give up"), null when it can't be located.
 
-Saved words are reviewed with spaced repetition (FSRS via `ts-fsrs`) on `/practice/review`: the card
+Saved words are reviewed with spaced repetition (FSRS via `ts-fsrs`) in the daily session: the card
 shows the meaning and the context with the phrase masked, the learner types the English and the
 answer is checked on the client (a miss is `again`, a hit or an overruled miss is `good`). A word's
 schedule lives in `vocabulary_cards`, created by its first review; having no card **is** "new".

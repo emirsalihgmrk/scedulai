@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 interface CompletedStepProps {
   title: string;
   total: number;
+  note?: string;
   onRestart: () => void;
 }
 
 export default function CompletedStep({
   title,
   total,
+  note,
   onRestart,
 }: CompletedStepProps) {
   return (
@@ -26,6 +28,7 @@ export default function CompletedStep({
         <p className="text-sm text-muted-foreground">
           You translated all {total} sentences correctly.
         </p>
+        {note && <p className="text-sm text-muted-foreground">{note}</p>}
       </div>
 
       <Button

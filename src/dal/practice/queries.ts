@@ -1,24 +1,44 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 
 import { db } from "@/db";
 import { practicesTable } from "@/db/schema";
-import type { PracticeWithQuestions } from "@/schemas/practice";
+import type {
+  PracticeListItem,
+  PracticeWithQuestions,
+} from "@/schemas/practice";
 
-export async function getPractice(
-  mistakeId: string,
+// The newest set created since `since`.
+export async function getLatestPractice(
   userId: string,
+  since: Date,
 ): Promise<PracticeWithQuestions | undefined> {
   return db.query.practicesTable.findFirst({
     where: and(
-      eq(practicesTable.mistakeId, mistakeId),
       eq(practicesTable.userId, userId),
+      gte(practicesTable.createdAt, since),
     ),
-    columns: { id: true, completedAt: true },
+    columns: { id: true, category: true, completedAt: true },
     with: {
       questions: {
         columns: { createdAt: false, updatedAt: false },
         orderBy: (questions, { asc }) => asc(questions.order),
       },
     },
+    orderBy: (practices, { desc }) => desc(practices.createdAt),
+  });
+}
+
+// Sets created since `since`, the newest first.
+export async function getPractices(
+  userId: string,
+  since: Date,
+): Promise<PracticeListItem[]> {
+  return db.query.practicesTable.findMany({
+    where: and(
+      eq(practicesTable.userId, userId),
+      gte(practicesTable.createdAt, since),
+    ),
+    columns: { category: true, completedAt: true, createdAt: true },
+    orderBy: (practices, { desc }) => desc(practices.createdAt),
   });
 }

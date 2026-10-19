@@ -184,7 +184,6 @@ export async function saveQuizGlossService(
 }
 
 export async function savePracticeGlossService(
-  mistakeId: string,
   questionId: string,
   input: SaveGlossInput,
 ): Promise<void> {
@@ -193,7 +192,7 @@ export async function savePracticeGlossService(
 
   const { phrase } = saveGlossSchema.parse(input);
 
-  const practice = await getPracticeService(mistakeId);
+  const practice = await getPracticeService();
   const question = practice?.questions.find(({ id }) => id === questionId);
   if (!question) throw new AppError("Not found");
 

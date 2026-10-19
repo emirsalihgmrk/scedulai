@@ -42,12 +42,11 @@ export async function saveQuizGlossAction(
 }
 
 export async function savePracticeGlossAction(
-  mistakeId: string,
   questionId: string,
   input: SaveGlossInput,
 ): Promise<ActionResult> {
   try {
-    await savePracticeGlossService(mistakeId, questionId, input);
+    await savePracticeGlossService(questionId, input);
     return { ok: true, data: undefined };
   } catch (error) {
     return toActionFailure(error);

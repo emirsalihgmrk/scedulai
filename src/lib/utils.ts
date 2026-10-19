@@ -58,3 +58,8 @@ export function formatDuration(totalSeconds: number | null | undefined) {
     ? `${hours}:${pad(minutes)}:${pad(seconds)}`
     : `${pad(minutes)}:${pad(seconds)}`;
 }
+
+// English nouns with a regular plural only ("3 words", "1 sentence").
+export function pluralize(count: number, noun: string): string {
+  return `${count} ${count === 1 ? noun : `${noun}s`}`;
+}
