@@ -140,7 +140,6 @@ const PROGRAMS_SEED: {
   },
 ];
 
-// Duplicate 6Af6b_wyiwI removed from ted-talks (was listed twice)
 const VIDEOS_SEED: {
   youtubeId: string;
   programSlug: string;
@@ -381,7 +380,6 @@ const VIDEOS_SEED: {
     sectionTitle: "Managing & Resolving Mistakes",
     cefrLevel: "B2",
   },
-  //
   {
     youtubeId: "yZxlx7FegBM",
     programSlug: "alice-in-wonderland",
@@ -494,7 +492,6 @@ async function seed() {
     insertedPrograms.map((p) => [p.slug, p.id]),
   );
 
-  // Build programSlug → channelHandle for video insertion
   const channelHandleByProgramSlug = new Map(
     PROGRAMS_SEED.map((p) => [p.slug, p.channelHandle]),
   );

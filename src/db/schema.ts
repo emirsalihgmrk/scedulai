@@ -132,7 +132,6 @@ export const verificationTable = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
-// App tables
 export const programsTable = pgTable("programs", {
   ...commonFields,
   title: text("title").notNull(),
@@ -427,7 +426,6 @@ export const vocabularyReviewsTable = pgTable(
   ],
 );
 
-// Relations
 export const userRelations = relations(userTable, ({ many }) => ({
   learningProfiles: many(learningProfilesTable),
   sectionProgress: many(sectionProgressTable),

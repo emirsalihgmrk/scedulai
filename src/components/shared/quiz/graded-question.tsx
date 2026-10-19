@@ -56,7 +56,6 @@ export default function GradedQuestion({
           isFlipped && "transform-[rotateY(180deg)]",
         )}
       >
-        {/* Front — question + answer + verdict */}
         <div className="absolute inset-0 flex flex-col gap-4 overflow-y-auto px-5 backface-hidden sm:px-6">
           <SourceSentence
             question={question}
@@ -118,7 +117,6 @@ export default function GradedQuestion({
           </Button>
         </div>
 
-        {/* Back — full AI analysis */}
         <div className="absolute inset-0 flex flex-col gap-3 overflow-y-auto px-5 pb-5 backface-hidden transform-[rotateY(180deg)] sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">

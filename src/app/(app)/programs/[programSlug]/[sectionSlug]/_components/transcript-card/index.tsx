@@ -57,7 +57,6 @@ export default function TranscriptCard({
     [lines],
   );
 
-  // The active line is the last one whose timestamp has been reached.
   const activeIndex = useMemo(() => {
     let index = 0;
     for (let i = 0; i < startSeconds.length; i++) {

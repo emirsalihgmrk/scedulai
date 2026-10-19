@@ -23,12 +23,6 @@ import {
 } from "@/db/schema";
 import { questionPayloadSchema } from "@/schemas/column-types";
 
-// Raw, generated shapes only — narrowing happens in schemas/<module>.ts.
-//   <Entity>Row             every table ($inferSelect)
-//   <entity>RowSchema       select schema, only where a read is parsed at runtime
-//   create<Entity>RowSchema insert schema, only for tables the app writes;
-//                           update/upsert inputs derive from it via .partial()
-//
 // drizzle-zod only *types* `$type<>()` jsonb columns — at runtime it emits a
 // generic JSON validator. Every typed jsonb column must be refined with its
 // real schema below so the row schema actually validates it.

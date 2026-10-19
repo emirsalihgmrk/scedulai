@@ -25,7 +25,6 @@ export default function AuthBrandPanel({
         className,
       )}
     >
-      {/* Decorative ring outlines */}
       <div
         aria-hidden
         className="pointer-events-none absolute -top-40 -right-28 size-128 rounded-full border border-primary-foreground/10"
@@ -35,7 +34,6 @@ export default function AuthBrandPanel({
         className="pointer-events-none absolute -top-24 -right-12 size-80 rounded-full border border-primary-foreground/5"
       />
 
-      {/* Logo */}
       <div className="relative flex items-center gap-2.5">
         <span className="flex size-9 items-center justify-center rounded-md bg-primary-foreground/15 text-primary-foreground">
           <GraduationCap className="size-5" />
@@ -45,7 +43,6 @@ export default function AuthBrandPanel({
         </span>
       </div>
 
-      {/* Glass content card */}
       <div className="relative rounded-2xl border border-primary-foreground/12 bg-primary p-8 shadow-2xl backdrop-blur-sm">
         <span className="inline-flex rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-semibold tracking-wider uppercase">
           {eyebrow}
@@ -71,7 +68,6 @@ export default function AuthBrandPanel({
         )}
       </div>
 
-      {/* Footer */}
       <div className="relative flex items-center gap-2 text-sm text-primary-foreground/70">
         <span>&copy; 2026 ScedulAI</span>
         <span aria-hidden>&middot;</span>

@@ -7,7 +7,6 @@ import type {
   PracticeWithQuestions,
 } from "@/schemas/practice";
 
-// The newest set created since `since`.
 export async function getLatestPractice(
   userId: string,
   since: Date,
@@ -28,7 +27,6 @@ export async function getLatestPractice(
   });
 }
 
-// Sets created since `since`, the newest first.
 export async function getPractices(
   userId: string,
   since: Date,

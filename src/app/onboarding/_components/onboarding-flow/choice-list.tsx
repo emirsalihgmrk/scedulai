@@ -29,9 +29,8 @@ interface ChoiceListProps {
   className?: string;
 }
 
-// Single-choice list rendered as selectable cards (shadcn "choice card"
-// pattern). Picking an option immediately reports it; the flow decides
-// whether to advance.
+// Picking an option reports it immediately; the flow decides whether to
+// advance.
 export default function ChoiceList({
   name,
   label,

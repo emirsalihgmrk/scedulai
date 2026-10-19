@@ -13,7 +13,7 @@ export const MISTAKE_CATEGORIES = [
 ] as const;
 export type MistakeCategory = (typeof MISTAKE_CATEGORIES)[number];
 
-// Where the graded answer came from: a section quiz or a mistake's practice.
+// Where the graded answer came from: a section quiz or a daily practice set.
 export const MISTAKE_SOURCES = ["section", "practice"] as const;
 export type MistakeSource = (typeof MISTAKE_SOURCES)[number];
 

@@ -27,7 +27,6 @@ interface StepFieldProps {
   onSignedIn: () => Promise<void>;
 }
 
-// The answer control for one onboarding step.
 export default function StepField({
   step,
   label,

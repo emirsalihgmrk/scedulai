@@ -43,7 +43,6 @@ export default async function ProgramHero({ params }: ProgramHeroProps) {
       </Link>
 
       <Card className="grid grid-cols-1 gap-6 p-(--card-spacing) [--card-spacing:--spacing(5)] md:grid-cols-[minmax(0,320px)_1fr] md:items-start">
-        {/* Thumbnail */}
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
           <Image
             src={thumbnailUrl}
@@ -55,7 +54,6 @@ export default async function ProgramHero({ params }: ProgramHeroProps) {
           />
         </div>
 
-        {/* Info */}
         <div className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-2">
             <h1 className="font-display text-2xl leading-tight font-bold text-balance text-foreground sm:text-3xl">

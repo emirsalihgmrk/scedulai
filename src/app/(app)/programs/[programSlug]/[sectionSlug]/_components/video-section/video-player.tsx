@@ -50,8 +50,6 @@ export default function VideoPlayer({
 
   const { registerSeek, reportTime } = usePlayerControls();
 
-  // Bridge external seek requests (from the transcript) to the player, mounting
-  // it from the thumbnail or queuing until ready as needed.
   const requestSeek = useCallback(
     (seconds: number) => {
       if (!isStarted) {
@@ -74,7 +72,6 @@ export default function VideoPlayer({
     return () => registerSeek(null);
   }, [registerSeek, requestSeek]);
 
-  // Flush a queued seek once the freshly-mounted player is ready.
   useEffect(() => {
     if (isReady && pendingSeekRef.current !== null) {
       seekTo(pendingSeekRef.current);
@@ -83,7 +80,6 @@ export default function VideoPlayer({
     }
   }, [isReady, seekTo, play]);
 
-  // Keep the transcript's active line in sync with playback.
   useEffect(() => {
     reportTime(currentTime);
   }, [currentTime, reportTime]);
@@ -105,7 +101,6 @@ export default function VideoPlayer({
 
   return (
     <figure className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
-      {/* 16:9 video surface */}
       <div
         ref={surfaceRef}
         className={cn(
@@ -113,7 +108,6 @@ export default function VideoPlayer({
           isFullscreen ? "h-full bg-black" : "aspect-video",
         )}
       >
-        {/* Poster shown before the player exists / until it's ready */}
         {!isReady && (
           <Image
             src={video.thumbnailUrl}

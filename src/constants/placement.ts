@@ -2,7 +2,6 @@
 export const PLACEMENT_LEVELS = ["A1", "A2", "B1", "B2", "C1"] as const;
 export type PlacementLevel = (typeof PLACEMENT_LEVELS)[number];
 
-// Share of a level's questions that must be right to pass that level.
 export const PLACEMENT_PASS_RATIO = 2 / 3;
 
 export interface PlacementQuestion {

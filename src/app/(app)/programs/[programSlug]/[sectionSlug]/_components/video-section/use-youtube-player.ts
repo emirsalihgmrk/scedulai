@@ -161,7 +161,6 @@ export function useYoutubePlayer({
     };
   }, [isEnabled, videoId, startSeconds, save, shouldPrime]);
 
-  // While playing: advance the displayed time and periodically persist it.
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -181,7 +180,6 @@ export function useYoutubePlayer({
     };
   }, [isPlaying, save]);
 
-  // Persist on tab hide and on unmount (navigation away), best-effort.
   useEffect(() => {
     if (!isEnabled) return;
 

@@ -73,7 +73,6 @@ function SectionRow({
       ? "Recently viewed"
       : null;
 
-  // Video watch progress (user position / total duration).
   const durationSeconds = section.video?.durationSeconds ?? 0;
   const positionSeconds = section.progress?.videoPositionSeconds ?? 0;
   const watchPercent =
@@ -83,7 +82,6 @@ function SectionRow({
 
   return (
     <li className="relative flex gap-4 pb-4 last:pb-0">
-      {/* Vertical connector */}
       {!isLast && (
         <span
           aria-hidden
@@ -91,7 +89,6 @@ function SectionRow({
         />
       )}
 
-      {/* Order node */}
       <div
         className={cn(
           "hidden sm:flex z-10 size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4",
@@ -101,13 +98,11 @@ function SectionRow({
         {isCompleted ? <Check className="size-5" /> : section.order}
       </div>
 
-      {/* Content */}
       <Link
         href={`/programs/${programSlug}/section-${section.order}`}
         className="group/section relative flex flex-1 items-center overflow-hidden rounded-xl bg-card p-3 ring-2 ring-foreground/10 transition-all hover:ring-foreground/25 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <div className="flex min-w-0 flex-1 items-center gap-4">
-          {/* Thumbnail */}
           {section.video && (
             <div className="relative hidden aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted sm:block">
               <Image
@@ -120,7 +115,6 @@ function SectionRow({
             </div>
           )}
 
-          {/* Text */}
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <span>Section {section.order}</span>
@@ -147,7 +141,6 @@ function SectionRow({
             )}
           </div>
 
-          {/* Action affordance */}
           <div className="ml-auto shrink-0 self-center text-muted-foreground">
             {isCurrent ? (
               <ArrowRight className="size-5 text-primary" />
@@ -160,7 +153,6 @@ function SectionRow({
           </div>
         </div>
 
-        {/* YouTube-style watch bar — pinned to the bottom, adds no row height */}
         {section.video && watchPercent > 0 && (
           <span
             aria-hidden

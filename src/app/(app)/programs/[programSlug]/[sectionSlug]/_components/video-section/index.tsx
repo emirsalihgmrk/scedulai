@@ -44,10 +44,8 @@ export default async function VideoSection({ sectionId }: VideoSectionProps) {
 export function VideoSectionFallback() {
   return (
     <div className="flex min-h-0 flex-col gap-5">
-      {/* Video surface */}
       <div className="aspect-video w-full animate-pulse rounded-xl bg-muted" />
 
-      {/* Metadata */}
       <div>
         <div className="h-7 w-3/4 animate-pulse rounded bg-muted sm:h-8" />
         <div className="mt-3 flex items-center gap-3">

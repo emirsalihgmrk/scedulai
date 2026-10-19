@@ -31,7 +31,6 @@ interface SessionCardProps {
   items: VocabularyItemListItem[];
   newItemIds: string[];
   initialPractice: PracticeWithQuestions | null;
-  // The category a new set would drill; null when there is nothing to drill.
   targetCategory: MistakeCategory | null;
 }
 
@@ -46,8 +45,6 @@ export default function SessionCard({
   initialPractice,
   targetCategory,
 }: SessionCardProps) {
-  // Today's set is drilled unless it is already finished; without one, a new
-  // set is made when there is a category to drill.
   const hasSentences = initialPractice
     ? !initialPractice.completedAt
     : targetCategory !== null;

@@ -29,8 +29,6 @@ export function isCorrectAnswer(
   );
 }
 
-// Splits the sentence around the phrase so it can be masked or highlighted;
-// null when the phrase can't be found in it.
 export function splitContext(
   context: string,
   contextPhrase: string | null,

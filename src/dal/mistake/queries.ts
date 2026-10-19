@@ -29,7 +29,6 @@ export async function getMistakes(
   });
 }
 
-// Mistakes from every source made since `since`, the newest first.
 export async function getRecentMistakes(
   userId: string,
   since: Date,

@@ -27,7 +27,6 @@ export default async function SessionSummary() {
   if (!user) return null;
 
   const wordCount = dueItems.length + newItems.length;
-  // Today's set if there is one, otherwise the one the session would make.
   const sentences = practice
     ? !practice.completedAt && {
         label: pluralize(practice.questions.length, "sentence"),
