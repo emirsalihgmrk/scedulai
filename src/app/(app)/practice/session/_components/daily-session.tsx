@@ -57,7 +57,7 @@ export default async function DailySession() {
 
 export function DailySessionFallback() {
   return (
-    <div className="flex h-[80vh] min-h-[32rem] flex-col gap-5 rounded-xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
+    <div className="flex h-[80vh] min-h-128 flex-col gap-5 rounded-xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
       <div className="flex items-center justify-between">
         <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
         <div className="h-5 w-24 animate-pulse rounded-full bg-muted" />

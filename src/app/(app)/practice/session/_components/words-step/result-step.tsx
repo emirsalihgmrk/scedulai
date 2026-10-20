@@ -50,7 +50,7 @@ export default function ResultStep({
               <PencilLine className="size-3.5" />
               Your answer
             </div>
-            <p className="break-words text-[15px] leading-relaxed text-foreground">
+            <p className="wrap-break-word text-[15px] leading-relaxed text-foreground">
               {answer}
             </p>
           </div>

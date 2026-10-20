@@ -131,7 +131,7 @@ export default function SessionCard({
   return (
     <Card
       aria-label="Today's session"
-      className="relative flex h-[80vh] min-h-[32rem] flex-col gap-0 overflow-hidden py-0"
+      className="relative flex h-[80vh] min-h-128 flex-col gap-0 overflow-hidden py-0"
     >
       <div className="absolute inset-x-0 top-0 z-10 h-1 bg-linear-to-r from-primary to-chart-5" />
 
