@@ -62,16 +62,9 @@ export type CreateVocabularyItemInput = z.infer<
   typeof createVocabularyItemSchema
 >;
 
-export const updateVocabularyItemSchema = createVocabularyItemSchema
-  .pick({
-    meaning: true,
-    context: true,
-    contextPhrase: true,
-    timeSeconds: true,
-  })
-  .partial();
-export type UpdateVocabularyItemInput = z.infer<
-  typeof updateVocabularyItemSchema
+export const upsertVocabularyItemSchema = createVocabularyItemSchema;
+export type UpsertVocabularyItemInput = z.infer<
+  typeof upsertVocabularyItemSchema
 >;
 
 export const upsertVocabularyCardSchema = createVocabularyCardRowSchema.pick({

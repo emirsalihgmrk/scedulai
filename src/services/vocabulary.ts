@@ -6,8 +6,8 @@ import {
   createVocabularyItem,
   createVocabularyReview,
   deleteVocabularyItem,
-  updateVocabularyItem,
   upsertVocabularyCard,
+  upsertVocabularyItem,
 } from "@/dal/vocabulary/mutations";
 import {
   getDueVocabularyItems,
@@ -25,6 +25,7 @@ import {
   reviewVocabularyItemSchema,
   saveGlossSchema,
   saveTranscriptPhraseSchema,
+  upsertVocabularyItemSchema,
 } from "@/schemas/vocabulary";
 import type {
   PhraseDefinition,
@@ -106,25 +107,14 @@ export async function saveTranscriptPhraseService(
 
   // The picked words are the phrase as the line says it, even when the model
   // turns it into dictionary form.
-  const item = createVocabularyItemSchema.parse({
+  const item = upsertVocabularyItemSchema.parse({
     ...definition,
     context: line.text,
     contextPhrase: phrase,
     timeSeconds: parseTimestamp(line.time),
   });
 
-  await db.transaction(async (tx) => {
-    const created = await createVocabularyItem(user.id, video.id, item, tx);
-    if (created) return;
-    const { meaning, context, contextPhrase, timeSeconds } = item;
-    await updateVocabularyItem(
-      user.id,
-      item.phrase,
-      video.id,
-      { meaning, context, contextPhrase, timeSeconds },
-      tx,
-    );
-  });
+  await upsertVocabularyItem(user.id, video.id, item);
 
   return { phrase: item.phrase, meaning: item.meaning };
 }

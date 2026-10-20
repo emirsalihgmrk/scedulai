@@ -10,8 +10,8 @@ import {
 import type {
   CreateVocabularyItemInput,
   CreateVocabularyReviewInput,
-  UpdateVocabularyItemInput,
   UpsertVocabularyCardInput,
+  UpsertVocabularyItemInput,
 } from "@/schemas/vocabulary";
 
 export async function createVocabularyItem(
@@ -29,23 +29,21 @@ export async function createVocabularyItem(
   return row;
 }
 
-export async function updateVocabularyItem(
+export async function upsertVocabularyItem(
   userId: string,
-  phrase: string,
   videoId: string | null,
-  input: UpdateVocabularyItemInput,
+  input: UpsertVocabularyItemInput,
   tx?: Transaction,
 ): Promise<void> {
   const executor = tx ?? db;
+  const { phrase, ...fields } = input;
   await executor
-    .update(vocabularyItemsTable)
-    .set({ videoId, ...input })
-    .where(
-      and(
-        eq(vocabularyItemsTable.userId, userId),
-        eq(vocabularyItemsTable.phrase, phrase),
-      ),
-    );
+    .insert(vocabularyItemsTable)
+    .values({ userId, videoId, phrase, ...fields })
+    .onConflictDoUpdate({
+      target: [vocabularyItemsTable.userId, vocabularyItemsTable.phrase],
+      set: { videoId, ...fields },
+    });
 }
 
 export async function upsertVocabularyCard(
