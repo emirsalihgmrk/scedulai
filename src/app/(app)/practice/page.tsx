@@ -1,11 +1,12 @@
 import { Suspense } from "react";
 
+import SessionSummary, {
+  SessionSummaryFallback,
+} from "@/components/shared/session-summary";
+
 import MistakeNotebook, {
   MistakeNotebookFallback,
 } from "./_components/mistake-notebook";
-import SessionSummary, {
-  SessionSummaryFallback,
-} from "./_components/session-summary";
 
 export default function Page() {
   return (

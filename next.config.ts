@@ -10,10 +10,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" }, // program covers
     ],
   },
-  // Unconditional redirects live here, never in a page.
+  // Unconditional redirects live here, never in a page. "/" depends on the
+  // session cookie, so proxy.ts sends it to /progress or /programs.
   async redirects() {
     return [
-      { source: "/", destination: "/programs", permanent: false },
       // Sign-up is the last step of onboarding.
       { source: "/auth/register", destination: "/onboarding", permanent: false },
     ];

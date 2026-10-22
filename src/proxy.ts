@@ -5,10 +5,12 @@ import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 
 const HOME = "/";
+const SIGNED_IN_HOME = "/progress";
+const GUEST_HOME = "/programs";
 
 const PUBLIC_ROUTES = [
-  "/",
   "/onboarding",
+  "/progress/**",
   "/programs/**",
   "/practice/**",
   "/account/**",
@@ -30,10 +32,18 @@ function matchesRoute(pathname: string, routes: string[]) {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // The cookie is only a hint here: a stale one lands on /progress, which
+  // shows a sign-in prompt to guests.
+  if (pathname === HOME) {
+    const url = request.nextUrl.clone();
+    url.pathname = getSessionCookie(request) ? SIGNED_IN_HOME : GUEST_HOME;
+    return NextResponse.redirect(url);
+  }
+
   if (matchesRoute(pathname, GUEST_ONLY_ROUTES)) {
     if (getSessionCookie(request)) {
       const url = request.nextUrl.clone();
-      url.pathname = HOME;
+      url.pathname = SIGNED_IN_HOME;
       url.search = "";
       return NextResponse.redirect(url);
     }
