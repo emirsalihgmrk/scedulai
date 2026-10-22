@@ -47,7 +47,7 @@ src/
   schemas/      # Zod DTOs per module; column-types.ts = JSONB shapes (below db/)
   constants/    # value arrays + literal types; source of the DB enums
   ai/           # LLM tasks and output schemas
-  lib/          # auth.ts, auth-client.ts, action.ts (ActionResult), errors.ts (AppError), utils.ts, youtube.ts, fsrs.ts
+  lib/          # auth.ts, auth-client.ts, action.ts (ActionResult), errors.ts (AppError), utils.ts, youtube.ts, fsrs.ts, time-zone.ts
   db/           # schema.ts, rows.ts (generated row types/schemas), index.ts (db, Transaction), seed/reset
   components/   # shared/ (app-wide) and ui/ (shadcn)
 ```
@@ -58,23 +58,26 @@ Auth tables (`user`, `session`, `account`, `verification`) are owned by better-a
 `programs` → `sections`, with `channels` → `videos` → `transcripts` on the content side, and
 `quizzes` / `practices` → `questions` on the exercise side. `section_progress` tracks per-user progress
 (video position, `quizCompletedAt`). Quizzes are keyed per native language, so questions can be
-generated on demand. Answers are graded but never stored: the quiz card re-queues a wrong answer at
-the end and the quiz is complete once every question is answered correctly. The mistakes found in
-each graded answer are stored, though: one `mistakes` row per mistake per attempt (categorized by the
-AI, with the sentence and answer snapshotted).
+generated on demand. Answers are graded but their text is never stored: the quiz card re-queues a
+wrong answer at the end and the quiz is complete once every question is answered correctly (an
+unfinished quiz starts over). Each graded answer leaves a `grades` row, though: the verdict and
+`isFirstAttempt` (the learner's first answer to that question ever; retries and restarts are kept
+too, but accuracy counts only first attempts). The mistakes found in it are stored as one `mistakes`
+row per mistake per attempt (categorized by the AI, with the sentence and answer snapshotted),
+linked to their grade by `gradeId` (null for mistakes recorded before grades were). Both tables
+record the question's `source` (`section` | `practice`).
 
 Mistakes are not practiced one by one. `/practice` lists section mistakes read-only, grouped by
 category (the mistake notebook), and `/practice/session` is the daily session: the due and new
 words first, then a `practices` row, one learner's daily set of 5 AI-generated `questions` drilling
-their weakest category (graded like the quiz, `completedAt` once finished). "Today" is a 20-hour
-window until the learner's time zone is known: a set created within it is today's, and none is made
-again. A category is as weak as its mistakes made since its last finished set was created (within
-30 days if it was never drilled), so a set answered without a mistake moves the session on and an
-abandoned one changes nothing; `other` is never drilled. The
-set is written around that category's most recent distinct mistakes. A question belongs to exactly
-one owner, a section quiz (shared) or a practice (one user's); a check constraint enforces it. Each
-mistake records its `source` (`section` | `practice`); both count towards weakness, but only section
-mistakes are listed.
+their weakest category (graded like the quiz, `completedAt` once finished). "Today" is still a
+20-hour window here (the session doesn't use `user.timeZone` yet): a set created within it is
+today's, and none is made again. A category is as weak as its mistakes made since its last finished
+set was created (within 30 days if it was never drilled), so a set answered without a mistake moves
+the session on and an abandoned one changes nothing; `other` is never drilled. The set is written
+around that category's most recent distinct mistakes. A question belongs to exactly
+one owner, a section quiz (shared) or a practice (one user's); a check constraint enforces it. Both
+mistake sources count towards weakness, but only section mistakes are listed.
 
 Saved words live in `vocabulary_items` (one per user and phrase, listed on `/vocabulary`): `phrase`
 is English in dictionary form, `meaning` is in the learner's native language and `context` is the
@@ -91,6 +94,19 @@ schedule lives in `vocabulary_cards`, created by its first review; having no car
 Scheduling is long-term only (one review per word per session); a miss is re-asked at the end of
 the session without another review. Every review is logged in `vocabulary_reviews` (rating and the
 state before it, never the answer).
+
+Listening time lives in `listening_days`: seconds of video played per user per local day. The
+player measures wall-clock time while playing (so seeking adds nothing) and sends it with each
+position save, which adds it to the day's row. `user.timeZone` is the browser's IANA zone, reported
+on every visit by the `(app)` layout; days are counted in UTC until it is known.
+
+`/progress` is the signed-in home: `proxy.ts` sends `/` there when a session cookie is present and
+to `/programs` otherwise. The `progress` module has no tables; it summarises other modules' reads:
+the activity calendar and streak (any listening, answer or review makes a day active), today's
+listening against `dailyMinutes`, totals, first-try accuracy and each mistake category's rate (the
+last 4 weeks against the 4 before), saved words by FSRS stage (learned = scheduled 21+ days out) and
+an estimated CEFR level (the highest level whose videos the learner answers well enough, never below
+the profile's level; the profile itself is not changed).
 
 The learned language is always English; there is no target-language setting anywhere.
 `user.nativeLanguage` is a property of the person; how they learn (CEFR level, goal, daily minutes)

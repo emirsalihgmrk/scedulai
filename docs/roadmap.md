@@ -67,7 +67,7 @@ verisine göre yeniden belirlenmeli (ör. kullanıcılar kendi videolarını ço
 ## Faz 3 — Alışkanlık · _3–4 hafta_
 
 - [ ] Günlük hedef (dakika veya kart), seri (streak), seri dondurma · _~1 hafta_ (saat dilimi kenar durumları sanıldığından zor)
-- [ ] İlerleme paneli: dinleme saati, öğrenilen kelime, kategori bazlı doğruluk trendi, tahmini CEFR · _1–1,5 hafta_
+- [x] İlerleme paneli: dinleme saati, öğrenilen kelime, kategori bazlı doğruluk trendi, tahmini CEFR · _1–1,5 hafta_
 - [ ] Hatırlatma e-postası (Resend) / PWA push bildirimi · _~1 hafta_ (zamanlanmış iş altyapısı + abonelikten çıkma)
 - [ ] Haftalık rapor e-postası: "Edat hatalarında %30 iyileştin, şu 3 ifade hâlâ zorluyor" · _~0,5 hafta_
 

@@ -42,14 +42,18 @@ the layers it needs, e.g. `user` has no service and `auth` has no DAL.
 | Module             | Owns tables                                 | Layers                                   |
 | ------------------ | ------------------------------------------- | ---------------------------------------- |
 | `auth`             | `session`, `account`, `verification`        | schemas, services, actions (better-auth) |
-| `user`             | `user`                                      | schemas, dal                             |
+| `user`             | `user`                                      | schemas, dal, services, actions          |
 | `learning-profile` | `learning_profiles`                         | schemas, dal, services, actions          |
-| `program`          | `programs`, `sections`, `section_progress`  | schemas, dal, services, actions          |
+| `program`          | `programs`, `sections`, `section_progress`, `listening_days` | schemas, dal, services, actions |
 | `video`            | `channels`, `videos`, `transcripts`         | schemas, dal, services                   |
-| `quiz`             | `quizzes`, `questions`                      | schemas, dal, services, actions          |
+| `quiz`             | `quizzes`, `questions`, `grades`            | schemas, dal, services, actions          |
 | `mistake`          | `mistakes`                                  | schemas, dal, services                   |
 | `practice`         | `practices`                                 | schemas, dal, services, actions          |
 | `vocabulary`       | `vocabulary_items`, `vocabulary_cards`, `vocabulary_reviews` | schemas, dal, services, actions |
+| `progress`         | —                                           | schemas, services                        |
+
+A module without tables (`progress`) only composes other modules' read services; its schema file
+holds service result types only.
 
 A module's DAL **writes only its own tables**. Reads may follow relations into other modules' tables
 (e.g. `getSections` includes each section's `video` and `progress`).
@@ -181,6 +185,8 @@ Raw Drizzle, one statement per function, no business logic, no auth.
   - Take only the parameters the query needs; an optional user id is `string | null`.
   - Return the query type: single → `<Type> | undefined`, list → `<Type>[]`.
   - Return the Drizzle call directly. Assign `row` / `rows` only when the result needs mapping.
+  - A count is `db.$count(table, where)` returning `number` (`getGradeCount`); other aggregates
+    are computed in the service from projected rows.
 - **Mutations**
   - Signature is `(relationIds…, input, tx?)` and **every mutation accepts `tx?: Transaction`** as
     its last parameter:

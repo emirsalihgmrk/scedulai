@@ -72,8 +72,10 @@ export default function Layout({ children }: LayoutProps<"/">) {
 
 ### Redirects
 
-Unconditional redirects (`/` → `/programs`) live in `next.config.ts` → `redirects()`, never in a page.
-Conditional redirects are guards (above) or live in the section that owns the check.
+Unconditional redirects (`/auth/register` → `/onboarding`) live in `next.config.ts` → `redirects()`,
+never in a page. Conditional redirects are guards (above) or live in the section that owns the
+check. The one exception is `/`, which `proxy.ts` sends to `/progress` or `/programs` by the session
+cookie alone, before any page renders.
 
 ---
 
