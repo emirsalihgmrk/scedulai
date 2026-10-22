@@ -17,7 +17,10 @@ export const metadata: Metadata = {
     "Learn languages by translating real talks. ScedulAI generates quizzes from video transcripts and grades your translations with AI feedback.",
 };
 
+// `cover` lets the page draw under the notch and home indicator, so the safe
+// areas are padded back in: the sides here, the bottom in BottomNav.
 export const viewport: Viewport = {
+  viewportFit: "cover",
   colorScheme: "light dark",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },
@@ -31,7 +34,9 @@ export default function Layout({ children }: LayoutProps<"/">) {
       lang="en"
       className={cn("bg-background", inter.variable, spaceGrotesk.variable)}
     >
-      <body className="font-sans antialiased">{children}</body>
+      <body className="pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] font-sans antialiased">
+        {children}
+      </body>
     </html>
   );
 }
