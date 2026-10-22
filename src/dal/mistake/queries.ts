@@ -1,6 +1,6 @@
 import { and, eq, gte } from "drizzle-orm";
 
-import type { MistakeSource } from "@/constants/mistake";
+import type { QuestionSource } from "@/constants/question";
 import { db } from "@/db";
 import { mistakesTable } from "@/db/schema";
 import type { MistakeListItem } from "@/schemas/mistake";
@@ -17,7 +17,7 @@ const mistakeColumns = {
 
 export async function getMistakes(
   userId: string,
-  source: MistakeSource,
+  source: QuestionSource,
 ): Promise<MistakeListItem[]> {
   return db.query.mistakesTable.findMany({
     where: and(

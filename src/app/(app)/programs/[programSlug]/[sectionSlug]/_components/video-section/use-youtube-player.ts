@@ -15,6 +15,11 @@ declare global {
 export const SKIP_SECONDS = 10;
 const TICK_MS = 500;
 const SAVE_INTERVAL_MS = 30000;
+// A background tab throttles ticks to about once a minute, so a gap up to this
+// long still counts as listened; a longer one (a sleeping laptop) is capped.
+const MAX_TICK_GAP_MS = 65000;
+// Mirrors the server's cap on one save (saveVideoPositionSchema).
+const MAX_LISTENED_SECONDS = 600;
 
 // One-time, promise-based loader for the IFrame Player API script. Repeated
 // calls share the same promise so the script is only ever injected once.
@@ -65,6 +70,10 @@ export function useYoutubePlayer({
   // without re-subscribing effects on every tick.
   const positionRef = useRef(startSeconds);
   const lastSavedRef = useRef(Math.floor(startSeconds));
+  // Wall-clock seconds played since the last save, so seeking adds nothing and
+  // a faster playback rate still counts real listening time.
+  const listenedRef = useRef(0);
+  const lastTickAtRef = useRef<number | null>(null);
 
   // When resuming, a cued player only shows the video's default poster, not
   // the frame the user left off at. To render the resume frame while paused we
@@ -75,10 +84,17 @@ export function useYoutubePlayer({
   const save = useCallback(
     (seconds: number) => {
       const rounded = Math.floor(seconds);
-      if (rounded === lastSavedRef.current) return;
+      const listened = Math.min(
+        Math.floor(listenedRef.current),
+        MAX_LISTENED_SECONDS,
+      );
+      if (rounded === lastSavedRef.current && listened === 0) return;
       lastSavedRef.current = rounded;
+      // The fraction below a second carries over to the next save.
+      listenedRef.current = Math.max(0, listenedRef.current - listened);
       void saveVideoPositionAction(sectionId, {
         videoPositionSeconds: rounded,
+        listenedSeconds: listened,
       }).catch(() => {
         // fire-and-forget: progress saving must never disrupt playback
       });
@@ -164,7 +180,18 @@ export function useYoutubePlayer({
   useEffect(() => {
     if (!isPlaying) return;
 
+    const countListened = () => {
+      const now = Date.now();
+      if (lastTickAtRef.current !== null) {
+        const gap = Math.min(now - lastTickAtRef.current, MAX_TICK_GAP_MS);
+        listenedRef.current += gap / 1000;
+      }
+      lastTickAtRef.current = now;
+    };
+    lastTickAtRef.current = Date.now();
+
     const tick = setInterval(() => {
+      countListened();
       const player = playerRef.current;
       if (!player) return;
       const time = player.getCurrentTime();
@@ -177,6 +204,8 @@ export function useYoutubePlayer({
     return () => {
       clearInterval(tick);
       clearInterval(saver);
+      countListened();
+      lastTickAtRef.current = null;
     };
   }, [isPlaying, save]);
 

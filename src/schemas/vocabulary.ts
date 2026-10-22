@@ -5,7 +5,12 @@ import {
   createVocabularyItemRowSchema,
   createVocabularyReviewRowSchema,
 } from "@/db/rows";
-import type { VideoRow, VocabularyCardRow, VocabularyItemRow } from "@/db/rows";
+import type {
+  VideoRow,
+  VocabularyCardRow,
+  VocabularyItemRow,
+  VocabularyReviewRow,
+} from "@/db/rows";
 import { glossSchema } from "@/schemas/quiz";
 
 // ── Query types ──
@@ -39,6 +44,16 @@ export type VocabularyCard = Pick<
 export type VocabularyItemWithCard = Pick<VocabularyItemRow, "id"> & {
   card: VocabularyCard | null;
 };
+
+export type VocabularyCardListItem = Pick<
+  VocabularyCardRow,
+  "state" | "scheduledDays" | "due"
+>;
+
+export type VocabularyReviewListItem = Pick<
+  VocabularyReviewRow,
+  "rating" | "createdAt"
+>;
 
 // ── DAL input schemas ──
 

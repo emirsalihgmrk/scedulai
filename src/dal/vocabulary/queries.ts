@@ -1,10 +1,16 @@
-import { and, eq, lte, notExists } from "drizzle-orm";
+import { and, eq, gte, lte, notExists } from "drizzle-orm";
 
 import { db } from "@/db";
-import { vocabularyCardsTable, vocabularyItemsTable } from "@/db/schema";
+import {
+  vocabularyCardsTable,
+  vocabularyItemsTable,
+  vocabularyReviewsTable,
+} from "@/db/schema";
 import type {
+  VocabularyCardListItem,
   VocabularyItemListItem,
   VocabularyItemWithCard,
+  VocabularyReviewListItem,
 } from "@/schemas/vocabulary";
 
 const LIST_ITEM_COLUMNS = {
@@ -104,5 +110,35 @@ export async function getVocabularyItem(
         },
       },
     },
+  });
+}
+
+export async function getVocabularyItemCount(userId: string): Promise<number> {
+  return db.$count(
+    vocabularyItemsTable,
+    eq(vocabularyItemsTable.userId, userId),
+  );
+}
+
+export async function getVocabularyCards(
+  userId: string,
+): Promise<VocabularyCardListItem[]> {
+  return db.query.vocabularyCardsTable.findMany({
+    where: eq(vocabularyCardsTable.userId, userId),
+    columns: { state: true, scheduledDays: true, due: true },
+  });
+}
+
+export async function getVocabularyReviews(
+  userId: string,
+  since: Date,
+): Promise<VocabularyReviewListItem[]> {
+  return db.query.vocabularyReviewsTable.findMany({
+    where: and(
+      eq(vocabularyReviewsTable.userId, userId),
+      gte(vocabularyReviewsTable.createdAt, since),
+    ),
+    columns: { rating: true, createdAt: true },
+    orderBy: (reviews, { asc }) => asc(reviews.createdAt),
   });
 }

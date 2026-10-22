@@ -1,7 +1,8 @@
 import { db } from "@/db";
 import type { Transaction } from "@/db";
-import { questionsTable, quizzesTable } from "@/db/schema";
+import { gradesTable, questionsTable, quizzesTable } from "@/db/schema";
 import type {
+  CreateGradeInput,
   CreateQuestionInput,
   CreateQuizInput,
   Question,
@@ -53,4 +54,18 @@ export async function createPracticeQuestions(
     .insert(questionsTable)
     .values(input.map((question) => ({ practiceId, ...question })))
     .returning(questionColumns);
+}
+
+export async function createGrade(
+  userId: string,
+  questionId: string,
+  input: CreateGradeInput,
+  tx?: Transaction,
+): Promise<{ id: string }> {
+  const executor = tx ?? db;
+  const [row] = await executor
+    .insert(gradesTable)
+    .values({ userId, questionId, ...input })
+    .returning({ id: gradesTable.id });
+  return row;
 }

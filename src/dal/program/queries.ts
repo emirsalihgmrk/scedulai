@@ -1,13 +1,19 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 
 import { db } from "@/db";
-import { programsTable, sectionProgressTable } from "@/db/schema";
+import {
+  listeningDaysTable,
+  programsTable,
+  sectionProgressTable,
+} from "@/db/schema";
 import type {
+  ListeningDay,
   ProgramDetail,
   ProgramListItem,
   Section,
   SectionListItem,
   SectionProgress,
+  SectionProgressWithSection,
 } from "@/schemas/program";
 
 export async function getPrograms(): Promise<ProgramListItem[]> {
@@ -121,4 +127,51 @@ export async function getSectionByOrder(
   });
 
   return row?.sections[0];
+}
+
+// The section the learner touched most recently, to pick up where they left off.
+export async function getLatestSectionProgress(
+  userId: string,
+): Promise<SectionProgressWithSection | undefined> {
+  return db.query.sectionProgressTable.findFirst({
+    where: eq(sectionProgressTable.userId, userId),
+    columns: {
+      quizCompletedAt: true,
+      videoPositionSeconds: true,
+      updatedAt: true,
+    },
+    with: {
+      section: {
+        columns: { title: true, order: true },
+        with: {
+          program: { columns: { slug: true, title: true } },
+          video: { columns: { durationSeconds: true, thumbnailUrl: true } },
+        },
+      },
+    },
+    orderBy: (progress, { desc }) => desc(progress.updatedAt),
+  });
+}
+
+export async function getCompletedSectionCount(
+  userId: string,
+): Promise<number> {
+  return db.$count(
+    sectionProgressTable,
+    and(
+      eq(sectionProgressTable.userId, userId),
+      isNotNull(sectionProgressTable.quizCompletedAt),
+    ),
+  );
+}
+
+// Every day ever listened: one row per day keeps the full history small.
+export async function getListeningDays(
+  userId: string,
+): Promise<ListeningDay[]> {
+  return db.query.listeningDaysTable.findMany({
+    where: eq(listeningDaysTable.userId, userId),
+    columns: { day: true, seconds: true },
+    orderBy: (days, { asc }) => asc(days.day),
+  });
 }

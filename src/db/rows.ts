@@ -10,7 +10,9 @@ import type {
   verificationTable,
   videosTable} from "@/db/schema";
 import {
+  gradesTable,
   learningProfilesTable,
+  listeningDaysTable,
   mistakesTable,
   practicesTable,
   questionsTable,
@@ -50,6 +52,10 @@ export type SectionProgressRow = typeof sectionProgressTable.$inferSelect;
 export const createSectionProgressRowSchema =
   createInsertSchema(sectionProgressTable);
 
+export type ListeningDayRow = typeof listeningDaysTable.$inferSelect;
+export const createListeningDayRowSchema =
+  createInsertSchema(listeningDaysTable);
+
 export type ChannelRow = typeof channelsTable.$inferSelect;
 
 export type VideoRow = typeof videosTable.$inferSelect;
@@ -63,6 +69,9 @@ export type QuestionRow = typeof questionsTable.$inferSelect;
 export const createQuestionRowSchema = createInsertSchema(questionsTable, {
   payload: questionPayloadSchema,
 });
+
+export type GradeRow = typeof gradesTable.$inferSelect;
+export const createGradeRowSchema = createInsertSchema(gradesTable);
 
 export type MistakeRow = typeof mistakesTable.$inferSelect;
 export const createMistakeRowSchema = createInsertSchema(mistakesTable);

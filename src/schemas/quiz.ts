@@ -1,7 +1,17 @@
 import { z } from "zod";
 
-import { createQuestionRowSchema, createQuizRowSchema } from "@/db/rows";
-import type { QuestionRow, QuizRow } from "@/db/rows";
+import {
+  createGradeRowSchema,
+  createQuestionRowSchema,
+  createQuizRowSchema,
+} from "@/db/rows";
+import type {
+  GradeRow,
+  MistakeRow,
+  QuestionRow,
+  QuizRow,
+  VideoRow,
+} from "@/db/rows";
 import { translationMistakeSchema } from "@/schemas/mistake";
 
 // ── Re-exports (jsonb shapes owned by this module) ──
@@ -25,6 +35,21 @@ export type QuizWithQuestions = Pick<QuizRow, "id"> & {
   questions: Question[];
 };
 
+export type Grade = Pick<GradeRow, "id">;
+
+// A practice question has no quiz, and so no video level.
+export type GradeListItem = Pick<
+  GradeRow,
+  "createdAt" | "source" | "isCorrect" | "isFirstAttempt"
+> & {
+  mistakes: Pick<MistakeRow, "category">[];
+  question: {
+    quiz: {
+      section: { video: Pick<VideoRow, "cefrLevel"> | null };
+    } | null;
+  } | null;
+};
+
 // ── DAL input schemas ──
 
 export const createQuizSchema = createQuizRowSchema.pick({
@@ -39,10 +64,17 @@ export const createQuestionSchema = createQuestionRowSchema.pick({
 });
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 
+export const createGradeSchema = createGradeRowSchema.pick({
+  source: true,
+  isCorrect: true,
+  isFirstAttempt: true,
+});
+export type CreateGradeInput = z.infer<typeof createGradeSchema>;
+
 // ── Service input schemas ──
 
-// Answers are graded, never stored (only the mistakes found in them are), so
-// this shape has no table to derive from.
+// Answers are graded, never stored (only the verdict and the mistakes found in
+// them are), so this shape has no table to derive from.
 export const gradeTranslationSchema = z.object({
   userTranslation: z.string().trim().min(1).max(200),
 });

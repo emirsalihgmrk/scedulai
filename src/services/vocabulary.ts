@@ -2,6 +2,7 @@ import { cache } from "react";
 
 import { definePhrase } from "@/ai/tasks/define-phrase";
 import { getNativeLanguageEnglishName } from "@/constants/language";
+import { PROGRESS_WINDOW_DAYS } from "@/constants/progress";
 import {
   createVocabularyItem,
   createVocabularyReview,
@@ -12,8 +13,11 @@ import {
 import {
   getDueVocabularyItems,
   getNewVocabularyItems,
+  getVocabularyCards,
   getVocabularyItem,
+  getVocabularyItemCount,
   getVocabularyItems,
+  getVocabularyReviews,
 } from "@/dal/vocabulary/queries";
 import { db } from "@/db";
 import { AppError } from "@/lib/errors";
@@ -32,8 +36,10 @@ import type {
   ReviewVocabularyItemInput,
   SaveGlossInput,
   SaveTranscriptPhraseInput,
+  VocabularyCardListItem,
   VocabularyItemListItem,
   VocabularyItemWithCard,
+  VocabularyReviewListItem,
 } from "@/schemas/vocabulary";
 import { getCurrentUserService } from "@/services/auth";
 import { getPracticeService } from "@/services/practice";
@@ -44,6 +50,7 @@ import { getTranscriptService, getVideoService } from "@/services/video";
 // because a daily cap needs the learner's time zone (Phase 3).
 const DUE_CARD_LIMIT = 50;
 const NEW_CARD_LIMIT = 10;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const getVocabularyItemsService = cache(
   async (): Promise<VocabularyItemListItem[]> => {
@@ -75,6 +82,32 @@ export const getVocabularyItemService = cache(
     if (!user) return null;
     const item = await getVocabularyItem(vocabularyItemId, user.id);
     return item ?? null;
+  },
+);
+
+export const getVocabularyItemCountService = cache(
+  async (): Promise<number> => {
+    const user = await getCurrentUserService();
+    if (!user) return 0;
+    return getVocabularyItemCount(user.id);
+  },
+);
+
+export const getVocabularyCardsService = cache(
+  async (): Promise<VocabularyCardListItem[]> => {
+    const user = await getCurrentUserService();
+    if (!user) return [];
+    return getVocabularyCards(user.id);
+  },
+);
+
+// Only as far back as the progress page looks.
+export const getVocabularyReviewsService = cache(
+  async (): Promise<VocabularyReviewListItem[]> => {
+    const user = await getCurrentUserService();
+    if (!user) return [];
+    const since = new Date(Date.now() - PROGRESS_WINDOW_DAYS * DAY_MS);
+    return getVocabularyReviews(user.id, since);
   },
 );
 

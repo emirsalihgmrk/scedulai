@@ -32,7 +32,8 @@ export const auth = betterAuth({
   },
   // Additional fields are never client-writable (`input: false`), otherwise
   // authClient.updateUser() could set them. `nativeLanguage` is written by the
-  // onboarding service; `plan` changes only through billing.
+  // onboarding service, `timeZone` by the time zone service; `plan` changes
+  // only through billing.
   user: {
     additionalFields: {
       nativeLanguage: {
@@ -53,6 +54,12 @@ export const auth = betterAuth({
         type: "string",
         required: false,
         defaultValue: "user",
+        input: false,
+        returned: true,
+      },
+      timeZone: {
+        type: "string",
+        required: false,
         input: false,
         returned: true,
       },

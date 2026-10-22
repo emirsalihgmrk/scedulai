@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  date,
   doublePrecision,
   index,
   integer,
@@ -20,9 +21,13 @@ import {
   LEARNING_GOALS,
   LEVEL_SOURCES,
 } from "@/constants/learning";
-import { MISTAKE_CATEGORIES, MISTAKE_SOURCES } from "@/constants/mistake";
+import { MISTAKE_CATEGORIES } from "@/constants/mistake";
 import { PLANS } from "@/constants/plan";
-import { QUESTION_DIRECTIONS, QUESTION_TYPES } from "@/constants/question";
+import {
+  QUESTION_DIRECTIONS,
+  QUESTION_SOURCES,
+  QUESTION_TYPES,
+} from "@/constants/question";
 import { ROLES } from "@/constants/role";
 import { CARD_STATES, REVIEW_RATINGS } from "@/constants/vocabulary";
 import type { QuestionPayload, TranscriptLine } from "@/schemas/column-types";
@@ -54,7 +59,7 @@ export const mistakeCategoryEnum = pgEnum(
   "mistake_category",
   MISTAKE_CATEGORIES,
 );
-export const mistakeSourceEnum = pgEnum("mistake_source", MISTAKE_SOURCES);
+export const questionSourceEnum = pgEnum("question_source", QUESTION_SOURCES);
 export const cardStateEnum = pgEnum("card_state", CARD_STATES);
 export const reviewRatingEnum = pgEnum("review_rating", REVIEW_RATINGS);
 
@@ -70,6 +75,9 @@ export const userTable = pgTable("user", {
   plan: planEnum("plan").default("free").notNull(),
   role: roleEnum("role").default("user").notNull(),
   nativeLanguage: nativeLanguageEnum("native_language").default("tr").notNull(),
+  // IANA name reported by the browser; null until the first visit after
+  // sign-up, when days are counted in UTC.
+  timeZone: text("time_zone"),
 });
 
 export const sessionTable = pgTable(
@@ -271,6 +279,23 @@ export const sectionProgressTable = pgTable(
   ],
 );
 
+// Seconds of video a learner played on each of their local days, added to on
+// every position save. One row per day, so a year of history stays small.
+export const listeningDaysTable = pgTable(
+  "listening_days",
+  {
+    ...commonFields,
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    day: date("day").notNull(),
+    seconds: integer("seconds").default(0).notNull(),
+  },
+  (table) => [
+    unique("listening_days_user_day_unique").on(table.userId, table.day),
+  ],
+);
+
 // One row per user. A user is "onboarded" once they have a profile; there is
 // no separate flag.
 export const learningProfilesTable = pgTable(
@@ -289,9 +314,32 @@ export const learningProfilesTable = pgTable(
   (table) => [unique("learning_profiles_user_unique").on(table.userId)],
 );
 
+// One row per graded answer: the verdict, never the answer. Retries are kept
+// too, so `isFirstAttempt` tells the learner's own answer apart from one given
+// after seeing the correction.
+export const gradesTable = pgTable(
+  "grades",
+  {
+    ...commonFields,
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    questionId: uuid("question_id").references(() => questionsTable.id, {
+      onDelete: "set null",
+    }),
+    source: questionSourceEnum("source").notNull(),
+    isCorrect: boolean("is_correct").notNull(),
+    isFirstAttempt: boolean("is_first_attempt").notNull(),
+  },
+  (table) => [
+    index("grades_user_id_created_at_idx").on(table.userId, table.createdAt),
+    index("grades_user_id_question_id_idx").on(table.userId, table.questionId),
+  ],
+);
+
 // One row per mistake found in a graded answer; every attempt is kept. The
 // sentence, answer and source are snapshotted so the history survives the
-// question.
+// question. `gradeId` is null for mistakes recorded before grades were.
 export const mistakesTable = pgTable(
   "mistakes",
   {
@@ -302,7 +350,10 @@ export const mistakesTable = pgTable(
     questionId: uuid("question_id").references(() => questionsTable.id, {
       onDelete: "set null",
     }),
-    source: mistakeSourceEnum("source").notNull(),
+    gradeId: uuid("grade_id").references(() => gradesTable.id, {
+      onDelete: "set null",
+    }),
+    source: questionSourceEnum("source").notNull(),
     category: mistakeCategoryEnum("category").notNull(),
     incorrect: text("incorrect").notNull(),
     correction: text("correction").notNull(),
@@ -429,6 +480,8 @@ export const vocabularyReviewsTable = pgTable(
 export const userRelations = relations(userTable, ({ many }) => ({
   learningProfiles: many(learningProfilesTable),
   sectionProgress: many(sectionProgressTable),
+  listeningDays: many(listeningDaysTable),
+  grades: many(gradesTable),
   mistakes: many(mistakesTable),
   practices: many(practicesTable),
   vocabularyItems: many(vocabularyItemsTable),
@@ -515,9 +568,22 @@ export const questionsRelations = relations(
       fields: [questionsTable.practiceId],
       references: [practicesTable.id],
     }),
+    grades: many(gradesTable),
     mistakes: many(mistakesTable),
   }),
 );
+
+export const gradesRelations = relations(gradesTable, ({ one, many }) => ({
+  user: one(userTable, {
+    fields: [gradesTable.userId],
+    references: [userTable.id],
+  }),
+  question: one(questionsTable, {
+    fields: [gradesTable.questionId],
+    references: [questionsTable.id],
+  }),
+  mistakes: many(mistakesTable),
+}));
 
 export const mistakesRelations = relations(mistakesTable, ({ one }) => ({
   user: one(userTable, {
@@ -527,6 +593,10 @@ export const mistakesRelations = relations(mistakesTable, ({ one }) => ({
   question: one(questionsTable, {
     fields: [mistakesTable.questionId],
     references: [questionsTable.id],
+  }),
+  grade: one(gradesTable, {
+    fields: [mistakesTable.gradeId],
+    references: [gradesTable.id],
   }),
 }));
 
@@ -591,6 +661,16 @@ export const transcriptsRelations = relations(transcriptsTable, ({ one }) => ({
     references: [videosTable.id],
   }),
 }));
+
+export const listeningDaysRelations = relations(
+  listeningDaysTable,
+  ({ one }) => ({
+    user: one(userTable, {
+      fields: [listeningDaysTable.userId],
+      references: [userTable.id],
+    }),
+  }),
+);
 
 export const sectionProgressRelations = relations(
   sectionProgressTable,

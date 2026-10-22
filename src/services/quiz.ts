@@ -4,14 +4,23 @@ import { cache } from "react";
 import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getNativeLanguageEnglishName } from "@/constants/language";
+import { PROGRESS_WINDOW_DAYS } from "@/constants/progress";
 import { createMistakes } from "@/dal/mistake/mutations";
 import { upsertSectionProgress } from "@/dal/program/mutations";
-import { createQuestions, createQuiz } from "@/dal/quiz/mutations";
-import { getQuestion, getQuiz } from "@/dal/quiz/queries";
+import { createGrade, createQuestions, createQuiz } from "@/dal/quiz/mutations";
+import {
+  getGrade,
+  getGradeCount,
+  getGrades,
+  getQuestion,
+  getQuiz,
+} from "@/dal/quiz/queries";
 import { db } from "@/db";
 import { AppError } from "@/lib/errors";
 import { gradeTranslationSchema } from "@/schemas/quiz";
 import type {
+  Grade,
+  GradeListItem,
   GradeTranslationInput,
   Question,
   QuizWithQuestions,
@@ -22,6 +31,7 @@ import { getLearningProfileService } from "@/services/learning-profile";
 import { getTranscriptService, getVideoService } from "@/services/video";
 
 const QUESTION_COUNT = 5;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Quizzes are keyed per native language, so they are only served to onboarded
 // users: no profile means no language to key them by.
@@ -49,6 +59,29 @@ export const getQuestionService = cache(
     return question ?? null;
   },
 );
+
+export const getGradeService = cache(
+  async (questionId: string): Promise<Grade | null> => {
+    const user = await getCurrentUserService();
+    if (!user) return null;
+    const grade = await getGrade(user.id, questionId);
+    return grade ?? null;
+  },
+);
+
+// Only as far back as the progress page looks.
+export const getGradesService = cache(async (): Promise<GradeListItem[]> => {
+  const user = await getCurrentUserService();
+  if (!user) return [];
+  const since = new Date(Date.now() - PROGRESS_WINDOW_DAYS * DAY_MS);
+  return getGrades(user.id, since);
+});
+
+export const getGradeCountService = cache(async (): Promise<number> => {
+  const user = await getCurrentUserService();
+  if (!user) return 0;
+  return getGradeCount(user.id);
+});
 
 // TODO: temporary — quizzes will be generated ahead of time, not on request.
 export async function generateQuizByAiService(
@@ -96,9 +129,10 @@ export async function generateQuizByAiService(
   });
 }
 
-// The answer itself is not stored (the quiz card keeps the queue), but every
-// mistake found in it is, once per attempt, so a retry adds new rows. A "no"
-// verdict has no mistakes and writes nothing.
+// The answer itself is not stored (the quiz card keeps the queue), but its
+// verdict and every mistake found in it are, once per attempt, so a retry adds
+// new rows. Whether this is the learner's first attempt is looked up while the
+// model grades, so it costs no time.
 export async function gradeTranslationService(
   questionId: string,
   input: GradeTranslationInput,
@@ -114,34 +148,47 @@ export async function gradeTranslationService(
     throw new AppError("Invalid question type");
   }
 
-  const { output: analysis, isCorrect } = await analyzeSentence({
-    sentence: question.payload.sourceSentence,
-    originalSentence: question.payload.expectedTranslation,
-    userTranslation,
-    nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
-  });
+  const [{ output: analysis, isCorrect }, previousGrade] = await Promise.all([
+    analyzeSentence({
+      sentence: question.payload.sourceSentence,
+      originalSentence: question.payload.expectedTranslation,
+      userTranslation,
+      nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
+    }),
+    getGradeService(question.id),
+  ]);
 
-  if (analysis.mistakes.length > 0) {
-    const { sourceSentence } = question.payload;
-    const source = question.practiceId ? "practice" : "section";
-    after(() =>
-      createMistakes(
+  const { sourceSentence } = question.payload;
+  const source = question.practiceId ? "practice" : "section";
+  after(() =>
+    db.transaction(async (tx) => {
+      const grade = await createGrade(
         user.id,
         question.id,
+        { source, isCorrect, isFirstAttempt: !previousGrade },
+        tx,
+      );
+      if (analysis.mistakes.length === 0) return;
+      await createMistakes(
+        user.id,
+        question.id,
+        grade.id,
         analysis.mistakes.map((mistake) => ({
           ...mistake,
           source,
           sourceSentence,
           userTranslation,
         })),
-      ),
-    );
-  }
+        tx,
+      );
+    }),
+  );
 
   return { userTranslation, analysis, isCorrect };
 }
 
-// Trusts the client: answers are not stored, so the server can't recount them.
+// Trusts the client: grades are kept per attempt, not per quiz run, so the
+// server can't tell when this run's queue emptied.
 export async function completeQuizService(sectionId: string): Promise<void> {
   const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
