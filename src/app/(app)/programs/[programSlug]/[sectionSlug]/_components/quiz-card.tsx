@@ -36,13 +36,9 @@ export default function QuizCard({
   const initialQuiz = use(quizPromise);
   const isCompleted = use(isCompletedPromise);
   const [quiz, setQuiz] = useState(initialQuiz);
-  // Question ids still to be answered correctly; a miss moves its id to the end.
-  // Answers aren't stored, so a completed quiz reopens on its completed step
-  // and an unfinished one starts over.
   const [queue, setQueue] = useState(() =>
     isCompleted ? [] : getQuestionIds(initialQuiz),
   );
-  // Bumped on every advance so a re-asked question remounts with a fresh draft.
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
