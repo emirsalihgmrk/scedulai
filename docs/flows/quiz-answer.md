@@ -209,15 +209,7 @@ sequenceDiagram
 - **Tekrar denemeler:** yanlış cevaptan sonra, ya da restart sonrası verilen cevaplar
   `isFirstAttempt = false` ile kaydedilir. Doğruluk oranı yalnızca ilk denemeleri sayar.
 
-## Gözlemler ve açık sorular
+## Notlar
 
-- **İstemciye güveniliyor:** `completeQuizService` kuyruğun gerçekten boşaldığını doğrulayamaz,
-  çünkü grade'ler quiz turuna değil cevaba bağlı (servis üstündeki "Trusts the client" yorumu).
-- **Kayıtlar arka planda:** `grades` ve `mistakes`, `after()` içinde yanıt gönderildikten sonra
-  yazılır. Kullanıcı sonucu beklemez, ama bu yazma başarısız olursa kullanıcı bundan haberdar
-  olmaz.
-- **Eşzamanlı üretim:** Aynı section + dil için iki istek aynı anda quiz üretirse ikisi de AI'ı
-  çağırır. `createQuiz` çakışmada satır döndürmez, bu yüzden ikinci istek "Quiz could not be
-  created" hatası alır (yenileyince var olan quiz yüklenir).
 - **Cevap metni:** "Cevap metni saklanmaz" kuralı `grades` için geçerli. Hata varsa cevap
   `mistakes.user_translation` içine kopyalanır.
