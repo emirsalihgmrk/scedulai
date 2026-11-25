@@ -13,14 +13,8 @@ import { PLACEMENT_QUESTIONS } from "@/constants/placement";
 import { cn } from "@/lib/utils";
 
 import StepField from "./step-field";
-import {
-  buildSteps,
-  STEP_COPY,
-  toInput
-  
-  
-} from "./steps";
-import type {Draft, OnboardingViewer} from "./steps";
+import { buildSteps, STEP_COPY, toInput } from "./steps";
+import type { Draft, OnboardingViewer } from "./steps";
 
 interface WizardProps {
   // null = guest: the flow ends with the email/code account step.
