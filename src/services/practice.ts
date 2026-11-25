@@ -187,8 +187,7 @@ export async function generatePracticeByAiService(): Promise<PracticeWithQuestio
   });
 }
 
-// Trusts the client, like completeQuizService: answers are not stored, so the
-// server can't recount them.
+// Trusts the client: answers are not stored, so the server can't recount them.
 export async function completePracticeService(): Promise<void> {
   const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");

@@ -59,10 +59,12 @@ Auth tables (`user`, `session`, `account`, `verification`) are owned by better-a
 `quizzes` / `practices` → `questions` on the exercise side. `section_progress` tracks per-user progress
 (video position, `quizCompletedAt`). Quizzes are keyed per native language, so questions can be
 generated on demand. Answers are graded but their text is never stored: the quiz card re-queues a
-wrong answer at the end and the quiz is complete once every question is answered correctly (an
-unfinished quiz starts over). Each graded answer leaves a `grades` row, though: the verdict and
-`isFirstAttempt` (the learner's first answer to that question ever; retries and restarts are kept
-too, but accuracy counts only first attempts). The mistakes found in it are stored as one `mistakes`
+wrong answer at the end. Each graded answer leaves a `grades` row, though: the verdict and
+`isFirstAttempt` (the learner's first answer to that question ever; retries are kept too, but
+accuracy counts only first attempts). The grades drive the quiz: it picks up where the learner left
+off (only questions without a correct grade are asked), and the server marks it complete
+(`quizCompletedAt`, first completion only) in the same write as the grade that leaves no question
+unanswered. There is no restart. The mistakes found in an answer are stored as one `mistakes`
 row per mistake per attempt (categorized by the AI, with the sentence and answer snapshotted),
 linked to their grade by `gradeId` (null for mistakes recorded before grades were). Both tables
 record the question's `source` (`section` | `practice`).

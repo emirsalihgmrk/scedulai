@@ -350,8 +350,8 @@ flowchart LR
   için sayfa yenilenirse set baştan başlar, ama yeniden üretilmez (bugünkü set döner).
 - **Tamamlanma:** kuyruk boşalınca `done` adımına geçilir ve `completePracticeAction` çağrılır,
   cevabı beklenmez. `completePracticeService` bugünkü seti bulur ve `completedAt`'i yazar. Hata
-  dönerse `done` ekranında gösterilir. Quiz'deki gibi istemciye güvenilir, sunucu cevapları
-  yeniden sayamaz.
+  dönerse `done` ekranında gösterilir. İstemciye güvenilir, sunucu cevapları yeniden saymaz (quiz'de
+  ise tamamlanmaya grade'lere bakarak sunucu karar verir).
 - **Tamamlanmanın etkisi:**
   - Session özeti "Done for today" der ve bugün yeni set yazılmaz.
   - Kategorinin son çalıştırılma zamanı setin oluşturulduğu an olur (bkz.

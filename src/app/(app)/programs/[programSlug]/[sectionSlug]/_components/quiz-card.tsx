@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { use, useEffect, useRef, useState, useTransition } from "react";
 
 import {
-  completeQuizAction,
   generateQuizByAiAction,
   gradeQuizTranslationAction,
 } from "@/actions/quiz";
@@ -17,31 +16,44 @@ import QuestionSkeleton from "@/components/shared/quiz/question-skeleton";
 import QuestionStep from "@/components/shared/quiz/question-step";
 import { Card } from "@/components/ui/card";
 import { getNativeLanguageLabel } from "@/constants/language";
-import type { QuizWithQuestions } from "@/schemas/quiz";
+import type { Grade, QuizWithQuestions } from "@/schemas/quiz";
 import type { User } from "@/schemas/user";
 
 interface QuizCardProps {
   user: User | null;
   sectionId: string;
   quizPromise: Promise<QuizWithQuestions | null>;
+  correctGradesPromise: Promise<Grade[]>;
   isCompletedPromise: Promise<boolean>;
 }
 
-function getQuestionIds(quiz: QuizWithQuestions | null): string[] {
-  return quiz?.questions.map((question) => question.id) ?? [];
+// The quiz picks up where the learner left off: only the questions not yet
+// answered correctly are asked. If every one has been, over several visits,
+// without the quiz being marked complete, all are asked again, and the server
+// completes it on the first correct answer.
+function getRemainingQuestionIds(
+  quiz: QuizWithQuestions | null,
+  correctGrades: Grade[],
+): string[] {
+  const ids = quiz?.questions.map((question) => question.id) ?? [];
+  const correctIds = new Set(correctGrades.map((grade) => grade.questionId));
+  const remaining = ids.filter((id) => !correctIds.has(id));
+  return remaining.length > 0 ? remaining : ids;
 }
 
 export default function QuizCard({
   user,
   sectionId,
   quizPromise,
+  correctGradesPromise,
   isCompletedPromise,
 }: QuizCardProps) {
   const initialQuiz = use(quizPromise);
+  const correctGrades = use(correctGradesPromise);
   const isCompleted = use(isCompletedPromise);
   const [quiz, setQuiz] = useState(initialQuiz);
   const [queue, setQueue] = useState(() =>
-    isCompleted ? [] : getQuestionIds(initialQuiz),
+    isCompleted ? [] : getRemainingQuestionIds(initialQuiz, correctGrades),
   );
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +69,7 @@ export default function QuizCard({
         const result = await generateQuizByAiAction(sectionId);
         if (result.ok) {
           setQuiz(result.data);
-          setQueue(getQuestionIds(result.data));
+          setQueue(getRemainingQuestionIds(result.data, []));
           setError(null);
         } else {
           setError(result.error);
@@ -70,16 +82,14 @@ export default function QuizCard({
     });
   }, [user, quiz, sectionId]);
 
+  // The server marks the quiz complete with the last correct answer's grade,
+  // so an emptied queue only refreshes the page's data.
   const handleContinue = (isCorrect: boolean) => {
     const [head, ...rest] = queue;
     const next = isCorrect ? rest : [...rest, head];
     setQueue(next);
     setAttempt((value) => value + 1);
-    if (next.length === 0) {
-      void completeQuizAction(sectionId).then((result) => {
-        if (result.ok) router.refresh();
-      });
-    }
+    if (next.length === 0) router.refresh();
   };
 
   if (error) {
@@ -151,7 +161,6 @@ export default function QuizCard({
             title="Quiz completed"
             total={total}
             note="Any mistakes you made come back in your daily practice."
-            onRestart={() => setQueue(getQuestionIds(quiz))}
           />
         )}
       </Card>

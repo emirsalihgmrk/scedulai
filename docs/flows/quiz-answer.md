@@ -2,7 +2,8 @@
 
 Section sayfasındaki çeviri quiz'i. Kullanıcı ana dilindeki cümleyi İngilizceye çevirir, AI
 değerlendirir. Yanlış cevaplanan soru kuyruğun sonuna döner, her soru doğru cevaplanınca quiz
-tamamlanır.
+tamamlanır. Quiz kaldığı yerden devam eder: yalnızca henüz doğru cevaplanmamış sorular sorulur.
+Tamamlanmaya sunucu karar verir, restart yoktur.
 
 - **Giriş noktası:** `app/(app)/programs/[programSlug]/[sectionSlug]/content.tsx`
 - **Okuduğu tablolar:** `quizzes`, `questions`, `section_progress`, `sections`, `videos`,
@@ -21,9 +22,8 @@ flowchart TD
   D -- hata --> Y["'Quiz could not be prepared' ekranı"]
   D -- başarılı --> F
   C -- evet --> E{"Daha önce<br/>tamamlanmış mı?"}
-  E -- hayır --> F["Kuyruk = tüm sorular"]
+  E -- hayır --> F["Kuyruk = doğru cevaplanmamış sorular"]
   E -- evet --> G["Tamamlandı ekranı"]
-  G -- Restart --> F
   F --> H["3. Cevap değerlendirme"]
   H -- doğru --> I["Soruyu kuyruktan çıkar"]
   H -- yanlış --> J["Soruyu kuyruğun sonuna ekle"]
@@ -33,6 +33,9 @@ flowchart TD
   K -- evet --> L["4. Tamamlanma"]
   L --> G
 ```
+
+Tamamlanma sunucuda, 3. adımda yazılır: son soruyu doğru cevaplayan cevabın grade'iyle aynı
+transaction'da. 4. adım yalnızca istemcinin tamamlandı ekranına geçmesidir.
 
 ## 1. Sayfa yükleme
 
@@ -49,25 +52,36 @@ sequenceDiagram
     S->>DB: user + learning_profiles
     S->>DB: quizzes + questions (sectionId, nativeLanguage)
   and
+    P->>S: getCorrectGradesService(sectionId)
+    S->>DB: grades (bu kullanıcı, quiz'in soruları, isCorrect)
+  and
     P->>S: getSectionProgressService(sectionId)
     S->>DB: section_progress
   end
-  P-->>QC: user, quizPromise, isCompletedPromise
+  P-->>QC: user, quizPromise, correctGradesPromise, isCompletedPromise
   Note over QC: use() ile promise'leri açar,<br/>o sırada Suspense iskeleti görünür
-  QC->>QC: queue = isCompleted ? [] : tüm soru id'leri
+  QC->>QC: queue = isCompleted ? [] : doğru cevaplanmamış sorular
 ```
 
-- **Nerede:** `content.tsx` → `getQuizService` (`services/quiz.ts`), `getSectionProgressService`
-  (`services/program.ts`), sunucuda. Promise'ler istemcideki `QuizCard`'a (`quiz-card.tsx`) verilir.
-- **Okuduğu:** `learning_profiles`, `quizzes`, `questions`, `section_progress`
+- **Nerede:** `content.tsx` → `getQuizService`, `getCorrectGradesService` (`services/quiz.ts`),
+  `getSectionProgressService` (`services/program.ts`), sunucuda. Promise'ler istemcideki
+  `QuizCard`'a (`quiz-card.tsx`) verilir. Kuyruğu `getRemainingQuestionIds` kurar.
+- **Okuduğu:** `learning_profiles`, `quizzes`, `questions`, `grades`, `section_progress`
 - **Yazdığı:** yok
 - **AI çağrısı:** yok
 - **Dallanmalar:**
   - Kullanıcı ya da profili yoksa `getQuizService` null döner. Quiz ana dile göre tutulduğu için
     profili olmayan kullanıcıya quiz verilemez.
   - Kullanıcı yoksa `QuizCard` "Sign in" ekranını gösterir.
-  - `quizCompletedAt` doluysa kuyruk boş başlar ve doğrudan tamamlandı ekranı görünür.
-- **Döndürdüğü:** soruları sırasıyla (`order`) birlikte quiz, ve tamamlanma bilgisi (boolean)
+  - `quizCompletedAt` doluysa kuyruk boş başlar ve doğrudan tamamlandı ekranı görünür. Bu karar
+    grade'lerden değil `quizCompletedAt`'ten gelir, çünkü grade'ler eklenmeden önce quiz'i
+    bitirenlerin grade'i yoktur.
+  - Tamamlanmamışsa kuyruk, bu kullanıcının doğru grade'i olmayan sorulardan (sırasıyla) oluşur.
+    Bütün soruların doğru grade'i varken quiz tamamlanmamışsa (iki sekme son iki soruyu aynı anda
+    cevapladıysa ya da eski akışta doğru cevaplar birden fazla ziyarete dağıldıysa) bütün sorular
+    yeniden sorulur, ilk doğru cevap quiz'i tamamlar.
+- **Döndürdüğü:** soruları sırasıyla (`order`) birlikte quiz, doğru grade'ler (`id`, `questionId`)
+  ve tamamlanma bilgisi (boolean)
 
 ## 2. Quiz üretimi (quiz yoksa)
 
@@ -141,7 +155,13 @@ sequenceDiagram
   A->>S: sectionId, questionId, userTranslation
   S->>DB: user + learning_profiles
   S->>S: girdiyi Zod ile doğrula
-  S->>DB: getQuizService: quizzes + questions (sectionId, nativeLanguage)
+  par
+    S->>DB: getQuizService: quizzes + questions (sectionId, nativeLanguage)
+  and
+    S->>DB: getCorrectGradesService: bu quiz'in doğru grade'leri
+  and
+    S->>DB: getSectionProgressService: quiz_completed_at
+  end
   break soru bu quiz'de yoksa
     S-->>QS: AppError("Not found")
   end
@@ -159,6 +179,9 @@ sequenceDiagram
   rect rgba(127, 127, 127, 0.12)
     Note over S,DB: after(): yanıt gittikten sonra, tek transaction
     S->>DB: INSERT grades (isCorrect, isFirstAttempt, source)
+    opt doğru ve diğer bütün soruların doğru grade'i var, quiz tamamlanmamış
+      S->>DB: UPSERT section_progress.quiz_completed_at = şimdi
+    end
     opt hata bulunduysa
       S->>DB: INSERT mistakes (hata başına bir satır)
     end
@@ -171,8 +194,9 @@ sequenceDiagram
 - **Nerede:** `components/shared/quiz/question-step.tsx` (`handleSubmit`) → `onGrade`
   (`quiz-card.tsx`) → `actions/quiz.ts` → `gradeQuizTranslationService` (`services/quiz.ts`) →
   `ai/tasks/analyze-sentence.ts`. Kuyruk `quiz-card.tsx` içindeki `handleContinue`'da güncellenir.
-- **Okuduğu:** `learning_profiles`, `quizzes`, `questions`, `grades`
-- **Yazdığı:** `grades` (her cevapta bir satır), `mistakes` (hata varsa, hata başına bir satır)
+- **Okuduğu:** `learning_profiles`, `quizzes`, `questions`, `grades`, `section_progress`
+- **Yazdığı:** `grades` (her cevapta bir satır), `mistakes` (hata varsa, hata başına bir satır),
+  `section_progress` (quiz'i tamamlayan cevapta)
 - **AI çağrısı:** var, `analyzeSentence`
 - **Dallanmalar:**
   - Soru id ile tek başına aranmaz, kullanıcının gördüğü quiz'in (`getQuizService`: section +
@@ -185,6 +209,11 @@ sequenceDiagram
     hata geçmişini doldurmaz.
   - `isFirstAttempt`, bu kullanıcı için bu soruya ait **herhangi** bir grade yoksa true olur. Bu
     sorgu AI ile paralel çalıştığı için ek süre eklemez.
+  - **Tamamlanma:** cevap doğruysa, quiz'in diğer bütün sorularının bu kullanıcıdan doğru grade'i
+    varsa ve `quizCompletedAt` boşsa, `quiz_completed_at` grade ile aynı transaction'da yazılır
+    (`gradeTranslation`'ın `onCorrect`'i). İkisi ya birlikte yazılır ya hiç yazılmaz.
+    `quizCompletedAt` ilk tamamlanma anıdır ve bir daha değişmez. Tamamlanma için istemciden gelen
+    bir istek yoktur, istemci kuyruğun boşaldığını sunucuya bildirmez.
   - `source` her zaman `section`'dır. Practice soruları aynı puanlama kodundan
     (`gradeTranslation`) geçer ama kendi giriş noktalarından gelir
     (`gradePracticeTranslationService`, `source = practice`).
@@ -202,35 +231,31 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   participant QC as QuizCard (istemci)
-  participant A as completeQuizAction
-  participant S as completeQuizService
-  participant DB
 
   Note over QC: kuyruk boşaldı,<br/>tamamlandı ekranı hemen görünür
-  QC->>A: sectionId (sonuç beklenmeden)
-  A->>S: sectionId
-  S->>DB: user, quiz var mı?
-  S->>DB: UPSERT section_progress.quiz_completed_at = şimdi
-  A-->>QC: ok
   QC->>QC: router.refresh()
 ```
 
-- **Nerede:** `quiz-card.tsx` (`handleContinue`) → `actions/quiz.ts` → `completeQuizService`
-  (`services/quiz.ts`)
-- **Okuduğu:** `learning_profiles`, `quizzes`
-- **Yazdığı:** `section_progress` (yoksa ekler, varsa `quiz_completed_at`'i günceller)
+- **Nerede:** `quiz-card.tsx` (`handleContinue`)
+- **Okuduğu / Yazdığı:** yok. `quiz_completed_at` 3. adımda, son doğru cevabın grade'iyle yazıldı.
 - **AI çağrısı:** yok
-- **Dallanmalar:** kullanıcı ya da quiz yoksa `AppError`
-- **Döndürdüğü:** yok. Başarılıysa sayfa sunucudan yeniden render edilir.
+- **Not:** `router.refresh()` sunucu verisini (ve istemcinin router önbelleğini) yeniler. Son
+  grade `after()` ile yazıldığı için refresh, yazma bitmeden gelirse sayfa bir an eski veriyi
+  gösterebilir. Kullanıcı Continue'ya basana kadar yazma genellikle bitmiş olur.
+- **Restart yok:** tamamlandı ekranında "Practice again" düğmesi yoktur. Aynı cümleleri yeniden
+  çevirmek öğretici değil (beklenen çeviriler görüldü), hataları ise günlük practice tekrar eder.
 
 ## Kenar durumlar
 
-- **Sayfa yenilenirse:** kuyruk yalnızca tarayıcıda tutulduğu için kaybolur. Quiz tamamlanmadıysa
-  baştan, tüm sorularla başlar. Önceki cevapların `grades` satırları kalır.
-- **Restart:** tamamlandı ekranındaki Restart kuyruğu tüm sorularla yeniden doldurur. Tekrar
-  bitince `completeQuizAction` yine çağrılır ve `quiz_completed_at` yeni tarihle güncellenir.
-- **Tekrar denemeler:** yanlış cevaptan sonra, ya da restart sonrası verilen cevaplar
-  `isFirstAttempt = false` ile kaydedilir. Doğruluk oranı yalnızca ilk denemeleri sayar.
+- **Sayfa yenilenirse:** kuyruk tarayıcıda kaybolur ama sunucudan yeniden kurulur: doğru
+  cevaplanmış sorular sorulmaz, yanlış cevaplanmış ve hiç cevaplanmamış sorular sırasıyla gelir.
+  Yanıttan hemen sonra yenilenirse son grade henüz yazılmamış olabilir, o soru yeniden sorulur.
+- **Tekrar denemeler:** yanlış cevaptan sonra verilen cevaplar `isFirstAttempt = false` ile
+  kaydedilir. Doğruluk oranı yalnızca ilk denemeleri sayar. Bir sorunun birden fazla grade'i olabilir
+  (yanlış, yanlış, doğru), ama doğru cevaplanan soru bir daha sorulmadığı için pratikte en fazla bir
+  doğru grade'i olur.
+- **Grade yazılamazsa:** `after()` içindeki transaction başarısız olursa grade de tamamlanma da
+  yazılmaz. Soru sonraki ziyarette yeniden sorulur.
 
 ## Notlar
 

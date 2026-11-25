@@ -1,19 +1,15 @@
-import { CircleCheck, RotateCcw } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import { CircleCheck } from "lucide-react";
 
 interface CompletedStepProps {
   title: string;
   total: number;
   note?: string;
-  onRestart: () => void;
 }
 
 export default function CompletedStep({
   title,
   total,
   note,
-  onRestart,
 }: CompletedStepProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-5 p-6 text-center">
@@ -30,16 +26,6 @@ export default function CompletedStep({
         </p>
         {note && <p className="text-sm text-muted-foreground">{note}</p>}
       </div>
-
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={onRestart}
-        className="gap-1.5"
-      >
-        <RotateCcw data-icon="inline-start" />
-        Practice again
-      </Button>
     </div>
   );
 }

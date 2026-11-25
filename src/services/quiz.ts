@@ -9,8 +9,15 @@ import type { QuestionSource } from "@/constants/question";
 import { createMistakes } from "@/dal/mistake/mutations";
 import { upsertSectionProgress } from "@/dal/program/mutations";
 import { createGrade, createQuestions, createQuiz } from "@/dal/quiz/mutations";
-import { getGrade, getGradeCount, getGrades, getQuiz } from "@/dal/quiz/queries";
+import {
+  getCorrectGrades,
+  getGrade,
+  getGradeCount,
+  getGrades,
+  getQuiz,
+} from "@/dal/quiz/queries";
 import { db } from "@/db";
+import type { Transaction } from "@/db";
 import { AppError } from "@/lib/errors";
 import { keepLocatableGlosses } from "@/lib/utils";
 import { gradeTranslationSchema } from "@/schemas/quiz";
@@ -26,6 +33,7 @@ import type { User } from "@/schemas/user";
 import { getCurrentUserService } from "@/services/auth";
 import { getLearningProfileService } from "@/services/learning-profile";
 import { getPracticeService } from "@/services/practice";
+import { getSectionProgressService } from "@/services/program";
 import { getTranscriptService, getVideoService } from "@/services/video";
 
 const QUESTION_COUNT = 5;
@@ -57,6 +65,21 @@ export const getGradeService = cache(
     if (!user) return null;
     const grade = await getGrade(user.id, questionId);
     return grade ?? null;
+  },
+);
+
+// The section quiz's questions the learner has answered correctly; the rest
+// are still to be answered.
+export const getCorrectGradesService = cache(
+  async (sectionId: string): Promise<Grade[]> => {
+    const user = await getCurrentUserService();
+    if (!user) return [];
+    const quiz = await getQuizService(sectionId);
+    if (!quiz) return [];
+    return getCorrectGrades(
+      user.id,
+      quiz.questions.map(({ id }) => id),
+    );
   },
 );
 
@@ -127,12 +150,14 @@ export async function generateQuizByAiService(
 // The answer itself is not stored (the quiz card keeps the queue), but its
 // verdict and every mistake found in it are, once per attempt, so a retry adds
 // new rows. Whether this is the learner's first attempt is looked up while the
-// model grades, so it costs no time.
+// model grades, so it costs no time. `onCorrect` writes in the same
+// transaction as the grade, so it lands only if the grade does.
 async function gradeTranslation(
   user: User,
   question: Question,
   source: QuestionSource,
   userTranslation: string,
+  onCorrect?: (tx: Transaction) => Promise<void>,
 ): Promise<TranslationGrade> {
   if (question.payload.type !== "translation") {
     throw new AppError("Invalid question type");
@@ -157,6 +182,7 @@ async function gradeTranslation(
         { source, isCorrect, isFirstAttempt: !previousGrade },
         tx,
       );
+      if (isCorrect) await onCorrect?.(tx);
       if (analysis.mistakes.length === 0) return;
       await createMistakes(
         user.id,
@@ -177,7 +203,10 @@ async function gradeTranslation(
 }
 
 // The question is looked up in the quiz the learner is served, never by id
-// alone, so a quiz in another native language can't be graded.
+// alone, so a quiz in another native language can't be graded. The server
+// decides when the quiz is complete: a correct answer completes it once every
+// other question has been answered correctly too. Only the first completion is
+// recorded.
 export async function gradeQuizTranslationService(
   sectionId: string,
   questionId: string,
@@ -188,11 +217,34 @@ export async function gradeQuizTranslationService(
 
   const { userTranslation } = gradeTranslationSchema.parse(input);
 
-  const quiz = await getQuizService(sectionId);
+  const [quiz, correctGrades, progress] = await Promise.all([
+    getQuizService(sectionId),
+    getCorrectGradesService(sectionId),
+    getSectionProgressService(sectionId),
+  ]);
   const question = quiz?.questions.find(({ id }) => id === questionId);
-  if (!question) throw new AppError("Not found");
+  if (!quiz || !question) throw new AppError("Not found");
 
-  return gradeTranslation(user, question, "section", userTranslation);
+  const correctIds = new Set(correctGrades.map((grade) => grade.questionId));
+  const completesQuiz =
+    !progress?.quizCompletedAt &&
+    quiz.questions.every(({ id }) => id === question.id || correctIds.has(id));
+
+  return gradeTranslation(
+    user,
+    question,
+    "section",
+    userTranslation,
+    completesQuiz
+      ? (tx) =>
+          upsertSectionProgress(
+            user.id,
+            sectionId,
+            { quizCompletedAt: new Date() },
+            tx,
+          )
+      : undefined,
+  );
 }
 
 // The question is looked up in the learner's set for today, so another
@@ -211,18 +263,4 @@ export async function gradePracticeTranslationService(
   if (!question) throw new AppError("Not found");
 
   return gradeTranslation(user, question, "practice", userTranslation);
-}
-
-// Trusts the client: grades are kept per attempt, not per quiz run, so the
-// server can't tell when this run's queue emptied.
-export async function completeQuizService(sectionId: string): Promise<void> {
-  const user = await getCurrentUserService();
-  if (!user) throw new AppError("Unauthorized");
-
-  const quiz = await getQuizService(sectionId);
-  if (!quiz) throw new AppError("Not found");
-
-  await upsertSectionProgress(user.id, sectionId, {
-    quizCompletedAt: new Date(),
-  });
 }

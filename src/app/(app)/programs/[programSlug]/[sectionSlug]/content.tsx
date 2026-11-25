@@ -6,7 +6,7 @@ import {
   getSectionByOrderService,
   getSectionProgressService,
 } from "@/services/program";
-import { getQuizService } from "@/services/quiz";
+import { getCorrectGradesService, getQuizService } from "@/services/quiz";
 import { getTranscriptService, getVideoService } from "@/services/video";
 
 import { PlayerProvider } from "./_components/player-context";
@@ -39,6 +39,7 @@ export default async function Content({ params }: ContentProps) {
   if (!section) notFound();
 
   const quizPromise = getQuizService(section.id);
+  const correctGradesPromise = getCorrectGradesService(section.id);
   const isQuizCompletedPromise = getSectionProgressService(section.id).then(
     (progress) => !!progress?.quizCompletedAt,
   );
@@ -71,6 +72,7 @@ export default async function Content({ params }: ContentProps) {
             user={user}
             sectionId={section.id}
             quizPromise={quizPromise}
+            correctGradesPromise={correctGradesPromise}
             isCompletedPromise={isQuizCompletedPromise}
           />
         </Suspense>

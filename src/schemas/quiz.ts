@@ -35,7 +35,7 @@ export type QuizWithQuestions = Pick<QuizRow, "id"> & {
   questions: Question[];
 };
 
-export type Grade = Pick<GradeRow, "id">;
+export type Grade = Pick<GradeRow, "id" | "questionId">;
 
 // A practice question has no quiz, and so no video level.
 export type GradeListItem = Pick<

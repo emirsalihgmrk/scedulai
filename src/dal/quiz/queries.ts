@@ -1,4 +1,4 @@
-import { and, eq, gte } from "drizzle-orm";
+import { and, eq, gte, inArray } from "drizzle-orm";
 
 import type { SupportedNativeLanguageCode } from "@/constants/language";
 import { db } from "@/db";
@@ -33,7 +33,21 @@ export async function getGrade(
       eq(gradesTable.userId, userId),
       eq(gradesTable.questionId, questionId),
     ),
-    columns: { id: true },
+    columns: { id: true, questionId: true },
+  });
+}
+
+export async function getCorrectGrades(
+  userId: string,
+  questionIds: string[],
+): Promise<Grade[]> {
+  return db.query.gradesTable.findMany({
+    where: and(
+      eq(gradesTable.userId, userId),
+      eq(gradesTable.isCorrect, true),
+      inArray(gradesTable.questionId, questionIds),
+    ),
+    columns: { id: true, questionId: true },
   });
 }
 

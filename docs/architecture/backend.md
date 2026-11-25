@@ -222,7 +222,7 @@ The module's public API. Pages call its read services; actions call its mutation
 - **Read services mirror the DAL 1:1:** `getX` → `getXService`. The current user is always implicit
   (a service resolves it itself), so names never say "Current": `getLearningProfileService()`.
 - Where the DAL verb is generic, the service verb is concrete: DAL `upsertSectionProgress` →
-  `saveVideoPositionService`, `completeQuizService`.
+  `saveVideoPositionService`.
 - Private helpers are not exported and have no suffix (`getLearnerLanguages`).
 
 ### Reads go through services, writes go through the DAL
@@ -295,16 +295,16 @@ no video"). Anything else is treated as an internal error and never shown to the
 ## 7. Actions (`actions/<module>.ts`)
 
 - `"use server"` at the top.
-- **One action per mutation service the client calls, named after it:** `completeQuizService` →
-  `completeQuizAction`, with the same parameters.
+- **One action per mutation service the client calls, named after it:**
+  `deleteVocabularyItemService` → `deleteVocabularyItemAction`, with the same parameters.
 - **No logic.** Every action has exactly this shape:
 
   ```ts
-  export async function completeQuizAction(
-    sectionId: string,
+  export async function deleteVocabularyItemAction(
+    vocabularyItemId: string,
   ): Promise<ActionResult> {
     try {
-      await completeQuizService(sectionId);
+      await deleteVocabularyItemService(vocabularyItemId);
       return { ok: true, data: undefined };
     } catch (error) {
       return toActionFailure(error);
@@ -346,5 +346,5 @@ no video"). Anything else is treated as an internal error and never shown to the
 | `db/rows.ts`  | `QuizRow`, `userRowSchema`              | `createQuizRowSchema` (no update row schemas)          |
 | `schemas/`    | `QuizWithQuestions`                     | DAL `createQuestionSchema` · service `saveVideoPositionSchema` |
 | `dal/`        | `getQuiz` → `… \| undefined`            | `upsertSectionProgress(userId, sectionId, input, tx?)` |
-| `services/`   | `getQuizService` → `… \| null` (cached) | `completeQuizService` → `void \| <Type> \| null`       |
-| `actions/`    | —                                       | `completeQuizAction` → `ActionResult<T>`               |
+| `services/`   | `getQuizService` → `… \| null` (cached) | `deleteVocabularyItemService` → `void \| <Type> \| null` |
+| `actions/`    | —                                       | `deleteVocabularyItemAction` → `ActionResult<T>`       |

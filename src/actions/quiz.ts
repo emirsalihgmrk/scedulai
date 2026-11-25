@@ -8,7 +8,6 @@ import type {
   TranslationGrade,
 } from "@/schemas/quiz";
 import {
-  completeQuizService,
   generateQuizByAiService,
   gradePracticeTranslationService,
   gradeQuizTranslationService,
@@ -49,17 +48,6 @@ export async function gradePracticeTranslationAction(
   try {
     const data = await gradePracticeTranslationService(questionId, input);
     return { ok: true, data };
-  } catch (error) {
-    return toActionFailure(error);
-  }
-}
-
-export async function completeQuizAction(
-  sectionId: string,
-): Promise<ActionResult> {
-  try {
-    await completeQuizService(sectionId);
-    return { ok: true, data: undefined };
   } catch (error) {
     return toActionFailure(error);
   }
