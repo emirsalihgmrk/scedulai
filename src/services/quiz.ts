@@ -5,16 +5,11 @@ import { analyzeSentence } from "@/ai/tasks/analyze-sentence";
 import { generateSentences } from "@/ai/tasks/generate-sentences";
 import { getNativeLanguageEnglishName } from "@/constants/language";
 import { PROGRESS_WINDOW_DAYS } from "@/constants/progress";
+import type { QuestionSource } from "@/constants/question";
 import { createMistakes } from "@/dal/mistake/mutations";
 import { upsertSectionProgress } from "@/dal/program/mutations";
 import { createGrade, createQuestions, createQuiz } from "@/dal/quiz/mutations";
-import {
-  getGrade,
-  getGradeCount,
-  getGrades,
-  getQuestion,
-  getQuiz,
-} from "@/dal/quiz/queries";
+import { getGrade, getGradeCount, getGrades, getQuiz } from "@/dal/quiz/queries";
 import { db } from "@/db";
 import { AppError } from "@/lib/errors";
 import { keepLocatableGlosses } from "@/lib/utils";
@@ -27,8 +22,10 @@ import type {
   QuizWithQuestions,
   TranslationGrade,
 } from "@/schemas/quiz";
+import type { User } from "@/schemas/user";
 import { getCurrentUserService } from "@/services/auth";
 import { getLearningProfileService } from "@/services/learning-profile";
+import { getPracticeService } from "@/services/practice";
 import { getTranscriptService, getVideoService } from "@/services/video";
 
 const QUESTION_COUNT = 5;
@@ -51,13 +48,6 @@ export const getQuizService = cache(
     if (!user) return null;
     const quiz = await getQuiz(sectionId, user.nativeLanguage);
     return quiz ?? null;
-  },
-);
-
-export const getQuestionService = cache(
-  async (questionId: string): Promise<Question | null> => {
-    const question = await getQuestion(questionId);
-    return question ?? null;
   },
 );
 
@@ -138,17 +128,12 @@ export async function generateQuizByAiService(
 // verdict and every mistake found in it are, once per attempt, so a retry adds
 // new rows. Whether this is the learner's first attempt is looked up while the
 // model grades, so it costs no time.
-export async function gradeTranslationService(
-  questionId: string,
-  input: GradeTranslationInput,
+async function gradeTranslation(
+  user: User,
+  question: Question,
+  source: QuestionSource,
+  userTranslation: string,
 ): Promise<TranslationGrade> {
-  const user = await getOnboardedUser();
-  if (!user) throw new AppError("Unauthorized");
-
-  const { userTranslation } = gradeTranslationSchema.parse(input);
-
-  const question = await getQuestionService(questionId);
-  if (!question) throw new AppError("Not found");
   if (question.payload.type !== "translation") {
     throw new AppError("Invalid question type");
   }
@@ -164,7 +149,6 @@ export async function gradeTranslationService(
   ]);
 
   const { sourceSentence } = question.payload;
-  const source = question.practiceId ? "practice" : "section";
   after(() =>
     db.transaction(async (tx) => {
       const grade = await createGrade(
@@ -190,6 +174,43 @@ export async function gradeTranslationService(
   );
 
   return { userTranslation, analysis, isCorrect };
+}
+
+// The question is looked up in the quiz the learner is served, never by id
+// alone, so a quiz in another native language can't be graded.
+export async function gradeQuizTranslationService(
+  sectionId: string,
+  questionId: string,
+  input: GradeTranslationInput,
+): Promise<TranslationGrade> {
+  const user = await getOnboardedUser();
+  if (!user) throw new AppError("Unauthorized");
+
+  const { userTranslation } = gradeTranslationSchema.parse(input);
+
+  const quiz = await getQuizService(sectionId);
+  const question = quiz?.questions.find(({ id }) => id === questionId);
+  if (!question) throw new AppError("Not found");
+
+  return gradeTranslation(user, question, "section", userTranslation);
+}
+
+// The question is looked up in the learner's set for today, so another
+// learner's practice (or an older set) can't be graded.
+export async function gradePracticeTranslationService(
+  questionId: string,
+  input: GradeTranslationInput,
+): Promise<TranslationGrade> {
+  const user = await getOnboardedUser();
+  if (!user) throw new AppError("Unauthorized");
+
+  const { userTranslation } = gradeTranslationSchema.parse(input);
+
+  const practice = await getPracticeService();
+  const question = practice?.questions.find(({ id }) => id === questionId);
+  if (!question) throw new AppError("Not found");
+
+  return gradeTranslation(user, question, "practice", userTranslation);
 }
 
 // Trusts the client: grades are kept per attempt, not per quiz run, so the

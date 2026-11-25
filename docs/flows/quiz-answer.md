@@ -130,17 +130,21 @@ sequenceDiagram
   actor U as Kullanıcı
   participant QC as QuizCard (istemci)
   participant QS as QuestionStep (istemci)
-  participant A as gradeTranslationAction
-  participant S as gradeTranslationService
+  participant A as gradeQuizTranslationAction
+  participant S as gradeQuizTranslationService
   participant AI as analyzeSentence (AI)
   participant DB
 
   U->>QS: çeviriyi yazar, gönderir
-  QS->>A: questionId, userTranslation
-  A->>S: questionId, userTranslation
+  QS->>QC: onGrade(userTranslation)
+  QC->>A: sectionId, questionId, userTranslation
+  A->>S: sectionId, questionId, userTranslation
   S->>DB: user + learning_profiles
   S->>S: girdiyi Zod ile doğrula
-  S->>DB: questions (kaynak cümle, beklenen çeviri)
+  S->>DB: getQuizService: quizzes + questions (sectionId, nativeLanguage)
+  break soru bu quiz'de yoksa
+    S-->>QS: AppError("Not found")
+  end
   par aynı anda
     S->>AI: kaynak cümle, beklenen çeviri, kullanıcının çevirisi
     Note over AI: boş ya da harf içermeyen cevap<br/>AI'a gitmeden "no" sayılır
@@ -148,7 +152,7 @@ sequenceDiagram
   and
     S->>DB: grades: bu kullanıcı bu soruyu daha önce cevapladı mı?
   end
-  Note over S: isCorrect = meaningPreserved == "yes"<br/>source = practiceId varsa practice, yoksa section
+  Note over S: isCorrect = meaningPreserved == "yes"<br/>source = section
   S-->>A: analiz + isCorrect
   A-->>QS: ActionResult
   QS-->>U: değerlendirme ekranı (GradedQuestion)
@@ -164,13 +168,16 @@ sequenceDiagram
   QC->>QC: doğruysa kuyruktan çıkar, yanlışsa sona ekle
 ```
 
-- **Nerede:** `components/shared/quiz/question-step.tsx` (`handleSubmit`) → `actions/quiz.ts` →
-  `gradeTranslationService` (`services/quiz.ts`) → `ai/tasks/analyze-sentence.ts`. Kuyruk
-  `quiz-card.tsx` içindeki `handleContinue`'da güncellenir.
-- **Okuduğu:** `learning_profiles`, `questions`, `grades`
+- **Nerede:** `components/shared/quiz/question-step.tsx` (`handleSubmit`) → `onGrade`
+  (`quiz-card.tsx`) → `actions/quiz.ts` → `gradeQuizTranslationService` (`services/quiz.ts`) →
+  `ai/tasks/analyze-sentence.ts`. Kuyruk `quiz-card.tsx` içindeki `handleContinue`'da güncellenir.
+- **Okuduğu:** `learning_profiles`, `quizzes`, `questions`, `grades`
 - **Yazdığı:** `grades` (her cevapta bir satır), `mistakes` (hata varsa, hata başına bir satır)
 - **AI çağrısı:** var, `analyzeSentence`
 - **Dallanmalar:**
+  - Soru id ile tek başına aranmaz, kullanıcının gördüğü quiz'in (`getQuizService`: section +
+    kullanıcının ana dili) içinde aranır. Orada yoksa (başka dildeki quiz'in ya da bir practice'in
+    sorusu) `AppError("Not found")` döner ve AI çağrılmaz.
   - `isCorrect` kararını sunucudaki kod verir, AI değil. AI'ın döndürdüğü `meaningPreserved`
     değeri `"yes"` ise doğru sayılır. Gramer hataları cevabı yanlış yapmaz, yalnızca gösterilir ve
     kaydedilir. `"partial"` ise yanlış sayılır.
@@ -178,8 +185,9 @@ sequenceDiagram
     hata geçmişini doldurmaz.
   - `isFirstAttempt`, bu kullanıcı için bu soruya ait **herhangi** bir grade yoksa true olur. Bu
     sorgu AI ile paralel çalıştığı için ek süre eklemez.
-  - `source`, sorunun sahibinden çıkarılır: `practiceId` doluysa `practice`, değilse `section`. Bu
-    servis practice soruları için de aynı şekilde kullanılır.
+  - `source` her zaman `section`'dır. Practice soruları aynı puanlama kodundan
+    (`gradeTranslation`) geçer ama kendi giriş noktalarından gelir
+    (`gradePracticeTranslationService`, `source = practice`).
 - **Döndürdüğü:** `TranslationGrade` (kullanıcının çevirisi, analiz, `isCorrect`)
 - **Gloss'lar:** cevap yazılırken kaynak cümledeki gloss'lu kelimelerin altı çizilidir ve popover
   yalnızca `englishLemma`'yı gösterir. Kelimenin cümlede nasıl çekileceği kullanıcıya bırakılır,

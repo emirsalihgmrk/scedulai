@@ -8,6 +8,7 @@ import {
   completePracticeAction,
   generatePracticeByAiAction,
 } from "@/actions/practice";
+import { gradePracticeTranslationAction } from "@/actions/quiz";
 import { savePracticeGlossAction } from "@/actions/vocabulary";
 import EmptyState from "@/components/shared/empty-state";
 import GeneratingStep from "@/components/shared/quiz/generating-step";
@@ -153,6 +154,9 @@ export default function SessionCard({
           total={practice.questions.length}
           nativeLangLabel={getNativeLanguageLabel(user.nativeLanguage)}
           sourceLabel={`Your weakest area: ${categoryLabel}`}
+          onGrade={(input) =>
+            gradePracticeTranslationAction(question.id, input)
+          }
           onContinue={handleContinue}
           onSaveGloss={(gloss) =>
             savePracticeGlossAction(question.id, {

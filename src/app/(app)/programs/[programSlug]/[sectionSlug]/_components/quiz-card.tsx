@@ -4,7 +4,11 @@ import { FileQuestion, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useRef, useState, useTransition } from "react";
 
-import { completeQuizAction, generateQuizByAiAction } from "@/actions/quiz";
+import {
+  completeQuizAction,
+  generateQuizByAiAction,
+  gradeQuizTranslationAction,
+} from "@/actions/quiz";
 import { saveQuizGlossAction } from "@/actions/vocabulary";
 import EmptyState from "@/components/shared/empty-state";
 import CompletedStep from "@/components/shared/quiz/completed-step";
@@ -132,6 +136,9 @@ export default function QuizCard({
             total={total}
             nativeLangLabel={getNativeLanguageLabel(user.nativeLanguage)}
             sourceLabel="AI-generated from transcript"
+            onGrade={(input) =>
+              gradeQuizTranslationAction(sectionId, question.id, input)
+            }
             onContinue={handleContinue}
             onSaveGloss={(gloss) =>
               saveQuizGlossAction(sectionId, question.id, {

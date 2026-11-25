@@ -10,7 +10,8 @@ import type {
 import {
   completeQuizService,
   generateQuizByAiService,
-  gradeTranslationService,
+  gradePracticeTranslationService,
+  gradeQuizTranslationService,
 } from "@/services/quiz";
 
 export async function generateQuizByAiAction(
@@ -24,12 +25,29 @@ export async function generateQuizByAiAction(
   }
 }
 
-export async function gradeTranslationAction(
+export async function gradeQuizTranslationAction(
+  sectionId: string,
   questionId: string,
   input: GradeTranslationInput,
 ): Promise<ActionResult<TranslationGrade>> {
   try {
-    const data = await gradeTranslationService(questionId, input);
+    const data = await gradeQuizTranslationService(
+      sectionId,
+      questionId,
+      input,
+    );
+    return { ok: true, data };
+  } catch (error) {
+    return toActionFailure(error);
+  }
+}
+
+export async function gradePracticeTranslationAction(
+  questionId: string,
+  input: GradeTranslationInput,
+): Promise<ActionResult<TranslationGrade>> {
+  try {
+    const data = await gradePracticeTranslationService(questionId, input);
     return { ok: true, data };
   } catch (error) {
     return toActionFailure(error);

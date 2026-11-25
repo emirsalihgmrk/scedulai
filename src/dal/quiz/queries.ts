@@ -2,13 +2,8 @@ import { and, eq, gte } from "drizzle-orm";
 
 import type { SupportedNativeLanguageCode } from "@/constants/language";
 import { db } from "@/db";
-import { gradesTable, questionsTable, quizzesTable } from "@/db/schema";
-import type {
-  Grade,
-  GradeListItem,
-  Question,
-  QuizWithQuestions,
-} from "@/schemas/quiz";
+import { gradesTable, quizzesTable } from "@/db/schema";
+import type { Grade, GradeListItem, QuizWithQuestions } from "@/schemas/quiz";
 
 export async function getQuiz(
   sectionId: string,
@@ -26,15 +21,6 @@ export async function getQuiz(
         orderBy: (questions, { asc }) => asc(questions.order),
       },
     },
-  });
-}
-
-export async function getQuestion(
-  questionId: string,
-): Promise<Question | undefined> {
-  return db.query.questionsTable.findFirst({
-    where: eq(questionsTable.id, questionId),
-    columns: { createdAt: false, updatedAt: false },
   });
 }
 

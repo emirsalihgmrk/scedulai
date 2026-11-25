@@ -321,14 +321,15 @@ sequenceDiagram
 
 ## 6. Cevaplama ve tamamlanma
 
-Sorular quiz'deki bileşenlerle (`QuestionStep`) ve aynı not verme yoluyla
-(`gradeTranslationAction` → `gradeTranslationService`) cevaplanır. Bkz.
+Sorular quiz'deki bileşenlerle (`QuestionStep`) ve aynı puanlama koduyla (`gradeTranslation`)
+cevaplanır, ama kendi giriş noktalarından geçer: `gradePracticeTranslationAction` →
+`gradePracticeTranslationService`. Bkz.
 [quiz-answer.md, Cevap değerlendirme](./quiz-answer.md#3-cevap-değerlendirme). Burada yalnızca
 farklar yazılıdır.
 
 ```mermaid
 flowchart LR
-  Q["QuestionStep<br/>gradeTranslationAction"] --> G["grades + mistakes<br/>source = practice"]
+  Q["QuestionStep<br/>gradePracticeTranslationAction"] --> G["grades + mistakes<br/>source = practice"]
   Q --> C{"doğru mu?"}
   C -- hayır --> E["soru kuyruğun sonuna"] --> Q
   C -- evet --> K{"kuyruk boş mu?"}
@@ -337,9 +338,13 @@ flowchart LR
   D --> P[("practices.completedAt = now")]
 ```
 
-- **Kaynak:** sorunun `practice_id`'si dolu olduğu için `grades` ve `mistakes` satırları
-  `source = practice` ile yazılır. Bu hatalar hata defterinde görünmez, ama zayıf kategori
-  hesabına girer.
+- **Sahiplik:** soru id ile tek başına aranmaz, kullanıcının bugünkü setinde
+  (`getPracticeService`) aranır. Başka bir kullanıcının ya da eski bir setin sorusu
+  `AppError("Not found")` alır ve AI çağrılmaz. Pencere (20 saat) session açıkken dolarsa, kalan
+  sorular da aynı hatayı alır.
+- **Kaynak:** `gradePracticeTranslationService` `grades` ve `mistakes` satırlarını
+  `source = practice` ile yazar. Bu hatalar hata defterinde görünmez, ama zayıf kategori hesabına
+  girer.
 - **Kuyruk:** yanlış cevaplanan soru kuyruğun sonuna gider. Her ilerlemede artan `attempt`
   sayacı, yeniden sorulan soruyu boş bir cevap kutusuyla yeniden çizer. Cevaplar saklanmadığı
   için sayfa yenilenirse set baştan başlar, ama yeniden üretilmez (bugünkü set döner).
@@ -363,5 +368,3 @@ flowchart LR
   için sayfanın yenilenmesi gerekir.
 - İki istek "bugünkü set var mı?" kontrolünü aynı anda geçerse iki set oluşabilir.
   `getPracticeService` en yenisini döndürdüğü için bu zararsızdır.
-- **Gözlem:** `gradeTranslationService` soruyu yalnızca id ile bulur. Sorunun kullanıcının bugünkü
-  setine (ya da gördüğü quiz'e) ait olup olmadığını kontrol etmez.

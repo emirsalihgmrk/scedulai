@@ -3,13 +3,18 @@
 import { ArrowRight, ChevronRight, Languages } from "lucide-react";
 import { useState, useTransition } from "react";
 
-import { gradeTranslationAction } from "@/actions/quiz";
 import AnswerInput from "@/components/shared/quiz/answer-input";
 import GradedQuestion from "@/components/shared/quiz/graded-question";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import type { Gloss, Question, TranslationGrade } from "@/schemas/quiz";
+import type { ActionResult } from "@/lib/action";
+import type {
+  Gloss,
+  GradeTranslationInput,
+  Question,
+  TranslationGrade,
+} from "@/schemas/quiz";
 
 // Every quiz teaches English.
 const LEARNED_LANGUAGE_LABEL = "English";
@@ -20,6 +25,9 @@ interface QuestionStepProps {
   total: number;
   nativeLangLabel: string;
   sourceLabel: string;
+  onGrade: (
+    input: GradeTranslationInput,
+  ) => Promise<ActionResult<TranslationGrade>>;
   onContinue: (isCorrect: boolean) => void;
   onSaveGloss?: (gloss: Gloss) => Promise<boolean>;
 }
@@ -30,6 +38,7 @@ export default function QuestionStep({
   total,
   nativeLangLabel,
   sourceLabel,
+  onGrade,
   onContinue,
   onSaveGloss,
 }: QuestionStepProps) {
@@ -47,9 +56,7 @@ export default function QuestionStep({
     setError(null);
     startTransition(async () => {
       try {
-        const result = await gradeTranslationAction(question.id, {
-          userTranslation: draft,
-        });
+        const result = await onGrade({ userTranslation: draft });
         if (result.ok) {
           setGrade(result.data);
         } else {
