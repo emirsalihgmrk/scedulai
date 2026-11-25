@@ -18,10 +18,10 @@ import { glossSchema } from "@/schemas/quiz";
 export type VocabularyItemListItem = Pick<
   VocabularyItemRow,
   | "id"
-  | "phrase"
-  | "meaning"
+  | "englishLemma"
+  | "nativeLemma"
   | "context"
-  | "contextPhrase"
+  | "englishInContext"
   | "timeSeconds"
   | "createdAt"
 > & {
@@ -57,20 +57,21 @@ export type VocabularyReviewListItem = Pick<
 
 // ── DAL input schemas ──
 
-// Lowercased so the same phrase saved twice hits the (user, phrase) unique key.
+// Lowercased so the same phrase saved twice hits the (user, englishLemma)
+// unique key.
 export const createVocabularyItemSchema = createVocabularyItemRowSchema
   .pick({
-    phrase: true,
-    meaning: true,
+    englishLemma: true,
+    nativeLemma: true,
     context: true,
-    contextPhrase: true,
+    englishInContext: true,
     timeSeconds: true,
   })
   .extend({
-    phrase: z.string().trim().toLowerCase().min(1).max(80),
-    meaning: z.string().trim().min(1).max(120),
+    englishLemma: z.string().trim().toLowerCase().min(1).max(80),
+    nativeLemma: z.string().trim().min(1).max(120),
     context: z.string().trim().min(1).max(500),
-    contextPhrase: z.string().trim().toLowerCase().min(1).max(80).nullish(),
+    englishInContext: z.string().trim().toLowerCase().min(1).max(80).nullish(),
     timeSeconds: z.int().min(0).nullish(),
   });
 export type CreateVocabularyItemInput = z.infer<
@@ -105,14 +106,20 @@ export type CreateVocabularyReviewInput = z.infer<
 
 // ── Service input schemas ──
 
+// The picked words, as the line says them.
 export const saveTranscriptPhraseSchema = createVocabularyItemSchema
-  .pick({ phrase: true })
-  .extend({ lineIndex: z.int().min(0) });
+  .pick({ englishInContext: true })
+  .extend({
+    englishInContext: createVocabularyItemSchema.shape.englishInContext
+      .unwrap()
+      .unwrap(),
+    lineIndex: z.int().min(0),
+  });
 export type SaveTranscriptPhraseInput = z.infer<
   typeof saveTranscriptPhraseSchema
 >;
 
-export const saveGlossSchema = glossSchema.pick({ phrase: true });
+export const saveGlossSchema = glossSchema.pick({ nativeInContext: true });
 export type SaveGlossInput = z.infer<typeof saveGlossSchema>;
 
 export const reviewVocabularyItemSchema = createVocabularyReviewSchema
@@ -125,7 +132,7 @@ export type ReviewVocabularyItemInput = z.infer<
 // ── Service result types ──
 
 export const phraseDefinitionSchema = createVocabularyItemSchema.pick({
-  phrase: true,
-  meaning: true,
+  englishLemma: true,
+  nativeLemma: true,
 });
 export type PhraseDefinition = z.infer<typeof phraseDefinitionSchema>;

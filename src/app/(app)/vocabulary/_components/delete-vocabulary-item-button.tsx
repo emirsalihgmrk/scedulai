@@ -9,12 +9,12 @@ import { Button } from "@/components/ui/button";
 
 interface DeleteVocabularyItemButtonProps {
   vocabularyItemId: string;
-  phrase: string;
+  englishLemma: string;
 }
 
 export default function DeleteVocabularyItemButton({
   vocabularyItemId,
-  phrase,
+  englishLemma,
 }: DeleteVocabularyItemButtonProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function DeleteVocabularyItemButton({
       size="icon-sm"
       onClick={handleDelete}
       disabled={isPending}
-      aria-label={`Delete “${phrase}”`}
+      aria-label={`Delete “${englishLemma}”`}
       className="shrink-0 text-muted-foreground hover:text-destructive"
     >
       {isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}

@@ -386,10 +386,11 @@ export const practicesTable = pgTable(
   ],
 );
 
-// One row per phrase a learner saved. `phrase` is English in dictionary form,
-// `meaning` is in the learner's native language and `context` is the English
-// sentence it was saved from. `contextPhrase` is the phrase as it appears in
-// that sentence ("gave up" for "give up"), null when it can't be located.
+// One row per phrase a learner saved. `englishLemma` is the phrase in
+// dictionary form, `nativeLemma` its dictionary form in the learner's native
+// language and `context` the English sentence it was saved from.
+// `englishInContext` is the phrase as that sentence says it ("gave up" for
+// "give up"), null when it can't be located.
 // Saved from a transcript, it has the video and the line's timestamp; from a
 // section quiz's gloss, only the video; from a practice's gloss, neither.
 export const vocabularyItemsTable = pgTable(
@@ -399,19 +400,19 @@ export const vocabularyItemsTable = pgTable(
     userId: text("user_id")
       .references(() => userTable.id, { onDelete: "cascade" })
       .notNull(),
-    phrase: text("phrase").notNull(),
-    meaning: text("meaning").notNull(),
+    englishLemma: text("english_lemma").notNull(),
+    nativeLemma: text("native_lemma").notNull(),
     context: text("context").notNull(),
-    contextPhrase: text("context_phrase"),
+    englishInContext: text("english_in_context"),
     videoId: uuid("video_id").references(() => videosTable.id, {
       onDelete: "set null",
     }),
     timeSeconds: integer("time_seconds"),
   },
   (table) => [
-    unique("vocabulary_items_user_phrase_unique").on(
+    unique("vocabulary_items_user_english_lemma_unique").on(
       table.userId,
-      table.phrase,
+      table.englishLemma,
     ),
     index("vocabulary_items_user_id_created_at_idx").on(
       table.userId,

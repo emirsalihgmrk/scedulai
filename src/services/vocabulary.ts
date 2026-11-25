@@ -120,7 +120,8 @@ export async function saveTranscriptPhraseService(
   const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
 
-  const { lineIndex, phrase } = saveTranscriptPhraseSchema.parse(input);
+  const { lineIndex, englishInContext } =
+    saveTranscriptPhraseSchema.parse(input);
 
   const video = await getVideoService(sectionId);
   if (!video) throw new AppError("This section has no video");
@@ -128,28 +129,26 @@ export async function saveTranscriptPhraseService(
   const lines = await getTranscriptService(video.id);
   const line = lines.at(lineIndex);
   if (!line) throw new AppError("Not found");
-  if (!matchPhrase(line.text, phrase)) {
+  if (!matchPhrase(line.text, englishInContext)) {
     throw new AppError("Those words are not in this line");
   }
 
   const definition = await definePhrase({
-    phrase,
+    phrase: englishInContext,
     sentence: line.text,
     nativeLanguage: getNativeLanguageEnglishName(user.nativeLanguage),
   });
 
-  // The picked words are the phrase as the line says it, even when the model
-  // turns it into dictionary form.
   const item = upsertVocabularyItemSchema.parse({
     ...definition,
     context: line.text,
-    contextPhrase: phrase,
+    englishInContext,
     timeSeconds: parseTimestamp(line.time),
   });
 
   await upsertVocabularyItem(user.id, video.id, item);
 
-  return { phrase: item.phrase, meaning: item.meaning };
+  return { englishLemma: item.englishLemma, nativeLemma: item.nativeLemma };
 }
 
 // A gloss already carries its translation, so no model call is needed. Saved
@@ -158,29 +157,35 @@ export async function saveTranscriptPhraseService(
 async function saveGloss(
   userId: string,
   question: Question,
-  glossPhrase: string,
+  nativeInContext: string,
   videoId: string | null,
 ): Promise<void> {
   const { payload } = question;
   if (payload.type !== "translation") {
     throw new AppError("Invalid question type");
   }
-  const gloss = payload.glosses?.find(({ phrase }) => phrase === glossPhrase);
+  const gloss = payload.glosses?.find(
+    (candidate) => candidate.nativeInContext === nativeInContext,
+  );
   if (!gloss) throw new AppError("Not found");
 
+  // Both English forms come from the model, so the one stored is the first the
+  // sentence really holds: the lemma is there too when the sentence uses it
+  // ("meeting").
   const { expectedTranslation } = payload;
+  const englishInContext =
+    [gloss.englishInContext, gloss.englishLemma].find((form) =>
+      matchPhrase(expectedTranslation, form),
+    ) ?? null;
+
   await createVocabularyItem(
     userId,
     videoId,
     createVocabularyItemSchema.parse({
-      phrase: gloss.meaning,
-      meaning: gloss.phrase,
+      englishLemma: gloss.englishLemma,
+      nativeLemma: gloss.nativeLemma,
       context: expectedTranslation,
-      // A gloss's English is in dictionary form, so the sentence holds it only
-      // when it uses that form too ("meeting", but not "gave up").
-      contextPhrase: matchPhrase(expectedTranslation, gloss.meaning)
-        ? gloss.meaning
-        : null,
+      englishInContext,
       timeSeconds: null,
     }),
   );
@@ -194,7 +199,7 @@ export async function saveQuizGlossService(
   const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
 
-  const { phrase } = saveGlossSchema.parse(input);
+  const { nativeInContext } = saveGlossSchema.parse(input);
 
   const [quiz, video] = await Promise.all([
     getQuizService(sectionId),
@@ -203,7 +208,7 @@ export async function saveQuizGlossService(
   const question = quiz?.questions.find(({ id }) => id === questionId);
   if (!question) throw new AppError("Not found");
 
-  await saveGloss(user.id, question, phrase, video?.id ?? null);
+  await saveGloss(user.id, question, nativeInContext, video?.id ?? null);
 }
 
 export async function savePracticeGlossService(
@@ -213,13 +218,13 @@ export async function savePracticeGlossService(
   const user = await getCurrentUserService();
   if (!user) throw new AppError("Unauthorized");
 
-  const { phrase } = saveGlossSchema.parse(input);
+  const { nativeInContext } = saveGlossSchema.parse(input);
 
   const practice = await getPracticeService();
   const question = practice?.questions.find(({ id }) => id === questionId);
   if (!question) throw new AppError("Not found");
 
-  await saveGloss(user.id, question, phrase, null);
+  await saveGloss(user.id, question, nativeInContext, null);
 }
 
 export async function reviewVocabularyItemService(

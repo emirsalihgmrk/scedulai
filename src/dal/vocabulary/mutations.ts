@@ -36,12 +36,12 @@ export async function upsertVocabularyItem(
   tx?: Transaction,
 ): Promise<void> {
   const executor = tx ?? db;
-  const { phrase, ...fields } = input;
+  const { englishLemma, ...fields } = input;
   await executor
     .insert(vocabularyItemsTable)
-    .values({ userId, videoId, phrase, ...fields })
+    .values({ userId, videoId, englishLemma, ...fields })
     .onConflictDoUpdate({
-      target: [vocabularyItemsTable.userId, vocabularyItemsTable.phrase],
+      target: [vocabularyItemsTable.userId, vocabularyItemsTable.englishLemma],
       set: { videoId, ...fields },
     });
 }

@@ -64,13 +64,13 @@ function VocabularyItem({ item }: VocabularyItemProps) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-display text-lg font-semibold text-foreground">
-            {item.phrase}
+            {item.englishLemma}
           </p>
-          <p className="text-sm text-muted-foreground">{item.meaning}</p>
+          <p className="text-sm text-muted-foreground">{item.nativeLemma}</p>
         </div>
         <DeleteVocabularyItemButton
           vocabularyItemId={item.id}
-          phrase={item.phrase}
+          englishLemma={item.englishLemma}
         />
       </div>
 

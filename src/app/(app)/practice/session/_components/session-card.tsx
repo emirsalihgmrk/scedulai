@@ -156,7 +156,7 @@ export default function SessionCard({
           onContinue={handleContinue}
           onSaveGloss={(gloss) =>
             savePracticeGlossAction(question.id, {
-              phrase: gloss.phrase,
+              nativeInContext: gloss.nativeInContext,
             }).then((result) => result.ok)
           }
         />

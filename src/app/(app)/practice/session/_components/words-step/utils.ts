@@ -24,17 +24,17 @@ export function isCorrectAnswer(
   item: VocabularyItemListItem,
 ): boolean {
   const normalized = normalizeAnswer(answer);
-  return [item.phrase, item.contextPhrase].some(
+  return [item.englishLemma, item.englishInContext].some(
     (form) => form !== null && normalizeAnswer(form) === normalized,
   );
 }
 
 export function splitContext(
   context: string,
-  contextPhrase: string | null,
+  englishInContext: string | null,
 ): ContextParts | null {
-  if (!contextPhrase) return null;
-  const match = matchPhrase(context, contextPhrase);
+  if (!englishInContext) return null;
+  const match = matchPhrase(context, englishInContext);
   if (!match) return null;
   return {
     before: context.slice(0, match.index),

@@ -20,7 +20,7 @@ export default function PromptStep({
   onChange,
   onSubmit,
 }: PromptStepProps) {
-  const parts = splitContext(item.context, item.contextPhrase);
+  const parts = splitContext(item.context, item.englishInContext);
 
   return (
     <form
@@ -35,7 +35,7 @@ export default function PromptStep({
           Meaning
         </p>
         <p className="font-display text-2xl font-bold text-foreground">
-          {item.meaning}
+          {item.nativeLemma}
         </p>
       </div>
 

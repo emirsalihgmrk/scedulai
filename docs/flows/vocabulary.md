@@ -36,8 +36,8 @@ sequenceDiagram
   U->>SP: satırdaki düğmeyle popover'ı açar, kelimeleri seçer
   Note over SP: ilk dokunuş bir kelime seçer, ikincisi aralık yapar (en çok 6 kelime)<br/>baştaki ve sondaki noktalama atılır
   U->>SP: Save
-  SP->>A: sectionId, lineIndex, phrase
-  A->>S: sectionId, lineIndex, phrase
+  SP->>A: sectionId, lineIndex, englishInContext (seçilen kelimeler)
+  A->>S: sectionId, lineIndex, englishInContext
   S->>DB: user
   S->>S: girdiyi Zod ile doğrula
   S->>DB: sections → videos
@@ -46,9 +46,9 @@ sequenceDiagram
     S-->>SP: AppError → popover'da hata
   end
   S->>AI: seçilen kelimeler, satır, ana dil
-  AI-->>S: phrase (sözlük biçimi), meaning (ana dilde)
-  S->>DB: UPSERT vocabulary_items (aynı kullanıcı + phrase varsa günceller)
-  S-->>A: phrase + meaning
+  AI-->>S: englishLemma, nativeLemma (iki dilde sözlük biçimi)
+  S->>DB: UPSERT vocabulary_items (aynı kullanıcı + englishLemma varsa günceller)
+  S-->>A: englishLemma + nativeLemma
   A-->>SP: ActionResult
   SP-->>U: "give up · vazgeçmek"
 ```
@@ -59,21 +59,25 @@ sequenceDiagram
 - **Okuduğu tablolar:** `user`, `sections`, `videos`, `transcripts`
 - **Yazdığı tablolar:** `vocabulary_items`
 - **AI çağrısı:** var, `definePhrase`. Seçilen kelimeleri sözlük biçimine çevirir ("giving up" →
-  "give up") ve o cümledeki anlamını ana dilde verir.
+  "give up", `englishLemma`) ve o cümledeki anlamını ana dilde, sözlük biçiminde verir
+  (`nativeLemma`). Seçilen kelimeler olduğu gibi `englishInContext` olur.
 - **Dallanmalar:**
   - Kullanıcı yoksa (`Unauthorized`), section'ın videosu yoksa, `lineIndex`'te satır yoksa
     (`Not found`) ya da seçilen kelimeler satırda bütün kelimeler olarak geçmiyorsa hata döner.
     Son kontrol `matchPhrase` ile yapılır ve büyük/küçük harfe bakmaz.
-  - Kelime zaten kayıtlıysa yeni satır açılmaz, var olan güncellenir: `meaning`, `context`,
-    `contextPhrase`, `video_id` ve `time_seconds` yeni kayıttan gelir. Kelimenin tekrar takvimi
+  - Kelime zaten kayıtlıysa yeni satır açılmaz, var olan güncellenir: `nativeLemma`, `context`,
+    `englishInContext`, `video_id` ve `time_seconds` yeni kayıttan gelir. Kelimenin tekrar takvimi
     (`vocabulary_cards`) ayrı tabloda durduğu için sıfırlanmaz.
-- **Döndürdüğü:** `PhraseDefinition` (sözlük biçimi ve ana dildeki anlamı). Popover'da gösterilir.
+- **Döndürdüğü:** `PhraseDefinition` (`englishLemma` ve `nativeLemma`). Popover'da gösterilir.
 
 ### Quiz ya da practice sorusundan kelime kaydetme (gloss)
 
-Gloss, AI'ın soru üretirken cümledeki kelimelere eklediği ipucudur. Soru cümlesinde altı çizili
-kelimenin üstüne gelince anlamı ve kaydet düğmesi görünür. Quiz ve practice aynı bileşenleri ve
-aynı kayıt fonksiyonunu (`saveGloss`) kullanır. Fark yalnızca sorunun nereden doğrulandığındadır.
+Gloss, AI'ın soru üretirken cümledeki kelimelere eklediği ipucudur. Her gloss, kelimenin iki dilde
+sözlük biçimini (`nativeLemma`, `englishLemma`) ve iki cümlede geçtiği biçimi taşır:
+`nativeInContext` kaynak cümlede, `englishInContext` beklenen çeviride. Soru cümlesinde altı çizili
+kelimenin üstüne gelince `englishLemma` ve kaydet düğmesi görünür. Değerlendirme ekranında beklenen
+çeviride de altı çizilir ve oradan da kaydedilebilir. Quiz ve practice aynı bileşenleri ve aynı
+kayıt fonksiyonunu (`saveGloss`) kullanır. Fark yalnızca sorunun nereden doğrulandığındadır.
 
 ```mermaid
 sequenceDiagram
@@ -85,7 +89,7 @@ sequenceDiagram
 
   U->>SS: gloss'un üstüne gelir, kaydet'e basar
   alt quiz sorusu
-    SS->>A: saveQuizGlossAction(sectionId, questionId, phrase)
+    SS->>A: saveQuizGlossAction(sectionId, questionId, nativeInContext)
     A->>S: saveQuizGlossService
     par
       S->>DB: user + learning_profiles, quiz + questions
@@ -93,14 +97,14 @@ sequenceDiagram
       S->>DB: sections → videos
     end
   else practice sorusu
-    SS->>A: savePracticeGlossAction(questionId, phrase)
+    SS->>A: savePracticeGlossAction(questionId, nativeInContext)
     A->>S: savePracticeGlossService
     S->>DB: bugünkü practice + questions (son 20 saat)
   end
   break soru bulunamazsa, tipi translation değilse ya da gloss soruda yoksa
     S-->>SS: AppError
   end
-  Note over S: saveGloss: phrase = gloss.meaning (İngilizce)<br/>meaning = gloss.phrase (ana dil)<br/>context = sorunun beklenen İngilizce çevirisi
+  Note over S: saveGloss: englishLemma, nativeLemma, englishInContext gloss'tan aynı adla<br/>context = sorunun beklenen İngilizce çevirisi
   S->>DB: INSERT vocabulary_items (aynı phrase varsa hiçbir şey yapma)
   S-->>A: ok
   A-->>SS: ActionResult
@@ -109,7 +113,8 @@ sequenceDiagram
 
 - **Nerede:**
   - Quiz: `quiz-card.tsx` → `question-step.tsx` → `answer-input.tsx` / `graded-question.tsx` →
-    `source-sentence.tsx` (`SaveGlossButton`) → `saveQuizGlossAction` (`actions/vocabulary.ts`) →
+    `source-sentence.tsx` (değerlendirme ekranında beklenen çeviri de) → `glossed-text.tsx`
+    (`SaveGlossButton`) → `saveQuizGlossAction` (`actions/vocabulary.ts`) →
     `saveQuizGlossService` (`services/vocabulary.ts`)
   - Practice: `session-card.tsx` → aynı bileşenler → `savePracticeGlossAction` →
     `savePracticeGlossService`
@@ -133,24 +138,27 @@ sequenceDiagram
 
 ### Kaynağa göre kaydın alanları
 
-| Alan                 | Transcript                         | Quiz gloss                                          | Practice gloss            |
-| -------------------- | ---------------------------------- | --------------------------------------------------- | ------------------------- |
-| `phrase` (İngilizce) | AI'ın verdiği sözlük biçimi        | `gloss.meaning`                                     | `gloss.meaning`           |
-| `meaning` (ana dil)  | AI'ın verdiği anlam                | `gloss.phrase`                                      | `gloss.phrase`            |
-| `context`            | transcript satırı                  | sorunun beklenen çevirisi                           | sorunun beklenen çevirisi |
-| `context_phrase`     | seçilen kelimeler (her zaman dolu) | sözlük biçimi cümlede aynen geçiyorsa o, yoksa null | aynı                      |
-| `video_id`           | section'ın videosu                 | section'ın videosu (varsa)                          | null                      |
-| `time_seconds`       | satırın zamanı                     | null                                                | null                      |
-| Tekrar kaydedilirse  | günceller                          | değiştirmez                                         | değiştirmez               |
+| Alan                 | Transcript                          | Quiz gloss                   | Practice gloss            |
+| -------------------- | ----------------------------------- | ---------------------------- | ------------------------- |
+| `english_lemma`      | AI'ın verdiği sözlük biçimi         | `gloss.englishLemma`         | `gloss.englishLemma`      |
+| `native_lemma`       | AI'ın verdiği anlam (sözlük biçimi) | `gloss.nativeLemma`          | `gloss.nativeLemma`       |
+| `context`            | transcript satırı                   | sorunun beklenen çevirisi    | sorunun beklenen çevirisi |
+| `english_in_context` | seçilen kelimeler (her zaman dolu)  | `gloss.englishInContext` (*) | aynı                      |
+| `video_id`           | section'ın videosu                  | section'ın videosu (varsa)   | null                      |
+| `time_seconds`       | satırın zamanı                      | null                         | null                      |
+| Tekrar kaydedilirse  | günceller                           | değiştirmez                  | değiştirmez               |
+
+(*) Cümlede bulunamazsa `gloss.englishLemma` denenir, o da yoksa null.
 
 ---
 
 **Notlar**
 
-- `context_phrase` transcript kaydında her zaman doludur, çünkü kullanıcı kelimeleri cümlenin
-  içinden seçer ve cümlede geçtikleri zaten doğrulanmıştır. Gloss'ta da cümle elimizde, ama
-  İngilizce kelime sözlük biçiminde gelir. Cümle "gave up" diyorsa "give up" orada bulunamaz ve
-  `context_phrase` null kalır.
+- `english_in_context` transcript kaydında her zaman doludur, çünkü kullanıcı kelimeleri cümlenin
+  içinden seçer ve cümlede geçtikleri zaten doğrulanmıştır. Gloss'ta AI'ın beklenen çeviriden
+  kopyaladığı biçim gelir. Ona güvenilmez, `matchPhrase` ile cümlede aranır. Bulunamazsa sözlük
+  biçimi denenir (cümle "meeting" diyorsa ikisi aynıdır), o da yoksa alan null kalır ve tekrar
+  kartı cümleyi cevaptan sonraya bırakır.
 - `video_id` transcript'ten ve quiz'den kayıtta dolu (quiz section'ın videosunu kullanır),
   practice'ten kayıtta boştur. `time_seconds` yalnızca transcript'ten kayıtta doludur. Şemadaki
   `vocabulary_items_time_needs_video_check` kısıtı, video olmadan zaman kaydedilmesini engeller.
@@ -196,9 +204,10 @@ sequenceDiagram
   - Kullanıcı yoksa giriş yapmaya çağıran `EmptyState` gösterilir.
   - Kullanıcının kayıtlı kelimesi yoksa kelimenin nereden kaydedileceğini anlatan `EmptyState`
     gösterilir.
-- **Döndürdüğü:** `VocabularyItemListItem[]`, en yeni kayıt önce. Her kartta `phrase`, `meaning`,
-  `context`, varsa videonun başlığı ve `time_seconds`, bir de kayıt tarihi görünür.
-  `contextPhrase` de gelir ama bu sayfada kullanılmaz (tekrar kartında kelimeyi gizlemek içindir).
+- **Döndürdüğü:** `VocabularyItemListItem[]`, en yeni kayıt önce. Her kartta `englishLemma`,
+  `nativeLemma`, `context`, varsa videonun başlığı ve `time_seconds`, bir de kayıt tarihi görünür.
+  `englishInContext` de gelir ama bu sayfada kullanılmaz (tekrar kartında kelimeyi gizlemek
+  içindir).
 
 ### Silme
 
@@ -305,7 +314,7 @@ sequenceDiagram
   Note over W: kuyruk = kelimelerin id'leri, baştaki sorulur
   W->>U: PromptStep: anlam + kelimesi gizlenmiş cümle
   U->>W: İngilizcesini yazar, Check
-  W->>W: isCorrectAnswer (phrase ya da contextPhrase ile)
+  W->>W: isCorrectAnswer (englishLemma ya da englishInContext ile)
   W->>U: ResultStep: sonuç, kelime, tam cümle, video
   alt doğru, Continue
     U->>W: good
@@ -342,12 +351,12 @@ sequenceDiagram
   `vocabulary_reviews` (her tekrarda bir satır: `rating` ve tekrardan önceki `state`, kart yoksa
   `new`; cevap metni saklanmaz)
 - **AI çağrısı:** yok
-- **Kartın ön yüzü:** anlam (`meaning`) ve cümle (`context`). Cümledeki `contextPhrase` kelime
-  başına bir boşlukla gizlenir. `contextPhrase` null ise ya da cümlede bulunamazsa cümle cevabı
-  ele vereceği için cevaptan sonraya bırakılır.
-- **Kontrol:** büyük/küçük harf, noktalama ve kıvrık kesme işareti yok sayılır. Cevap `phrase`
-  (sözlük biçimi) ya da `contextPhrase` (cümledeki biçim) ile aynıysa doğrudur: "give up" da
-  "gave up" da kabul edilir.
+- **Kartın ön yüzü:** ana dildeki sözlük biçimi (`nativeLemma`) ve cümle (`context`). Cümledeki
+  `englishInContext` kelime başına bir boşlukla gizlenir. `englishInContext` null ise ya da
+  cümlede bulunamazsa cümle cevabı ele vereceği için cevaptan sonraya bırakılır.
+- **Kontrol:** büyük/küçük harf, noktalama ve kıvrık kesme işareti yok sayılır. Cevap
+  `englishLemma` (sözlük biçimi) ya da `englishInContext` (cümledeki biçim) ile aynıysa doğrudur:
+  "give up" da "gave up" da kabul edilir.
 - **Puan:**
 
   | Sonuç                   | `rating` | Kuyruk         |

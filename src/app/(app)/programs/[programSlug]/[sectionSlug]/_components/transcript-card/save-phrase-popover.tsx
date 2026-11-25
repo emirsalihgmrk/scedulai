@@ -76,7 +76,7 @@ export default function SavePhrasePopover({
       try {
         const result = await saveTranscriptPhraseAction(sectionId, {
           lineIndex,
-          phrase,
+          englishInContext: phrase,
         });
         if (result.ok) {
           setDefinition(result.data);
@@ -136,8 +136,11 @@ export default function SavePhrasePopover({
           <div className="flex items-start gap-2 rounded-lg bg-success/10 p-2.5 text-success">
             <BookmarkCheck className="mt-0.5 size-4 shrink-0" />
             <p className="text-sm">
-              <span className="font-semibold">{definition.phrase}</span>
-              <span className="text-foreground/80"> · {definition.meaning}</span>
+              <span className="font-semibold">{definition.englishLemma}</span>
+              <span className="text-foreground/80">
+                {" "}
+                · {definition.nativeLemma}
+              </span>
             </p>
           </div>
         ) : (

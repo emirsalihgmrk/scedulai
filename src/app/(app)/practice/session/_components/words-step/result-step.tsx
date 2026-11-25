@@ -34,11 +34,11 @@ export default function ResultStep({
   isCorrect,
   onContinue,
 }: ResultStepProps) {
-  const parts = splitContext(item.context, item.contextPhrase);
+  const parts = splitContext(item.context, item.englishInContext);
   const VerdictIcon = isCorrect ? CircleCheck : CircleX;
   const sentenceForm =
-    item.contextPhrase && item.contextPhrase !== item.phrase
-      ? item.contextPhrase
+    item.englishInContext && item.englishInContext !== item.englishLemma
+      ? item.englishInContext
       : null;
 
   return (
@@ -70,10 +70,10 @@ export default function ResultStep({
         <div className="flex flex-col gap-3 rounded-xl border border-success/30 bg-success/8 p-4">
           <div>
             <p className="font-display text-xl font-bold text-foreground">
-              {item.phrase}
+              {item.englishLemma}
             </p>
             <p className="text-sm text-muted-foreground">
-              {item.meaning}
+              {item.nativeLemma}
               {sentenceForm && <> · “{sentenceForm}” in the sentence</>}
             </p>
           </div>

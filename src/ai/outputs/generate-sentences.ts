@@ -12,15 +12,25 @@ export const sentencePairSchema = z.object({
   glosses: z
     .array(
       glossSchema.extend({
-        phrase: z
+        nativeInContext: z
           .string()
           .describe(
             "A word or fixed expression copied exactly, character for character, from the native sentence.",
           ),
-        meaning: z
+        nativeLemma: z
+          .string()
+          .describe(
+            "The same word or expression in native-language dictionary form: infinitive verb, noun without endings.",
+          ),
+        englishLemma: z
           .string()
           .describe(
             "Its English meaning in dictionary form: base verb, singular noun, no tense or article.",
+          ),
+        englishInContext: z
+          .string()
+          .describe(
+            "The words of the English translation that carry this meaning, copied exactly, character for character.",
           ),
       }),
     )

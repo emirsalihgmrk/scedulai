@@ -105,6 +105,11 @@ sequenceDiagram
 - **Yazdığı:** `quizzes`, `questions` (tek transaction)
 - **AI çağrısı:** var, `generateSentences`. Her soru `payload` içinde ana dil cümlesini
   (`sourceSentence`), beklenen İngilizce çeviriyi (`expectedTranslation`) ve `glosses`'u taşır.
+  Her gloss dört alan taşır:
+  - `nativeInContext`: kaynak cümleden harfi harfine ("vazgeçtim")
+  - `nativeLemma`: ana dildeki sözlük biçimi ("vazgeçmek")
+  - `englishLemma`: İngilizce sözlük biçimi ("give up")
+  - `englishInContext`: beklenen çeviriden harfi harfine ("gave up")
 - **Dallanmalar:**
   - Video ya da transcript yoksa `AppError` fırlatılır ve hata ekranı gösterilir.
   - Action başarısız olursa `hasRequestedRef` sıfırlanır, böylece sonraki render'da tekrar
@@ -172,6 +177,12 @@ sequenceDiagram
   - `source`, sorunun sahibinden çıkarılır: `practiceId` doluysa `practice`, değilse `section`. Bu
     servis practice soruları için de aynı şekilde kullanılır.
 - **Döndürdüğü:** `TranslationGrade` (kullanıcının çevirisi, analiz, `isCorrect`)
+- **Gloss'lar:** cevap yazılırken kaynak cümledeki gloss'lu kelimelerin altı çizilidir ve popover
+  yalnızca `englishLemma`'yı gösterir. Kelimenin cümlede nasıl çekileceği kullanıcıya bırakılır,
+  çünkü gramer hataları `mistakes`'e yazılır. Değerlendirme ekranında beklenen çeviride de
+  `englishInContext`'lerin altı çizilir ve popover "give up · vazgeçmek" gösterir. İki ekran da
+  `GlossedText` (`components/shared/quiz/glossed-text.tsx`) bileşenini kullanır. Cümlede birebir
+  geçmeyen gloss'un altı çizilmez.
 - **Yan çıkış:** sorudaki kelimeyi kaydetmek (`saveQuizGlossAction`) vocabulary akışına aittir.
 
 ## 4. Tamamlanma

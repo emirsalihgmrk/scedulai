@@ -8,6 +8,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import GlossedText from "@/components/shared/quiz/glossed-text";
 import SourceSentence from "@/components/shared/quiz/source-sentence";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -101,8 +102,23 @@ export default function GradedQuestion({
               <CircleCheck className="size-3.5" />
               Original Sentence
             </div>
+            {/* Once graded, the glosses show the form the sentence needed. */}
             <p className="text-[15px] leading-relaxed text-foreground">
-              {question.payload.expectedTranslation}
+              <GlossedText
+                text={question.payload.expectedTranslation}
+                glosses={question.payload.glosses ?? []}
+                form="englishInContext"
+                renderHint={(gloss) => (
+                  <span>
+                    <span className="font-medium">{gloss.englishLemma}</span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      · {gloss.nativeLemma}
+                    </span>
+                  </span>
+                )}
+                onSaveGloss={onSaveGloss}
+              />
             </p>
           </div>
 

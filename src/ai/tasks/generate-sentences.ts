@@ -7,13 +7,16 @@ import {
 } from "@/ai/outputs/generate-sentences";
 import type { GenerateSentencesOutput } from "@/ai/outputs/generate-sentences";
 
-// Shared with the practice task. A meaning in dictionary form gives away the
-// word, never the grammar the learner is meant to produce.
+// Shared with the practice task. The learner sees only the English lemma while
+// translating, which gives away the word, never the grammar they are meant to
+// produce; the in-context form is shown once the answer is graded.
 export function buildGlossRules(nativeLanguage: string): string {
   return `For each pair, also list glosses: vocabulary hints the learner can open while translating.
 - Gloss every content word or fixed expression of the ${nativeLanguage} sentence (nouns, verbs, adjectives, adverbs, idioms). Skip names, numbers and words whose English is identical.
-- phrase: copied exactly, character for character, from the ${nativeLanguage} sentence. A multi-word expression is one gloss.
-- meaning: its English meaning in dictionary form: base verb ("go", never "went" or "is going"), singular noun, no article. Never reveal tense, agreement, articles or prepositions the translation needs.`;
+- nativeInContext: copied exactly, character for character, from the ${nativeLanguage} sentence. A multi-word expression is one gloss.
+- nativeLemma: the same word or expression in ${nativeLanguage} dictionary form: a verb as its infinitive, a noun without case, possessive or plural endings.
+- englishLemma: its English meaning in dictionary form: base verb ("go", never "went" or "is going"), singular noun, no article. Never reveal tense, agreement, articles or prepositions the translation needs.
+- englishInContext: the words of the English translation that carry this meaning, copied exactly, character for character, from it ("went", "is going", "children").`;
 }
 
 export interface GenerateSentencesArgs {

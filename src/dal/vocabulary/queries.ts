@@ -15,10 +15,10 @@ import type {
 
 const LIST_ITEM_COLUMNS = {
   id: true,
-  phrase: true,
-  meaning: true,
+  englishLemma: true,
+  nativeLemma: true,
   context: true,
-  contextPhrase: true,
+  englishInContext: true,
   timeSeconds: true,
   createdAt: true,
 } as const;

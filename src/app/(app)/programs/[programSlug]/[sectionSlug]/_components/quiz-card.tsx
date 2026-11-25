@@ -135,7 +135,7 @@ export default function QuizCard({
             onContinue={handleContinue}
             onSaveGloss={(gloss) =>
               saveQuizGlossAction(sectionId, question.id, {
-                phrase: gloss.phrase,
+                nativeInContext: gloss.nativeInContext,
               }).then((result) => result.ok)
             }
           />

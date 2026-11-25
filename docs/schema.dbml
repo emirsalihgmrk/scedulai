@@ -372,15 +372,15 @@ table vocabulary_items {
   created_at timestamp [not null, default: `now()`]
   updated_at timestamp [not null, default: `now()`]
   user_id text [not null]
-  phrase text [not null]
-  meaning text [not null]
+  english_lemma text [not null]
+  native_lemma text [not null]
   context text [not null]
-  context_phrase text
+  english_in_context text
   video_id uuid
   time_seconds integer
 
   indexes {
-    (user_id, phrase) [name: 'vocabulary_items_user_phrase_unique', unique]
+    (user_id, english_lemma) [name: 'vocabulary_items_user_english_lemma_unique', unique]
     (user_id, created_at) [name: 'vocabulary_items_user_id_created_at_idx']
     
   }

@@ -2,9 +2,15 @@ import { z } from "zod";
 
 import type { QuestionType } from "@/constants/question";
 
+// A vocabulary hint on a translation question. Each side has its dictionary
+// form (lemma: "give up", not the root "give") and the form its sentence uses:
+// `nativeInContext` is in the source sentence, `englishInContext` in the
+// expected translation.
 export const glossSchema = z.object({
-  phrase: z.string(),
-  meaning: z.string(),
+  nativeInContext: z.string(),
+  nativeLemma: z.string(),
+  englishLemma: z.string(),
+  englishInContext: z.string(),
 });
 export type Gloss = z.infer<typeof glossSchema>;
 

@@ -79,16 +79,22 @@ around that category's most recent distinct mistakes. A question belongs to exac
 one owner, a section quiz (shared) or a practice (one user's); a check constraint enforces it. Both
 mistake sources count towards weakness, but only section mistakes are listed.
 
-Saved words live in `vocabulary_items` (one per user and phrase, listed on `/vocabulary`): `phrase`
-is English in dictionary form, `meaning` is in the learner's native language and `context` is the
-English sentence it came from. A phrase picked from a transcript line is defined by the AI and keeps
-the video and the line's timestamp; saving it again from a transcript replaces its context. A quiz
-or practice gloss already carries its translation (no AI call), keeps the section's video (quiz
-only) and never replaces an existing item. `contextPhrase` is the phrase as the context sentence
-says it ("gave up" for "give up"), null when it can't be located.
+Field names carry both the language and the form: a lemma is the dictionary form ("give up",
+"vazgeçmek"), in-context is the form a sentence uses ("gave up", "vazgeçtim"). A question's
+glosses (vocabulary hints) have all four: `nativeInContext` (copied from the source sentence),
+`nativeLemma`, `englishLemma` (the only hint shown while translating, so the grammar stays the
+learner's job) and `englishInContext` (copied from the expected translation, shown once graded).
+
+Saved words live in `vocabulary_items` (one per user and English lemma, listed on `/vocabulary`):
+`englishLemma`, `nativeLemma`, `context` (the English sentence it came from) and `englishInContext`
+(the phrase as that sentence says it, null when it can't be located). A phrase picked from a
+transcript line is defined by the AI (the picked words are its `englishInContext`) and keeps the
+video and the line's timestamp; saving it again from a transcript replaces its context. A quiz or
+practice gloss already carries every field (no AI call), keeps the section's video (quiz only) and
+never replaces an existing item.
 
 Saved words are reviewed with spaced repetition (FSRS via `ts-fsrs`) in the daily session: the card
-shows the meaning and the context with the phrase masked, the learner types the English and the
+shows the native lemma and the context with the phrase masked, the learner types the English and the
 answer is checked on the client (a miss is `again`, a hit or an overruled miss is `good`). A word's
 schedule lives in `vocabulary_cards`, created by its first review; having no card **is** "new".
 Scheduling is long-term only (one review per word per session); a miss is re-asked at the end of
