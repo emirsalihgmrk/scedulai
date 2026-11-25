@@ -25,15 +25,14 @@ export function isCorrectAnswer(
 ): boolean {
   const normalized = normalizeAnswer(answer);
   return [item.englishLemma, item.englishInContext].some(
-    (form) => form !== null && normalizeAnswer(form) === normalized,
+    (form) => normalizeAnswer(form) === normalized,
   );
 }
 
 export function splitContext(
   context: string,
-  englishInContext: string | null,
+  englishInContext: string,
 ): ContextParts | null {
-  if (!englishInContext) return null;
   const match = matchPhrase(context, englishInContext);
   if (!match) return null;
   return {

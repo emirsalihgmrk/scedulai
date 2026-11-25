@@ -375,7 +375,7 @@ table vocabulary_items {
   english_lemma text [not null]
   native_lemma text [not null]
   context text [not null]
-  english_in_context text
+  english_in_context text [not null]
   video_id uuid
   time_seconds integer
 

@@ -390,7 +390,8 @@ export const practicesTable = pgTable(
 // dictionary form, `nativeLemma` its dictionary form in the learner's native
 // language and `context` the English sentence it was saved from.
 // `englishInContext` is the phrase as that sentence says it ("gave up" for
-// "give up"), null when it can't be located.
+// "give up"). There is no `nativeInContext`: the native sentence isn't kept,
+// and a transcript line has none.
 // Saved from a transcript, it has the video and the line's timestamp; from a
 // section quiz's gloss, only the video; from a practice's gloss, neither.
 export const vocabularyItemsTable = pgTable(
@@ -403,7 +404,7 @@ export const vocabularyItemsTable = pgTable(
     englishLemma: text("english_lemma").notNull(),
     nativeLemma: text("native_lemma").notNull(),
     context: text("context").notNull(),
-    englishInContext: text("english_in_context"),
+    englishInContext: text("english_in_context").notNull(),
     videoId: uuid("video_id").references(() => videosTable.id, {
       onDelete: "set null",
     }),

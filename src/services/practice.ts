@@ -9,6 +9,7 @@ import { getLatestPractice, getPractices } from "@/dal/practice/queries";
 import { createPracticeQuestions } from "@/dal/quiz/mutations";
 import { db } from "@/db";
 import { AppError } from "@/lib/errors";
+import { keepLocatableGlosses } from "@/lib/utils";
 import type { MistakeListItem } from "@/schemas/mistake";
 import type {
   PracticeListItem,
@@ -167,7 +168,11 @@ export async function generatePracticeByAiService(): Promise<PracticeWithQuestio
           type: "translation",
           sourceSentence: sentence.native,
           expectedTranslation: sentence.english,
-          glosses: sentence.glosses,
+          glosses: keepLocatableGlosses(
+            sentence.native,
+            sentence.english,
+            sentence.glosses,
+          ),
         },
       })),
       tx,

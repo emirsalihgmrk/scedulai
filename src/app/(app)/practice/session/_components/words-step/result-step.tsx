@@ -37,9 +37,7 @@ export default function ResultStep({
   const parts = splitContext(item.context, item.englishInContext);
   const VerdictIcon = isCorrect ? CircleCheck : CircleX;
   const sentenceForm =
-    item.englishInContext && item.englishInContext !== item.englishLemma
-      ? item.englishInContext
-      : null;
+    item.englishInContext !== item.englishLemma ? item.englishInContext : null;
 
   return (
     <>

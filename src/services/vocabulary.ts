@@ -169,23 +169,16 @@ async function saveGloss(
   );
   if (!gloss) throw new AppError("Not found");
 
-  // Both English forms come from the model, so the one stored is the first the
-  // sentence really holds: the lemma is there too when the sentence uses it
-  // ("meeting").
-  const { expectedTranslation } = payload;
-  const englishInContext =
-    [gloss.englishInContext, gloss.englishLemma].find((form) =>
-      matchPhrase(expectedTranslation, form),
-    ) ?? null;
-
+  // Glosses are checked against their sentences when the question is written
+  // (keepLocatableGlosses), so the in-context form is always in the context.
   await createVocabularyItem(
     userId,
     videoId,
     createVocabularyItemSchema.parse({
       englishLemma: gloss.englishLemma,
       nativeLemma: gloss.nativeLemma,
-      context: expectedTranslation,
-      englishInContext,
+      context: payload.expectedTranslation,
+      englishInContext: gloss.englishInContext,
       timeSeconds: null,
     }),
   );

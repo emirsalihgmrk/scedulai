@@ -143,22 +143,23 @@ sequenceDiagram
 | `english_lemma`      | AI'ın verdiği sözlük biçimi         | `gloss.englishLemma`         | `gloss.englishLemma`      |
 | `native_lemma`       | AI'ın verdiği anlam (sözlük biçimi) | `gloss.nativeLemma`          | `gloss.nativeLemma`       |
 | `context`            | transcript satırı                   | sorunun beklenen çevirisi    | sorunun beklenen çevirisi |
-| `english_in_context` | seçilen kelimeler (her zaman dolu)  | `gloss.englishInContext` (*) | aynı                      |
+| `english_in_context` | seçilen kelimeler                   | `gloss.englishInContext`     | `gloss.englishInContext`  |
 | `video_id`           | section'ın videosu                  | section'ın videosu (varsa)   | null                      |
 | `time_seconds`       | satırın zamanı                      | null                         | null                      |
 | Tekrar kaydedilirse  | günceller                           | değiştirmez                  | değiştirmez               |
-
-(*) Cümlede bulunamazsa `gloss.englishLemma` denenir, o da yoksa null.
 
 ---
 
 **Notlar**
 
-- `english_in_context` transcript kaydında her zaman doludur, çünkü kullanıcı kelimeleri cümlenin
-  içinden seçer ve cümlede geçtikleri zaten doğrulanmıştır. Gloss'ta AI'ın beklenen çeviriden
-  kopyaladığı biçim gelir. Ona güvenilmez, `matchPhrase` ile cümlede aranır. Bulunamazsa sözlük
-  biçimi denenir (cümle "meeting" diyorsa ikisi aynıdır), o da yoksa alan null kalır ve tekrar
-  kartı cümleyi cevaptan sonraya bırakır.
+- `english_in_context` her zaman doludur (`notNull`) ve her zaman `context` cümlesinde geçer:
+  - **Transcript:** kullanıcı kelimeleri satırın içinden seçer, `matchPhrase` satırda geçtiklerini
+    doğrular.
+  - **Gloss:** soru yazılırken `keepLocatableGlosses` (`lib/utils.ts`) her gloss'u cümlelerinde
+    arar. `nativeInContext` kaynak cümlede birebir geçmeli, `englishInContext` beklenen çeviride
+    `matchPhrase` ile bulunmalı. Bulunamazsa sözlük biçimi denenir (cümle "meeting" diyorsa ikisi
+    aynıdır). O da yoksa gloss soruya hiç yazılmaz. Saklanan `englishInContext` cümledeki yazımla
+    yazılır.
 - `video_id` transcript'ten ve quiz'den kayıtta dolu (quiz section'ın videosunu kullanır),
   practice'ten kayıtta boştur. `time_seconds` yalnızca transcript'ten kayıtta doludur. Şemadaki
   `vocabulary_items_time_needs_video_check` kısıtı, video olmadan zaman kaydedilmesini engeller.
@@ -352,8 +353,9 @@ sequenceDiagram
   `new`; cevap metni saklanmaz)
 - **AI çağrısı:** yok
 - **Kartın ön yüzü:** ana dildeki sözlük biçimi (`nativeLemma`) ve cümle (`context`). Cümledeki
-  `englishInContext` kelime başına bir boşlukla gizlenir. `englishInContext` null ise ya da
-  cümlede bulunamazsa cümle cevabı ele vereceği için cevaptan sonraya bırakılır.
+  `englishInContext` kelime başına bir boşlukla gizlenir. Kayıt sırasında doğrulandığı için hep
+  bulunur. Yine de bulunamazsa (`splitContext` null dönerse) cümle cevabı ele vereceği için
+  cevaptan sonraya bırakılır.
 - **Kontrol:** büyük/küçük harf, noktalama ve kıvrık kesme işareti yok sayılır. Cevap
   `englishLemma` (sözlük biçimi) ya da `englishInContext` (cümledeki biçim) ile aynıysa doğrudur:
   "give up" da "gave up" da kabul edilir.

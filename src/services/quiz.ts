@@ -17,6 +17,7 @@ import {
 } from "@/dal/quiz/queries";
 import { db } from "@/db";
 import { AppError } from "@/lib/errors";
+import { keepLocatableGlosses } from "@/lib/utils";
 import { gradeTranslationSchema } from "@/schemas/quiz";
 import type {
   Grade,
@@ -119,7 +120,11 @@ export async function generateQuizByAiService(
           type: "translation",
           sourceSentence: sentence.native,
           expectedTranslation: sentence.english,
-          glosses: sentence.glosses,
+          glosses: keepLocatableGlosses(
+            sentence.native,
+            sentence.english,
+            sentence.glosses,
+          ),
         },
       })),
       tx,

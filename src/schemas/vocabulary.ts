@@ -71,7 +71,7 @@ export const createVocabularyItemSchema = createVocabularyItemRowSchema
     englishLemma: z.string().trim().toLowerCase().min(1).max(80),
     nativeLemma: z.string().trim().min(1).max(120),
     context: z.string().trim().min(1).max(500),
-    englishInContext: z.string().trim().toLowerCase().min(1).max(80).nullish(),
+    englishInContext: z.string().trim().toLowerCase().min(1).max(80),
     timeSeconds: z.int().min(0).nullish(),
   });
 export type CreateVocabularyItemInput = z.infer<
@@ -109,12 +109,7 @@ export type CreateVocabularyReviewInput = z.infer<
 // The picked words, as the line says them.
 export const saveTranscriptPhraseSchema = createVocabularyItemSchema
   .pick({ englishInContext: true })
-  .extend({
-    englishInContext: createVocabularyItemSchema.shape.englishInContext
-      .unwrap()
-      .unwrap(),
-    lineIndex: z.int().min(0),
-  });
+  .extend({ lineIndex: z.int().min(0) });
 export type SaveTranscriptPhraseInput = z.infer<
   typeof saveTranscriptPhraseSchema
 >;

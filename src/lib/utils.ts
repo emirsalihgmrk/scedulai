@@ -2,6 +2,8 @@ import { clsx  } from "clsx";
 import type {ClassValue} from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import type { Gloss } from "@/schemas/quiz";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -42,6 +44,26 @@ export function matchPhrase(
     `(?<![\\p{L}\\p{N}])${pattern}(?![\\p{L}\\p{N}])`,
     "iu",
   ).exec(text);
+}
+
+// Glosses come from the model, so one is kept only when both its forms are in
+// their sentences: every stored gloss can then be underlined and saved with
+// its in-context form. An English lemma the sentence uses ("meeting") stands
+// in for a missing in-context form, and the sentence's own spelling is kept.
+export function keepLocatableGlosses(
+  sourceSentence: string,
+  expectedTranslation: string,
+  glosses: Gloss[],
+): Gloss[] {
+  return glosses.flatMap((gloss) => {
+    if (!gloss.nativeInContext.trim()) return [];
+    if (!sourceSentence.includes(gloss.nativeInContext)) return [];
+    for (const form of [gloss.englishInContext, gloss.englishLemma]) {
+      const match = form.trim() ? matchPhrase(expectedTranslation, form) : null;
+      if (match) return [{ ...gloss, englishInContext: match[0] }];
+    }
+    return [];
+  });
 }
 
 export function formatDuration(totalSeconds: number | null | undefined) {

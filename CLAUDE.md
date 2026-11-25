@@ -84,10 +84,12 @@ Field names carry both the language and the form: a lemma is the dictionary form
 glosses (vocabulary hints) have all four: `nativeInContext` (copied from the source sentence),
 `nativeLemma`, `englishLemma` (the only hint shown while translating, so the grammar stays the
 learner's job) and `englishInContext` (copied from the expected translation, shown once graded).
+A gloss whose forms aren't in their sentences is dropped before the question is written
+(`keepLocatableGlosses`).
 
 Saved words live in `vocabulary_items` (one per user and English lemma, listed on `/vocabulary`):
 `englishLemma`, `nativeLemma`, `context` (the English sentence it came from) and `englishInContext`
-(the phrase as that sentence says it, null when it can't be located). A phrase picked from a
+(the phrase as that sentence says it; always set and always in `context`). A phrase picked from a
 transcript line is defined by the AI (the picked words are its `englishInContext`) and keeps the
 video and the line's timestamp; saving it again from a transcript replaces its context. A quiz or
 practice gloss already carries every field (no AI call), keeps the section's video (quiz only) and
