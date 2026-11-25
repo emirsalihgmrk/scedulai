@@ -40,8 +40,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Validated, not just read: a stale cookie would bounce a signed-out user
+  // to /progress with no way back to sign in.
   if (matchesRoute(pathname, GUEST_ONLY_ROUTES)) {
-    if (getSessionCookie(request)) {
+    const session = getSessionCookie(request)
+      ? await auth.api.getSession({ headers: request.headers })
+      : null;
+    if (session) {
       const url = request.nextUrl.clone();
       url.pathname = SIGNED_IN_HOME;
       url.search = "";
